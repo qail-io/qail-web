@@ -5,13 +5,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Examples | QAIL</title>
-    <meta name="description" content="See QAIL in action with real-world query examples.">
+    <meta name="description" content="See QAIL AST builder and text syntax in action with real-world examples.">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
 
     <!-- Social Meta Tags -->
-    <meta property="og:title" content="QAIL vs The World">
+    <meta property="og:title" content="QAIL Examples">
     <meta property="og:description"
-        content="See how QAIL compares to SQLGlot, PRQL, and Flyway. Why we chose a Transpiler over an ORM.">
+        content="Build queries with the AST builder API or text syntax. See the difference.">
     <meta property="og:image" content="https://qail-web.pages.dev/social_preview.svg">
     <meta name="twitter:card" content="summary_large_image">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -28,147 +28,174 @@
     <header class="page-header">
         <div class="container">
             <h1>Examples</h1>
-            <p class="subtitle">See QAIL in action with real-world query examples.</p>
+            <p class="subtitle">AST Builder API vs Text Syntax</p>
         </div>
     </header>
 
     <main class="page-content">
         <div class="container prose">
+
+            <!-- AST Builder Examples -->
             <section>
-                <h2>Basic Queries</h2>
+                <h2>AST Builder API (Recommended)</h2>
+                <p style="color: var(--text-muted);">Build queries as typed Rust structs. No parsing. No strings.</p>
+
                 <div class="comparison-grid">
                     <div class="code-block qail">
                         <small>Select all users</small>
-                        <code>get::users:'_</code>
+                        <code>QailCmd::get("users")
+    .select_all()</code>
                     </div>
                     <div class="code-block sql">
-                        <small>Generated SQL</small>
+                        <small>Wire Protocol Output</small>
                         <code>SELECT * FROM users</code>
                     </div>
                 </div>
 
                 <div class="comparison-grid" style="margin-top: 1.5rem;">
                     <div class="code-block qail">
-                        <small>Select specific columns</small>
-                        <code>get::users:'id'email'name</code>
+                        <small>Filter with conditions</small>
+                        <code>QailCmd::get("users")
+    .columns(["id", "email"])
+    .filter("active", Eq, true)
+    .order_by("created_at", Desc)
+    .limit(10)</code>
                     </div>
                     <div class="code-block sql">
-                        <small>Generated SQL</small>
-                        <code>SELECT id, email, name FROM users</code>
+                        <small>Wire Protocol Output</small>
+                        <code>SELECT id, email FROM users 
+WHERE active = true 
+ORDER BY created_at DESC 
+LIMIT 10</code>
+                    </div>
+                </div>
+
+                <div class="comparison-grid" style="margin-top: 1.5rem;">
+                    <div class="code-block qail">
+                        <small>Insert with returning</small>
+                        <code>QailCmd::add("users")
+    .columns(["email", "name"])
+    .values(["alice@example.com", "Alice"])
+    .returning_all()</code>
+                    </div>
+                    <div class="code-block sql">
+                        <small>Wire Protocol Output</small>
+                        <code>INSERT INTO users (email, name) 
+VALUES ('alice@example.com', 'Alice') 
+RETURNING *</code>
+                    </div>
+                </div>
+
+                <div class="comparison-grid" style="margin-top: 1.5rem;">
+                    <div class="code-block qail">
+                        <small>Join tables</small>
+                        <code>QailCmd::get("users")
+    .columns(["name", "avatar"])
+    .left_join("profiles", "users.id", "profiles.user_id")</code>
+                    </div>
+                    <div class="code-block sql">
+                        <small>Wire Protocol Output</small>
+                        <code>SELECT name, avatar FROM users 
+LEFT JOIN profiles ON users.id = profiles.user_id</code>
                     </div>
                 </div>
             </section>
 
-            <section>
-                <h2>Filtering</h2>
+            <!-- Text Syntax Examples -->
+            <section style="margin-top: 3rem;">
+                <h2>Text Syntax (CLI, LSP, WASM)</h2>
+                <p style="color: var(--text-muted);">Human-readable syntax for developer tools. Parses to AST
+                    internally.</p>
+
                 <div class="comparison-grid">
                     <div class="code-block qail">
-                        <small>Filter by condition</small>
-                        <code>get::users:'_ [ 'active == true ]</code>
+                        <small>Select all users</small>
+                        <code>get users fields *</code>
                     </div>
                     <div class="code-block sql">
-                        <small>Generated SQL</small>
-                        <code>SELECT * FROM users WHERE active = true</code>
+                        <small>Transpiled SQL</small>
+                        <code>SELECT * FROM users</code>
+                    </div>
+                </div>
+
+                <div class="comparison-grid" style="margin-top: 1.5rem;">
+                    <div class="code-block qail">
+                        <small>Filter with conditions</small>
+                        <code>get users fields id, email 
+    where active = true 
+    order by created_at desc 
+    limit 10</code>
+                    </div>
+                    <div class="code-block sql">
+                        <small>Transpiled SQL</small>
+                        <code>SELECT id, email FROM users 
+WHERE active = true 
+ORDER BY created_at DESC 
+LIMIT 10</code>
                     </div>
                 </div>
 
                 <div class="comparison-grid" style="margin-top: 1.5rem;">
                     <div class="code-block qail">
                         <small>Fuzzy search</small>
-                        <code>get::users:'id'name [ 'name ~ "john" ]</code>
+                        <code>get users fields id, name 
+    where name ilike john</code>
                     </div>
                     <div class="code-block sql">
-                        <small>Generated SQL</small>
-                        <code>SELECT id, name FROM users WHERE name ILIKE '%john%'</code>
+                        <small>Transpiled SQL</small>
+                        <code>SELECT id, name FROM users 
+WHERE name ILIKE '%john%'</code>
                     </div>
                 </div>
             </section>
 
-            <section>
-                <h2>Sorting & Pagination</h2>
-                <div class="comparison-grid">
-                    <div class="code-block qail">
-                        <small>Sort descending</small>
-                        <code>get::users:'_ [ -created_at ]</code>
-                    </div>
-                    <div class="code-block sql">
-                        <small>Generated SQL</small>
-                        <code>SELECT * FROM users ORDER BY created_at DESC</code>
-                    </div>
-                </div>
-
-                <div class="comparison-grid" style="margin-top: 1.5rem;">
-                    <div class="code-block qail">
-                        <small>Pagination with range</small>
-                        <code>get::users:'_ [ 20..30 ]</code>
-                    </div>
-                    <div class="code-block sql">
-                        <small>Generated SQL</small>
-                        <code>SELECT * FROM users LIMIT 10 OFFSET 20</code>
-                    </div>
-                </div>
-            </section>
-
-            <section>
-                <h2>Combined Example</h2>
-                <div class="comparison-grid">
-                    <div class="code-block qail">
-                        <small>Full query with filter, sort, and pagination</small>
-                        <code>get::users:'id'email [ 'active == true, -created_at, 0..10 ]</code>
-                    </div>
-                    <div class="code-block sql">
-                        <small>Generated SQL</small>
-                        <code>SELECT id, email FROM users WHERE active = true ORDER BY created_at DESC LIMIT 10</code>
-                    </div>
-                </div>
-            </section>
-
-            <section>
-                <h2>Market Comparison</h2>
+            <!-- Comparison Table -->
+            <section style="margin-top: 3rem;">
+                <h2>AST Builder vs Others</h2>
                 <div class="market-table-container">
                     <table class="market-table">
                         <thead>
                             <tr>
                                 <th>Feature</th>
-                                <th>Other Transpilers</th>
-                                <th>Query Languages</th>
-                                <th>Migration Tools</th>
-                                <th class="highlight">QAIL</th>
+                                <th>Raw SQL</th>
+                                <th>ORMs</th>
+                                <th>Query Builders</th>
+                                <th class="highlight">QAIL AST</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
-                                <td>Transpiles SQL</td>
-                                <td class="check">✓</td>
-                                <td class="check">✓</td>
-                                <td class="cross">✕</td>
-                                <td class="check">✓</td>
-                            </tr>
-                            <tr>
-                                <td>Supports NoSQL</td>
+                                <td>String-free</td>
                                 <td class="cross">✕</td>
                                 <td class="cross">✕</td>
                                 <td class="cross">✕</td>
                                 <td class="check">✓</td>
                             </tr>
                             <tr>
-                                <td>LSP / Autocomplete</td>
+                                <td>Injection Impossible</td>
                                 <td class="cross">✕</td>
-                                <td class="check">✓</td>
-                                <td class="cross">✕</td>
-                                <td class="check">✓</td>
-                            </tr>
-                            <tr>
-                                <td>Security Guarantee</td>
-                                <td class="cross">✕</td>
-                                <td class="cross">✕</td>
+                                <td class="cross">✕ (via .raw())</td>
                                 <td class="cross">✕</td>
                                 <td class="check">✓</td>
                             </tr>
                             <tr>
-                                <td>Zero-Config Sync</td>
+                                <td>Wire Protocol Direct</td>
                                 <td class="cross">✕</td>
                                 <td class="cross">✕</td>
+                                <td class="cross">✕</td>
+                                <td class="check">✓</td>
+                            </tr>
+                            <tr>
+                                <td>Multi-Database</td>
+                                <td class="cross">✕</td>
+                                <td class="check">✓</td>
+                                <td class="check">✓</td>
+                                <td class="check">✓</td>
+                            </tr>
+                            <tr>
+                                <td>Type-Safe End-to-End</td>
+                                <td class="cross">✕</td>
+                                <td class="check">✓</td>
                                 <td class="cross">✕</td>
                                 <td class="check">✓</td>
                             </tr>
@@ -176,7 +203,6 @@
                     </table>
                 </div>
             </section>
-
 
         </div>
     </main>
