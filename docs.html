@@ -5,13 +5,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Documentation | QAIL</title>
-    <meta name="description" content="Complete documentation for QAIL: The AST-Native Query Compiler.">
+    <meta name="description"
+        content="Complete documentation for QAIL: The AST-Native Query Compiler. Builder API, Text Syntax, and Integration Guides.">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
 
     <!-- Social Meta Tags -->
     <meta property="og:title" content="QAIL Documentation">
     <meta property="og:description"
-        content="Official documentation for QAIL. Installation, Syntax Reference, and Integration Guides for Rust, Node, and Go.">
+        content="Build queries with the AST builder API. Skip strings entirely. Zero injection surface.">
     <meta property="og:image" content="https://qail-web.pages.dev/social_preview.svg">
     <meta name="twitter:card" content="summary_large_image">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -29,7 +30,7 @@
     <header class="page-header">
         <div class="container">
             <h1>Documentation</h1>
-            <p class="subtitle">Quick Reference, Syntax, and Guides</p>
+            <p class="subtitle">AST Builder API, Text Syntax, and Guides</p>
         </div>
     </header>
 
@@ -37,15 +38,142 @@
         <div class="container">
             <!-- Shortcuts -->
             <div class="docs-nav">
-                <a href="#quick-ref">Quick Ref</a>
+                <a href="#builder">Builder API</a>
                 <a href="#installation">Installation</a>
-                <a href="#syntax">Syntax</a>
+                <a href="#text-syntax">Text Syntax</a>
                 <a href="#examples">Examples</a>
             </div>
 
-            <!-- Reference Table -->
-            <section id="quick-ref">
-                <h2>Quick Reference</h2>
+            <!-- AST Builder API (Primary) -->
+            <section id="builder">
+                <h2>AST Builder API</h2>
+                <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
+                    The recommended way to use QAIL. Build queries as typed Rust structs. No parsing. No strings.
+                </p>
+                <div class="symbols-table-wrapper">
+                    <table class="symbols-table">
+                        <thead>
+                            <tr>
+                                <th>Method</th>
+                                <th>Description</th>
+                                <th>Example</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="symbol">QailCmd::get()</td>
+                                <td>SELECT query</td>
+                                <td><code>QailCmd::get("users")</code></td>
+                            </tr>
+                            <tr>
+                                <td class="symbol">QailCmd::add()</td>
+                                <td>INSERT query</td>
+                                <td><code>QailCmd::add("users")</code></td>
+                            </tr>
+                            <tr>
+                                <td class="symbol">QailCmd::set()</td>
+                                <td>UPDATE query</td>
+                                <td><code>QailCmd::set("users")</code></td>
+                            </tr>
+                            <tr>
+                                <td class="symbol">QailCmd::del()</td>
+                                <td>DELETE query</td>
+                                <td><code>QailCmd::del("users")</code></td>
+                            </tr>
+                            <tr>
+                                <td class="symbol">.select_all()</td>
+                                <td>SELECT *</td>
+                                <td><code>.select_all()</code></td>
+                            </tr>
+                            <tr>
+                                <td class="symbol">.columns()</td>
+                                <td>Select specific columns</td>
+                                <td><code>.columns(["id", "email"])</code></td>
+                            </tr>
+                            <tr>
+                                <td class="symbol">.filter()</td>
+                                <td>WHERE condition</td>
+                                <td><code>.filter("active", Eq, true)</code></td>
+                            </tr>
+                            <tr>
+                                <td class="symbol">.where_eq()</td>
+                                <td>WHERE = shorthand</td>
+                                <td><code>.where_eq("id", 42)</code></td>
+                            </tr>
+                            <tr>
+                                <td class="symbol">.order_by()</td>
+                                <td>ORDER BY</td>
+                                <td><code>.order_by("created_at", Desc)</code></td>
+                            </tr>
+                            <tr>
+                                <td class="symbol">.limit()</td>
+                                <td>LIMIT</td>
+                                <td><code>.limit(10)</code></td>
+                            </tr>
+                            <tr>
+                                <td class="symbol">.offset()</td>
+                                <td>OFFSET</td>
+                                <td><code>.offset(20)</code></td>
+                            </tr>
+                            <tr>
+                                <td class="symbol">.left_join()</td>
+                                <td>LEFT JOIN</td>
+                                <td><code>.left_join("profiles", "users.id", "profiles.user_id")</code></td>
+                            </tr>
+                            <tr>
+                                <td class="symbol">.returning_all()</td>
+                                <td>RETURNING *</td>
+                                <td><code>.returning_all()</code></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <hr class="divider">
+
+            <!-- Installation -->
+            <section id="installation">
+                <h2>Installation</h2>
+
+                <h3>Rust (Recommended)</h3>
+                <div class="code-block"><code>[dependencies]
+qail-core = "*"    # AST and Builder
+qail-pg = "*"      # PostgreSQL driver (WIP)</code></div>
+
+                <h3>CLI</h3>
+                <div class="code-block"><code>cargo install qail</code></div>
+
+                <h3>JavaScript/TypeScript (WASM)</h3>
+                <div class="code-block"><code>npm install qail-wasm</code></div>
+
+                <h3>Usage</h3>
+                <div class="code-block"><code>// Rust - AST Builder (recommended)
+use qail_core::ast::{QailCmd, Operator, SortOrder};
+
+let cmd = QailCmd::get("users")
+    .columns(["id", "email"])
+    .filter("active", Operator::Eq, true)
+    .order_by("created_at", SortOrder::Desc)
+    .limit(10);
+
+// Encode to PostgreSQL wire protocol bytes
+use qail_pg::protocol::PgEncoder;
+let bytes = PgEncoder::encode_simple_query(&cmd);</code></div>
+
+                <div class="code-block" style="margin-top: 1rem;"><code>// JavaScript - Text syntax (CLI, playground)
+import { parseAndTranspile } from 'qail-wasm';
+const sql = parseAndTranspile("get users fields * where active = true");</code></div>
+            </section>
+
+            <hr class="divider">
+
+            <!-- Text Syntax -->
+            <section id="text-syntax">
+                <h2>Text Syntax Reference</h2>
+                <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
+                    For CLI, LSP, and WASM playground. Parses to AST internally.
+                </p>
                 <div class="symbols-table-wrapper">
                     <table class="symbols-table">
                         <thead>
@@ -60,8 +188,8 @@
                             <tr>
                                 <td class="symbol">get</td>
                                 <td>Select query</td>
-                                <td>get users</td>
-                                <td>SELECT FROM users</td>
+                                <td>get users fields *</td>
+                                <td>SELECT * FROM users</td>
                             </tr>
                             <tr>
                                 <td class="symbol">set</td>
@@ -84,20 +212,14 @@
                             <tr>
                                 <td class="symbol">fields</td>
                                 <td>Select columns</td>
-                                <td>fields id, name, *</td>
-                                <td>SELECT id, name, *</td>
+                                <td>fields id, email, *</td>
+                                <td>SELECT id, email, *</td>
                             </tr>
                             <tr>
                                 <td class="symbol">where</td>
                                 <td>Filter conditions</td>
                                 <td>where active = true</td>
                                 <td>WHERE active = true</td>
-                            </tr>
-                            <tr>
-                                <td class="symbol">and / or</td>
-                                <td>Logical operators</td>
-                                <td>where a = 1 and b = 2</td>
-                                <td>WHERE a = 1 AND b = 2</td>
                             </tr>
                             <tr>
                                 <td class="symbol">order by</td>
@@ -112,34 +234,16 @@
                                 <td>LIMIT 10 OFFSET 20</td>
                             </tr>
                             <tr>
-                                <td class="symbol">distinct</td>
-                                <td>Unique results</td>
-                                <td>get distinct users</td>
-                                <td>SELECT DISTINCT</td>
-                            </tr>
-                            <tr>
                                 <td class="symbol">left join</td>
                                 <td>Left outer join</td>
                                 <td>left join profiles</td>
                                 <td>LEFT JOIN profiles</td>
                             </tr>
                             <tr>
-                                <td class="symbol">inner join</td>
-                                <td>Inner join</td>
-                                <td>inner join orders</td>
-                                <td>INNER JOIN orders</td>
-                            </tr>
-                            <tr>
                                 <td class="symbol">ilike</td>
                                 <td>Fuzzy match</td>
                                 <td>where name ilike john</td>
                                 <td>WHERE name ILIKE '%john%'</td>
-                            </tr>
-                            <tr>
-                                <td class="symbol">$1, $2</td>
-                                <td>Parameters</td>
-                                <td>where id = $1</td>
-                                <td>WHERE id = $1</td>
                             </tr>
                         </tbody>
                     </table>
@@ -148,144 +252,71 @@
 
             <hr class="divider">
 
-            <!-- Installation -->
-            <section id="installation">
-                <h2>Installation</h2>
-
-                <h3>CLI</h3>
-                <div class="code-block"><code>cargo install qail</code></div>
-
-                <h3>Rust Library</h3>
-                <div class="code-block"><code>[dependencies]
-qail-core = "*"</code></div>
-
-                <h3>JavaScript/TypeScript (WASM)</h3>
-                <div class="code-block"><code>npm install qail-wasm</code></div>
-
-                <h3>Introspection (Zero-Config)</h3>
-                <div class="code-block"><code># Generate qail.schema.json from your database
-qail pull postgres://user:pass@localhost:5432/db</code></div>
-
-                <h3>Usage</h3>
-                <div class="code-block"><code>// Rust - AST-native (recommended)
-let cmd = QailCmd::get("users")
-    .columns(["id", "email"])
-    .filter("active", Eq, true);
-
-// Rust - Text syntax (for CLI, LSP)
-let cmd = parse("get users fields * where active = true")?;
-
-// JavaScript - WASM
-import { parseAndTranspile } from 'qail-wasm';
-const sql = parseAndTranspile("get users fields * where active = true");</code></div>
-            </section>
-
-            <hr class="divider">
-
-            <!-- Syntax -->
-            <section id="syntax">
-                <h2>Syntax Deep Dive</h2>
-
-                <div class="example-cards">
-                    <div class="example-card">
-                        <h3>Simple SELECT</h3>
-                        <div class="code-block qail"><code>get users fields id, email where active = true</code></div>
-                        <div class="code-block sql"><code>SELECT id, email FROM users WHERE active = true</code></div>
-                    </div>
-
-                    <div class="example-card">
-                        <h3>All Columns (Wildcard)</h3>
-                        <div class="code-block qail"><code>get users fields *</code></div>
-                        <div class="code-block sql"><code>SELECT * FROM users</code></div>
-                    </div>
-
-                    <div class="example-card">
-                        <h3>Pagination</h3>
-                        <div class="code-block qail"><code>get users fields * limit 10 offset 20</code></div>
-                        <div class="code-block sql"><code>SELECT * FROM users LIMIT 10 OFFSET 20</code></div>
-                    </div>
-
-                    <div class="example-card">
-                        <h3>Sorting</h3>
-                        <div class="code-block qail"><code>get users fields * order by created_at desc</code></div>
-                        <div class="code-block sql"><code>SELECT * FROM users ORDER BY created_at DESC</code></div>
-                        <div class="code-block qail"><code>get users fields * order by name asc</code></div>
-                        <div class="code-block sql"><code>SELECT * FROM users ORDER BY name ASC</code></div>
-                    </div>
-
-                    <div class="example-card">
-                        <h3>OR Conditions</h3>
-                        <div class="code-block qail"><code>get users fields * where role = admin or role = mod</code>
-                        </div>
-                        <div class="code-block sql">
-                            <code>SELECT * FROM users WHERE role = 'admin' OR role = 'mod'</code>
-                        </div>
-                    </div>
-
-                    <div class="example-card highlight-card">
-                        <h3>DISTINCT</h3>
-                        <div class="code-block qail"><code>get distinct users fields role</code></div>
-                        <div class="code-block sql"><code>SELECT DISTINCT role FROM users</code></div>
-                    </div>
-
-                    <div class="example-card">
-                        <h3>UPDATE</h3>
-                        <div class="code-block qail"><code>set users values verified = true where id = $1</code></div>
-                        <div class="code-block sql"><code>UPDATE users SET verified = true WHERE id = $1</code></div>
-                    </div>
-
-                    <div class="example-card">
-                        <h3>DELETE</h3>
-                        <div class="code-block qail"><code>del users where id = $1</code></div>
-                        <div class="code-block sql"><code>DELETE FROM users WHERE id = $1</code></div>
-                    </div>
-
-                    <div class="example-card">
-                        <h3>JOINs</h3>
-                        <div class="code-block qail"><code>get users left join profiles fields name, avatar</code></div>
-                        <div class="code-block sql">
-                            <code>SELECT name, avatar FROM users LEFT JOIN profiles ON ...</code>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <hr class="divider">
-
             <!-- Examples -->
             <section id="examples">
-                <h2>Real-World Examples</h2>
+                <h2>Examples</h2>
 
                 <div class="example-cards">
-                    <div class="example-card">
-                        <h3>Search with Fuzzy Match</h3>
-                        <div class="code-block qail"><code>get users fields id, name where name ilike john</code></div>
-                        <div class="code-block sql"><code>SELECT id, name FROM users WHERE name ILIKE '%john%'</code>
-                        </div>
-                    </div>
-
-                    <div class="example-card">
-                        <h3>Complex Filter</h3>
-                        <div class="code-block qail">
-                            <code>get bookings fields * where status = confirmed and created_at >= 2024-01-01 order by created_at desc limit 50</code>
-                        </div>
-                        <div class="code-block sql">
-                            <code>SELECT * FROM bookings WHERE status = 'confirmed' AND created_at >= '2024-01-01' ORDER BY created_at DESC LIMIT 50</code>
-                        </div>
-                    </div>
-
                     <div class="example-card highlight-card">
-                        <h3>Multi-Line Query</h3>
+                        <h3>AST Builder - Complete Flow</h3>
+                        <div class="code-block qail"><code>// Build the query
+let cmd = QailCmd::get("users")
+    .columns(["id", "email", "name"])
+    .filter("active", Operator::Eq, true)
+    .filter("role", Operator::In, vec!["admin", "mod"])
+    .order_by("created_at", SortOrder::Desc)
+    .limit(50);
+
+// Validate against schema (optional)
+validator.validate_command(&cmd)?;
+
+// Encode to PostgreSQL bytes
+let bytes = PgEncoder::encode_simple_query(&cmd);
+
+// Send to database (qail-pg driver - WIP)
+driver.execute(bytes).await?;</code></div>
+                    </div>
+
+                    <div class="example-card">
+                        <h3>Text Syntax - Complex Query</h3>
                         <div class="code-block qail">
                             <pre><code>get users 
     inner join bookings
-    fields *
+    fields id, email, bookings.total
     where created_at >= 2024-01-01
     and email_verified = true
-    and bookings.campaign_code ilike $1
     order by created_at desc
     limit 50</code></pre>
                         </div>
+                        <div class="code-block sql"><code>SELECT id, email, bookings.total 
+FROM users 
+INNER JOIN bookings ON ... 
+WHERE created_at >= '2024-01-01' 
+AND email_verified = true 
+ORDER BY created_at DESC 
+LIMIT 50</code></div>
+                    </div>
+
+                    <div class="example-card">
+                        <h3>Insert with Returning</h3>
+                        <div class="code-block qail"><code>let cmd = QailCmd::add("users")
+    .columns(["email", "name"])
+    .values(["alice@example.com", "Alice"])
+    .returning(["id", "created_at"]);</code></div>
+                        <div class="code-block sql"><code>INSERT INTO users (email, name) 
+VALUES ('alice@example.com', 'Alice') 
+RETURNING id, created_at</code></div>
+                    </div>
+
+                    <div class="example-card">
+                        <h3>Update with Filter</h3>
+                        <div class="code-block qail"><code>let cmd = QailCmd::set("users")
+    .set_value("status", "active")
+    .set_value("verified_at", "now()")
+    .where_eq("id", 42);</code></div>
+                        <div class="code-block sql"><code>UPDATE users 
+SET status = 'active', verified_at = now() 
+WHERE id = 42</code></div>
                     </div>
                 </div>
             </section>
