@@ -46,7 +46,7 @@
             <p class="hero-tagline">Build with AST. <span class="highlight">Execute with Bytes.</span></p>
 
             <div class="hero-demo">
-                <div class="demo-compare" style="flex-direction: row;">
+                <div class="demo-compare">
                     <!-- Source: QAIL AST -->
                     <div class="demo-target" style="order: 1;">
                         <div class="demo-new">
@@ -192,6 +192,31 @@
                     <h3>Type Safe End-to-End</h3>
                     <p>Schema validation at build time. Wrong queries don't compile. Wrong types don't bind.</p>
                 </div>
+            </div>
+
+            <!-- QAIL's Position -->
+            <div
+                style="margin-top: 3rem; background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%); border-radius: 16px; padding: 2rem; text-align: center;">
+                <h3 style="color: #fff; margin: 0 0 1.5rem; font-size: 1.5rem;">🦀 QAIL's Position</h3>
+                <div
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1.5rem; color: #e2e8f0;">
+                    <div>
+                        <div style="font-size: 1.75rem; font-weight: 700;">4% faster than C</div>
+                        <div style="font-size: 0.875rem; opacity: 0.8;">353k vs 339k q/s</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 1.75rem; font-weight: 700;">12% ahead of Go</div>
+                        <div style="font-size: 0.875rem; opacity: 0.8;">pgx 303k q/s</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 1.75rem; font-weight: 700;">16x faster</div>
+                        <div style="font-size: 0.875rem; opacity: 0.8;">Python asyncpg ~21k q/s</div>
+                    </div>
+                </div>
+                <a href="benchmarks.html"
+                    style="display: inline-block; margin-top: 1.5rem; color: #60a5fa; font-size: 0.9rem; text-decoration: none;">
+                    View full benchmarks →
+                </a>
             </div>
         </div>
     </section>

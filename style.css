@@ -163,6 +163,7 @@ body {
 .hero {
     position: relative;
     min-height: 100vh;
+    min-height: 100svh;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -210,6 +211,15 @@ body {
 .hero-content {
     position: relative;
     z-index: 1;
+}
+
+.ast-comparison > div {
+    flex-wrap: wrap;
+}
+
+.ast-comparison code {
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 .hero-title {
@@ -352,6 +362,9 @@ body {
     font-size: 0.85rem;
     color: var(--text-primary);
     display: block;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 .demo-new code {
@@ -379,6 +392,8 @@ body {
 .hero-install code {
     font-family: var(--font-mono);
     color: var(--accent-green);
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 .copy-btn {
@@ -677,6 +692,23 @@ body {
 
 /* Responsive */
 @media (max-width: 768px) {
+    .hero {
+        min-height: auto;
+        padding: 96px 0 56px;
+    }
+
+    .hero .container {
+        padding: 0 16px;
+    }
+
+    .hero-tagline {
+        margin-bottom: 32px;
+    }
+
+    .hero-demo {
+        margin-bottom: 32px;
+    }
+
     .nav-links {
         display: none;
         /* Hide links */
@@ -699,7 +731,7 @@ body {
 
     .demo-compare {
         flex-direction: column;
-        gap: 0;
+        gap: 16px;
     }
 
     .demo-connectors {
@@ -712,12 +744,16 @@ body {
     }
 
     .demo-sources::after {
+        content: none;
+    }
+
+    .demo-sources::before {
         content: '↓';
         display: block;
         text-align: center;
         font-size: 2rem;
         color: var(--accent-purple);
-        margin: 8px 0;
+        margin: 0 0 8px 0;
     }
 
     .demo-sources,
@@ -727,12 +763,32 @@ body {
 
     .demo-source-card,
     .demo-new {
-        min-width: 100%;
+        min-width: 0;
+        width: 100%;
+        max-width: 560px;
+        margin: 0 auto;
     }
 
     .hero-cta {
         flex-direction: column;
         align-items: center;
+    }
+
+    .hero-install {
+        width: 100%;
+        max-width: 420px;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        border-radius: 16px;
+    }
+
+    .hero-install code {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .hero-install .copy-btn {
+        flex: 0 0 auto;
     }
 
     .features-grid {

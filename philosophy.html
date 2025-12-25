@@ -180,6 +180,71 @@
                     </tbody>
                 </table>
             </section>
+
+            <section>
+                <h2>🛡️ Why No Raw Strings?</h2>
+                <p>QAIL intentionally does <strong>not</strong> provide a "Raw SQL" escape hatch. This is not a missing
+                    feature—it's a deliberate design choice.</p>
+
+                <h3>The Promise</h3>
+                <blockquote
+                    style="border-left: 4px solid var(--primary); padding-left: 1rem; margin: 1.5rem 0; font-style: italic;">
+                    "If it compiles in QAIL, it is a valid, safe protocol packet."
+                </blockquote>
+
+                <h3>Soundness by Construction</h3>
+                <p>By forcing all queries through the AST, QAIL guarantees:</p>
+                <ul>
+                    <li><strong>SQL Injection is Structurally Impossible</strong> — Code and data are never mixed.
+                        Parameters are always separate from query structure.</li>
+                    <li><strong>Syntax Errors at Construction Time</strong> — Invalid query structures fail when
+                        building the AST, before ever touching the database.</li>
+                    <li><strong>Global Safety Invariant</strong> — Every query that executes was validated at the type
+                        level (compiled languages) or construction time (dynamic languages).</li>
+                </ul>
+
+                <h3>The Rust vs C++ Analogy</h3>
+                <table style="width: 100%; margin: 1rem 0;">
+                    <thead>
+                        <tr>
+                            <th>Approach</th>
+                            <th>Philosophy</th>
+                            <th>Result</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>C++ (escape hatches)</td>
+                            <td>"Here's safe code, but use pointers if you need"</td>
+                            <td>People use pointers → Bugs happen</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Rust</strong> (no escape)</td>
+                            <td>"If it's not safe, you can't write it"</td>
+                            <td>People adapt → Memory safety guaranteed</td>
+                        </tr>
+                        <tr>
+                            <td>ORM with Raw</td>
+                            <td>"Use the builder, or escape to strings"</td>
+                            <td>People use Raw → Injection possible</td>
+                        </tr>
+                        <tr>
+                            <td><strong>QAIL</strong> (pure AST)</td>
+                            <td>"If it's not in the AST, you can't query it"</td>
+                            <td>People adapt → Injection impossible</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>For Those Who Need Raw SQL</h3>
+                <p>If you need raw SQL strings, use <code>sqlx</code> or another driver. QAIL is for those who want
+                    <strong>guarantees</strong>, not flexibility.
+                </p>
+
+                <p style="text-align: center; font-size: 1.25rem; margin-top: 2rem; color: var(--primary);"><em>"QAIL:
+                        Sound by Construction."</em></p>
+            </section>
+
         </div>
     </main>
 
