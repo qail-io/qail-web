@@ -26,14 +26,18 @@ import BaseLayout from '../layouts/BaseLayout.astro';
                         </div>
                     </div>
 
-                    <div class="demo-connectors" style="order: 2; transform: scaleX(-1);">
-                        <svg viewBox="0 0 100 300" preserveAspectRatio="none">
-                            <!-- Top to center -->
-                            <path d="M0 50 C 50 50, 50 150, 100 150" class="connector-line" />
-                            <!-- Middle to center -->
-                            <path d="M0 150 L 100 150" class="connector-line" />
-                            <!-- Bottom to center -->
-                            <path d="M0 250 C 50 250, 50 150, 100 150" class="connector-line" />
+                    <div class="demo-connectors" style="order: 2;">
+                        <svg viewBox="0 0 100 300" style="width: 100%; height: 100%;" preserveAspectRatio="none">
+                            <!-- Source (0, 150) to Targets (100, y) -->
+                            <!-- Card centers: 32, 111, 190, 269 (63px cards, 16px gaps, 300px container) -->
+                            <!-- 1. Postgres (Top) -->
+                            <path d="M 0 150 C 50 150, 50 32, 100 32" class="connector-line" />
+                            <!-- 2. SQLite -->
+                            <path d="M 0 150 C 40 150, 60 111, 100 111" class="connector-line" />
+                            <!-- 3. MongoDB -->
+                            <path d="M 0 150 C 40 150, 60 190, 100 190" class="connector-line" />
+                            <!-- 4. Qdrant (Bottom) -->
+                            <path d="M 0 150 C 50 150, 50 269, 100 269" class="connector-line" />
                         </svg>
                     </div>
 
@@ -44,12 +48,16 @@ import BaseLayout from '../layouts/BaseLayout.astro';
                             <code style="font-size: 0.7rem;">SELECT * FROM users WHERE active = true</code>
                         </div>
                         <div class="demo-source-card">
-                            <span class="demo-label">MongoDB</span>
-                            <code style="font-size: 0.7rem;">{"db.users.find({ active: true })"}</code>
+                            <span class="demo-label">SQLite</span>
+                            <code style="font-size: 0.7rem;">SELECT * FROM "users" WHERE "active" = 1</code>
                         </div>
                         <div class="demo-source-card">
-                            <span class="demo-label">Oracle</span>
-                            <code style="font-size: 0.7rem;">SELECT * FROM users WHERE active = 1</code>
+                            <span class="demo-label">MongoDB</span>
+                            <code style="font-size: 0.7rem;">{"db.users.find({ \"active\": true })"}</code>
+                        </div>
+                        <div class="demo-source-card">
+                            <span class="demo-label">Qdrant</span>
+                            <code style="font-size: 0.7rem;">{"filter: { must: [{ key: \"active\", match: { value: true } }] }"}</code>
                         </div>
                     </div>
                 </div>
@@ -57,13 +65,20 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
             <!-- Why AST-Native? -->
             <div class="ast-comparison"
-                style="margin-top: 2rem; margin-bottom: 2rem; display: flex; flex-direction: column; gap: 1rem; max-width: 700px;">
+                style="margin: 2rem auto; display: flex; flex-direction: column; gap: 1rem; max-width: 700px;">
                 <div
                     style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; background: rgba(239, 68, 68, 0.1); border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.3);">
                     <span style="font-size: 1.2rem;">❌</span>
                     <span style="opacity: 0.6; font-size: 0.8rem;">ORMs:</span>
                     <code
                         style="font-size: 0.7rem; opacity: 0.8;">Text → <s>Parse</s> → AST → <s>SQL String</s> → <s>Parse</s> → Execute</code>
+                </div>
+                <div
+                    style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; background: rgba(234, 179, 8, 0.1); border-radius: 8px; border: 1px solid rgba(234, 179, 8, 0.3);">
+                    <span style="font-size: 1.2rem;">⚠️</span>
+                    <span style="opacity: 0.8; font-size: 0.8rem; color: #eab308;">Raw SQL:</span>
+                    <code style="font-size: 0.7rem; color: #eab308; opacity: 0.9;">String → Parse → Execute</code>
+                    <span style="font-size: 0.7rem; opacity: 0.7; margin-left: auto;">Runtime checks.</span>
                 </div>
                 <div
                     style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; background: rgba(34, 197, 94, 0.1); border-radius: 8px; border: 1px solid rgba(34, 197, 94, 0.3);">
@@ -195,33 +210,19 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <div class="container">
             <h2 class="section-title">Supported Databases</h2>
             <p style="text-align: center; margin-bottom: 2rem; color: var(--text-muted);">
-                One AST. 19 targets. SQL and NoSQL.
+                One AST. Multimodal Targets. SQL and Document.
             </p>
 
-            <h3 style="text-align: center; font-size: 1.1rem; color: var(--text-muted); margin-bottom: 1rem;">SQL
-                Dialects</h3>
+            <h3 style="text-align: center; font-size: 1.1rem; color: var(--text-muted); margin-bottom: 1rem;">SQL-AST (Tier 1)</h3>
             <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; margin-bottom: 2rem;">
                 <div class="db-badge"><img src="/icons/postgresql.svg" alt="PostgreSQL" width="24">PostgreSQL</div>
-                <div class="db-badge"><img src="/icons/mysql.svg" alt="MySQL" width="24">MySQL</div>
                 <div class="db-badge"><img src="/icons/sqlite.svg" alt="SQLite" width="24">SQLite</div>
-                <div class="db-badge"><img src="/icons/sqlserver.svg" alt="SQL Server" width="24"> SQL Server</div>
-                <div class="db-badge"><img src="/icons/oracle.svg" alt="Oracle" width="24"> Oracle</div>
-                <div class="db-badge"><img src="/icons/bigquery.svg" alt="BigQuery" width="24">BigQuery</div>
-                <div class="db-badge"><img src="/icons/snowflake.svg" alt="Snowflake" width="24">Snowflake</div>
-                <div class="db-badge"><img src="/icons/redshift.svg" alt="Redshift" width="24"> Redshift</div>
-                <div class="db-badge"><img src="/icons/duckdb.svg" alt="DuckDB" width="24">DuckDB</div>
-                <div class="db-badge"><img src="/icons/mariadb.svg" alt="MariaDB" width="24">MariaDB</div>
-                <div class="db-badge"><img src="/icons/influxdb.svg" alt="InfluxDB" width="24">InfluxDB</div>
             </div>
 
-            <h3 style="text-align: center; font-size: 1.1rem; color: var(--text-muted); margin-bottom: 1rem;">NoSQL</h3>
+            <h3 style="text-align: center; font-size: 1.1rem; color: var(--text-muted); margin-bottom: 1rem;">Document-AST (Tier 2)</h3>
             <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem;">
                 <div class="db-badge nosql"><img src="/icons/mongodb.svg" alt="MongoDB" width="24">MongoDB</div>
                 <div class="db-badge nosql"><img src="/icons/dynamodb.svg" alt="DynamoDB" width="24"> DynamoDB</div>
-                <div class="db-badge nosql"><img src="/icons/redis.svg" alt="Redis" width="24">Redis</div>
-                <div class="db-badge nosql"><img src="/icons/cassandra.svg" alt="Cassandra" width="24">Cassandra</div>
-                <div class="db-badge nosql"><img src="/icons/elasticsearch.svg" alt="Elasticsearch" width="24">Elasticsearch</div>
-                <div class="db-badge nosql"><img src="/icons/neo4j.svg" alt="Neo4j" width="24">Neo4j</div>
                 <div class="db-badge nosql"><img src="/icons/qdrant.svg" alt="Qdrant" width="24"> Qdrant</div>
             </div>
         </div>

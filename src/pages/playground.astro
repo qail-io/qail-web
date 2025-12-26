@@ -168,10 +168,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     <main class="demo-page">
         <div class="container">
             <header style="text-align: center; margin-bottom: 48px;">
-                <h1 style="font-size: 2.5rem; margin-bottom: 8px;">One Syntax. <span class="highlight">19
+                <h1 style="font-size: 2.5rem; margin-bottom: 8px;">One AST. <span class="highlight">5
                         Databases.</span></h1>
-                <p style="color: var(--text-secondary); font-size: 1.1rem;">Write QAIL once, compile to any database
-                    format instantly.</p>
+                <p style="color: var(--text-secondary); font-size: 1.1rem;">Write QAIL once, compile to any supported
+                    database format instantly.</p>
             </header>
 
             <div class="qail-input-section">
@@ -194,7 +194,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             </div>
 
             <div class="section-divider" style="position: relative;">
-                <span>SQL Dialects (11)</span>
+                <span>SQL-AST (Tier 1)</span>
             </div>
 
             <div class="dialect-grid" id="sqlDialects">
@@ -202,7 +202,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             </div>
 
             <div class="section-divider" style="position: relative;">
-                <span>NoSQL (7)</span>
+                <span>Document-AST (Tier 2)</span>
             </div>
 
             <div class="dialect-grid" id="nosqlDialects">
@@ -219,27 +219,17 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             version,
             to_mongo,
             to_dynamo,
-            to_cassandra,
-            to_redis,
-            to_elastic,
-            to_neo4j,
             to_qdrant
         } from '/qail_wasm.js';
 
         const SQL_DIALECTS = [
             { name: 'PostgreSQL', key: 'postgres', icon: '/icons/postgresql.svg' },
-            { name: 'MySQL', key: 'mysql', icon: '/icons/mysql.svg' },
             { name: 'SQLite', key: 'sqlite', icon: '/icons/sqlite.svg' },
-            { name: 'SQL Server', key: 'sqlserver', icon: '/icons/sqlserver.svg' },
         ];
 
         const NOSQL_DIALECTS = [
             { name: 'MongoDB', key: 'mongo', fn: to_mongo, icon: '/icons/mongodb.svg' },
             { name: 'DynamoDB', key: 'dynamo', fn: to_dynamo, icon: '/icons/dynamodb.svg' },
-            { name: 'Redis', key: 'redis', fn: to_redis, icon: '/icons/redis.svg' },
-            { name: 'Cassandra', key: 'cassandra', fn: to_cassandra, icon: '/icons/cassandra.svg' },
-            { name: 'Elasticsearch', key: 'elastic', fn: to_elastic, icon: '/icons/elasticsearch.svg' },
-            { name: 'Neo4j', key: 'neo4j', fn: to_neo4j, icon: '/icons/neo4j.svg' },
             { name: 'Qdrant', key: 'qdrant', fn: to_qdrant, icon: '/icons/qdrant.svg' },
         ];
 

@@ -16,23 +16,23 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             <!-- Architecture Overview -->
             <section style="margin-bottom: 3rem;">
                 <div
-                    style="background: var(--surface-2); border-radius: 12px; padding: 1.5rem; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; line-height: 1.6;">
-                    <pre style="margin: 0; white-space: pre-wrap;">
+                    style="background: var(--surface-2); border-radius: 12px; padding: 1.5rem; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; line-height: 1.6; display: flex; justify-content: center;">
+                    <pre style="margin: 0; white-space: pre-wrap; text-align: left;">
 ┌─────────────────────────────────────────────────────────────┐
-│  QAIL Layered Architecture                                  │
+│                  QAIL Layered Architecture                  │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
-│  Layer 1: Intent (qail-core)                                │
-│  └── QailCmd AST, Parser, Validator, Builder API            │
+│                 Layer 1: Intent (qail-core)                 │
+│         QailCmd AST, Parser, Validator, Builder API         │
 │                                                             │
-│  Layer 2: Brain (protocol encoders)                         │
-│  └── AST → Wire Protocol Bytes (pure, sync, no I/O)         │
+│             Layer 2: Brain (protocol encoders)              │
+│       AST → Wire Protocol Bytes (pure, sync, no I/O)        │
 │                                                             │
-│  Layer 3: Muscle (drivers)                                  │
-│  └── Async I/O, Connection Pooling (tokio)                  │
+│                   Layer 3: Muscle (drivers)                 │
+│           Async I/O, Connection Pooling (tokio)             │
 │                                                             │
-│  Layer 4: Reality (databases)                               │
-│  └── PostgreSQL, MySQL, SQLite, etc.                        │
+│                 Layer 4: Reality (databases)                │
+│           PostgreSQL, SQLite, MongoDB, DynamoDB             │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
 </pre>
@@ -117,15 +117,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
                         <tbody>
                             <tr>
                                 <td class="feature-name"><img src="/icons/postgresql.svg" width="20"> PostgreSQL</td>
-                                <td class="status-cell"><span class="status-badge partial">50%</span></td>
-                                <td class="status-cell"><span class="status-badge planned">Planned</span></td>
-                                <td class="status-cell"><span class="status-badge planned">Planned</span></td>
-                            </tr>
-                            <tr>
-                                <td class="feature-name"><img src="/icons/mysql.svg" width="20"> MySQL</td>
-                                <td class="status-cell"><span class="status-badge planned">Planned</span></td>
-                                <td class="status-cell"><span class="status-badge planned">Planned</span></td>
-                                <td class="status-cell"><span class="status-badge planned">Planned</span></td>
+                                <td class="status-cell"><span class="status-badge full">100%</span></td>
+                                <td class="status-cell"><span class="status-badge full">100%</span></td>
+                                <td class="status-cell"><span class="status-badge full">100%</span></td>
                             </tr>
                             <tr>
                                 <td class="feature-name"><img src="/icons/sqlite.svg" width="20"> SQLite</td>
@@ -149,29 +143,49 @@ import BaseLayout from '../layouts/BaseLayout.astro';
                         <thead>
                             <tr>
                                 <th>Driver</th>
+                                <th>Language</th>
+                                <th>Status</th>
                                 <th>Connection</th>
-                                <th>Execute</th>
                                 <th>Pooling</th>
-                                <th>TLS</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
-                                <td class="feature-name"><img src="/icons/postgresql.svg" width="20"> qail-pg</td>
-                                <td class="status-cell"><span class="status-badge partial">30%</span></td>
-                                <td class="status-cell"><span class="status-badge planned">Planned</span></td>
-                                <td class="status-cell"><span class="status-badge planned">Planned</span></td>
-                                <td class="status-cell"><span class="status-badge planned">v1.0</span></td>
+                                <td class="feature-name"><img src="/icons/rust.svg" width="20"> qail-pg</td>
+                                <td class="status-cell">Rust</td>
+                                <td class="status-cell"><span class="status-badge full">80%</span></td>
+                                <td class="status-cell"><span class="status-badge full">✓</span></td>
+                                <td class="status-cell"><span class="status-badge full">✓</span></td>
                             </tr>
                             <tr>
-                                <td class="feature-name"><img src="/icons/mysql.svg" width="20"> qail-mysql</td>
-                                <td class="status-cell"><span class="status-badge planned">Planned</span></td>
-                                <td class="status-cell"><span class="status-badge planned">Planned</span></td>
-                                <td class="status-cell"><span class="status-badge planned">Planned</span></td>
-                                <td class="status-cell"><span class="status-badge planned">v1.0</span></td>
+                                <td class="feature-name"><img src="/icons/python.svg" width="20"> qail-py</td>
+                                <td class="status-cell">Python</td>
+                                <td class="status-cell"><span class="status-badge partial">Beta</span></td>
+                                <td class="status-cell"><span class="status-badge full">✓</span></td>
+                                <td class="status-cell"><span class="status-badge partial">🚧</span></td>
+                            </tr>
+                            <tr>
+                                <td class="feature-name">⚡ qail-ffi</td>
+                                <td class="status-cell">C / C++</td>
+                                <td class="status-cell"><span class="status-badge partial">Alpha</span></td>
+                                <td class="status-cell"><span class="status-badge full">✓</span></td>
+                                <td class="status-cell"><span class="status-badge partial">🚧</span></td>
                             </tr>
                         </tbody>
                     </table>
+                </div>
+            </section>
+
+            <!-- Layer 4: Interface -->
+            <section style="margin-top: 60px;">
+                <h2 class="section-title">Layer 4: Interface</h2>
+                <div
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 32px; justify-content: center;">
+                    <div class="feature-card" style="padding: 24px; text-align: center;">
+                        <span style="font-size: 2rem;">💻</span>
+                        <h4 style="margin: 12px 0;">qail_CLI</h4>
+                        <span class="status-badge full">Stable</span>
+                    </div>
                 </div>
             </section>
 
@@ -189,11 +203,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
                         <span class="status-badge full" style="margin-top: 8px;">✓</span>
                     </div>
                     <div class="feature-card" style="padding: 16px; text-align: center;">
-                        <img src="/icons/mysql.svg" width="24" style="margin-bottom: 8px;">
-                        <div style="font-size: 0.85rem;">MySQL</div>
-                        <span class="status-badge full" style="margin-top: 8px;">✓</span>
-                    </div>
-                    <div class="feature-card" style="padding: 16px; text-align: center;">
                         <img src="/icons/sqlite.svg" width="24" style="margin-bottom: 8px;">
                         <div style="font-size: 0.85rem;">SQLite</div>
                         <span class="status-badge full" style="margin-top: 8px;">✓</span>
@@ -204,18 +213,18 @@ import BaseLayout from '../layouts/BaseLayout.astro';
                         <span class="status-badge full" style="margin-top: 8px;">✓</span>
                     </div>
                     <div class="feature-card" style="padding: 16px; text-align: center;">
-                        <img src="/icons/redis.svg" width="24" style="margin-bottom: 8px;">
-                        <div style="font-size: 0.85rem;">Redis</div>
+                        <img src="/icons/dynamodb.svg" width="24" style="margin-bottom: 8px;">
+                        <div style="font-size: 0.85rem;">DynamoDB</div>
                         <span class="status-badge full" style="margin-top: 8px;">✓</span>
                     </div>
                     <div class="feature-card" style="padding: 16px; text-align: center;">
-                        <img src="/icons/neo4j.svg" width="24" style="margin-bottom: 8px;">
-                        <div style="font-size: 0.85rem;">Neo4j</div>
+                        <img src="/icons/qdrant.svg" width="24" style="margin-bottom: 8px;">
+                        <div style="font-size: 0.85rem;">Qdrant</div>
                         <span class="status-badge full" style="margin-top: 8px;">✓</span>
                     </div>
                 </div>
                 <p style="text-align: center; color: var(--text-muted); margin-top: 1.5rem; font-size: 0.85rem;">
-                    + Oracle, SQL Server, BigQuery, Snowflake, Redshift, DuckDB, MariaDB, Cassandra, DynamoDB, Elasticsearch, Qdrant
+                    Note: Only databases with open protocols are fully supported
                 </p>
             </section>
 

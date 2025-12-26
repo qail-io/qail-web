@@ -213,7 +213,7 @@ body {
     z-index: 1;
 }
 
-.ast-comparison > div {
+.ast-comparison>div {
     flex-wrap: wrap;
 }
 
@@ -307,18 +307,25 @@ body {
 .demo-sources {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    /* gap: 16px; Removed gap, letting space-between handle it for perfect 300px fit */
+    height: 300px;
+    justify-content: space-between;
 }
 
 .demo-source-card {
     background: var(--bg-card);
     border-radius: var(--border-radius);
-    padding: 16px 20px;
+    padding: 0 20px;
+    /* Reduced vertical padding, used flex for centering */
     border: 1px solid rgba(255, 255, 255, 0.1);
     text-align: left;
     min-width: 320px;
     position: relative;
     opacity: 0.8;
+    height: 63px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 /* Connectors */
@@ -329,6 +336,7 @@ body {
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    /* transform: scaleX(-1); Removed flip for simpler coordinates */
 }
 
 .connector-line {
@@ -1154,6 +1162,7 @@ body {
     background: rgba(34, 197, 94, 0.2);
     color: var(--accent-green);
 }
+
 /* Status Page Matrix */
 .status-matrix {
     width: 100%;
@@ -1165,7 +1174,8 @@ body {
     background: var(--bg-card);
     border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: var(--border-radius);
-    padding: 1px; /* Border fix */
+    padding: 1px;
+    /* Border fix */
 }
 
 .status-matrix th,
@@ -1195,7 +1205,8 @@ body {
 }
 
 .status-matrix th:first-child {
-    background: rgba(18, 18, 26, 0.95); /* Match bg-card with opacity */
+    background: rgba(18, 18, 26, 0.95);
+    /* Match bg-card with opacity */
 }
 
 .feature-name {
@@ -1231,13 +1242,15 @@ body {
 }
 
 .status-badge.partial {
-    background: rgba(234, 179, 8, 0.1); /* Yellow-500 */
+    background: rgba(234, 179, 8, 0.1);
+    /* Yellow-500 */
     color: #facc15;
     border-color: rgba(234, 179, 8, 0.2);
 }
 
 .status-badge.experimental {
-    background: rgba(239, 68, 68, 0.1); /* Red-500 */
+    background: rgba(239, 68, 68, 0.1);
+    /* Red-500 */
     color: #f87171;
     border-color: rgba(239, 68, 68, 0.2);
 }
@@ -1257,13 +1270,27 @@ body {
     margin-right: 0px;
 }
 
-.status-dot.full { background: var(--accent-green); box-shadow: 0 0 10px rgba(34, 197, 94, 0.4); }
-.status-dot.partial { background: #facc15; box-shadow: 0 0 10px rgba(250, 204, 21, 0.4); }
-.status-dot.experimental { background: #f87171; box-shadow: 0 0 10px rgba(248, 113, 113, 0.4); }
-.status-dot.planned { background: var(--text-secondary); opacity: 0.5; }
+.status-dot.full {
+    background: var(--accent-green);
+    box-shadow: 0 0 10px rgba(34, 197, 94, 0.4);
+}
+
+.status-dot.partial {
+    background: #facc15;
+    box-shadow: 0 0 10px rgba(250, 204, 21, 0.4);
+}
+
+.status-dot.experimental {
+    background: #f87171;
+    box-shadow: 0 0 10px rgba(248, 113, 113, 0.4);
+}
+
+.status-dot.planned {
+    background: var(--text-secondary);
+    opacity: 0.5;
+}
 
 .status-legend {
     font-size: 0.9rem;
     color: var(--text-secondary);
 }
-
