@@ -1,0 +1,204 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="December 23, 2025 Benchmark | QAIL" description="172x pipelining speedup! QAIL beats C libpq by 4% and Go pgx by 12%.">
+    <style>
+        .big-number {
+            font-size: 6rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #22c55e, #06b6d4);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1;
+            margin: 1.5rem 0;
+        }
+
+        .benchmark-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            border: 1px solid rgba(139, 92, 246, 0.4);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .benchmark-table th,
+        .benchmark-table td {
+            padding: 1rem;
+            text-align: right;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+
+        .benchmark-table th {
+            background: var(--surface-2);
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .benchmark-table td:first-child {
+            text-align: left;
+            color: var(--text);
+        }
+
+        .benchmark-table .winner {
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        .speedup-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--accent), var(--secondary));
+            color: var(--bg);
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-weight: bold;
+            font-size: 0.875rem;
+        }
+
+        .highlight-card {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            text-align: center;
+        }
+
+        .highlight-card h3 {
+            color: #fff;
+            margin: 0 0 1rem;
+        }
+
+        .highlight-card .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            color: #e2e8f0;
+        }
+
+        .stats-item {
+            font-size: 1.25rem;
+        }
+
+        .stats-label {
+            font-size: 0.875rem;
+            opacity: 0.8;
+        }
+    </style>
+
+    <header class="page-header" style="text-align: center;">
+        <div class="container">
+            <p style="color: var(--text-muted); margin-bottom: 0.5rem;">December 23, 2025</p>
+            <h1>172x Pipelining Speedup</h1>
+            <p class="subtitle">Query pipelining delivers massive performance gains.</p>
+
+            <div class="big-number">172x</div>
+            <p style="color: var(--text-muted); font-size: 1.25rem;">speedup over sequential execution</p>
+        </div>
+    </header>
+
+    <main class="page-content">
+        <div class="container">
+
+            <!-- Summary -->
+            <section style="margin-bottom: 3rem;">
+                <div class="highlight-card">
+                    <h3><img src="/icons/rust.svg" alt="Rust" width="20" height="20" style="vertical-align: middle; margin-right: 8px;"> QAIL's Position vs Industry Leaders</h3>
+                    <div class="stats">
+                        <div>
+                            <div class="stats-item">+4%</div>
+                            <div class="stats-label">vs C libpq</div>
+                        </div>
+                        <div>
+                            <div class="stats-item">+12%</div>
+                            <div class="stats-label">vs Go pgx</div>
+                        </div>
+                        <div>
+                            <div class="stats-item">16x</div>
+                            <div class="stats-label">vs Python asyncpg</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Results Table -->
+            <section style="margin-bottom: 3rem;">
+                <h2 style="color: var(--primary); font-size: 1.75rem; margin-bottom: 1.5rem; text-align: center;">
+                    📊 50M Query Benchmark Results
+                </h2>
+
+                <table class="benchmark-table">
+                    <thead>
+                        <tr>
+                            <th>Driver</th>
+                            <th>Language</th>
+                            <th>Queries/Second</th>
+                            <th>vs QAIL</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>qail-pg</strong></td>
+                            <td style="text-align: left;"><img src="/icons/rust.svg" alt="Rust" width="16" height="16" style="vertical-align: middle; margin-right: 4px;"> Rust</td>
+                            <td class="winner">353,000 🏆</td>
+                            <td>—</td>
+                        </tr>
+                        <tr>
+                            <td><strong>libpq</strong></td>
+                            <td style="text-align: left;">🇨 C</td>
+                            <td>339,000</td>
+                            <td>-4%</td>
+                        </tr>
+                        <tr>
+                            <td><strong>pgx</strong></td>
+                            <td style="text-align: left;">🐹 Go</td>
+                            <td>303,000</td>
+                            <td>-12%</td>
+                        </tr>
+                        <tr>
+                            <td><strong>asyncpg</strong></td>
+                            <td style="text-align: left;"><img src="/icons/python.svg" alt="Python" width="16" height="16" style="vertical-align: middle; margin-right: 4px;"> Python</td>
+                            <td>~21,000</td>
+                            <td>-16x</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Connection Pooling Results -->
+            <section style="margin-bottom: 3rem;">
+                <h2 style="color: var(--primary); font-size: 1.75rem; margin-bottom: 1.5rem; text-align: center;">
+                    🚀 Connection Pooling Performance
+                </h2>
+                <p style="text-align: center; color: var(--text-muted); margin-bottom: 2rem;">
+                    Multiple connections with pipelining delivers massive throughput.
+                </p>
+
+                <div class="highlight-card" style="background: linear-gradient(135deg, #2d5a40 0%, #1e3a2f 100%);">
+                    <h3 style="font-size: 3rem; margin-bottom: 0;">1.25M q/s</h3>
+                    <p style="color: #e2e8f0; margin: 0.5rem 0 0 0; font-size: 1.1rem;">
+                        With connection pooling (10 connections × pipelining)
+                    </p>
+                </div>
+            </section>
+
+            <!-- CTA -->
+            <section style="text-align: center; padding: 3rem 0;">
+                <a href="https://github.com/qail-rs/qail" target="_blank" class="btn btn-primary"
+                    style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                    <svg height="20" width="20" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+                    </svg>
+                    View on GitHub
+                </a>
+
+                <p style="margin-top: 2rem;">
+                    <a href="/benchmarks" style="color: var(--primary);">← Back to all benchmarks</a>
+                </p>
+            </section>
+
+        </div>
+    </main>
+</BaseLayout>
