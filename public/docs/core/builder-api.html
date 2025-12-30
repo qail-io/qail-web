@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "coal";
             const default_dark_theme = "coal";
-            window.path_to_searchindex_js = "../searchindex-e3083e64.js";
+            window.path_to_searchindex_js = "../searchindex-d95e44b2.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-07f5cd42.js"></script>
@@ -190,19 +190,19 @@
 <tr><th>Method</th><th>SQL Equivalent</th></tr>
 </thead>
 <tbody>
-<tr><td><code>QailCmd::get()</code></td><td>SELECT</td></tr>
-<tr><td><code>QailCmd::add()</code></td><td>INSERT</td></tr>
-<tr><td><code>QailCmd::set()</code></td><td>UPDATE</td></tr>
-<tr><td><code>QailCmd::del()</code></td><td>DELETE</td></tr>
+<tr><td><code>Qail::get()</code></td><td>SELECT</td></tr>
+<tr><td><code>Qail::add()</code></td><td>INSERT</td></tr>
+<tr><td><code>Qail::set()</code></td><td>UPDATE</td></tr>
+<tr><td><code>Qail::del()</code></td><td>DELETE</td></tr>
 </tbody>
 </table>
 </div>
 <h2 id="select-queries"><a class="header" href="#select-queries">SELECT Queries</a></h2>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>use qail_core::ast::{QailCmd, Operator, SortOrder};
+</span>use qail_core::{Qail, Operator, SortOrder};
 
-let cmd = QailCmd::get("users")
+let cmd = Qail::get("users")
     .columns(["id", "email", "name"])
     .filter("active", Operator::Eq, true)
     .order_by("created_at", SortOrder::Desc)
@@ -212,7 +212,7 @@ let cmd = QailCmd::get("users")
 <h2 id="insert-queries"><a class="header" href="#insert-queries">INSERT Queries</a></h2>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>let cmd = QailCmd::add("users")
+</span>let cmd = Qail::add("users")
     .columns(["email", "name"])
     .values(["alice@example.com", "Alice"])
     .returning(["id", "created_at"]);
@@ -220,7 +220,7 @@ let cmd = QailCmd::get("users")
 <h2 id="update-queries"><a class="header" href="#update-queries">UPDATE Queries</a></h2>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>let cmd = QailCmd::set("users")
+</span>let cmd = Qail::set("users")
     .set_value("status", "active")
     .set_value("verified_at", "now()")
     .where_eq("id", 42);
@@ -228,7 +228,7 @@ let cmd = QailCmd::get("users")
 <h2 id="delete-queries"><a class="header" href="#delete-queries">DELETE Queries</a></h2>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>let cmd = QailCmd::del("users")
+</span>let cmd = Qail::del("users")
     .where_eq("id", 42);
 <span class="boring">}</span></code></pre>
 <h2 id="builder-methods"><a class="header" href="#builder-methods">Builder Methods</a></h2>

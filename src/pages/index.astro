@@ -553,6 +553,101 @@ import BaseLayout from "../layouts/BaseLayout.astro";
             </p>
         </div>
     </section>
+
+    <!-- Migration Safety -->
+    <section id="safety" style="padding: 4rem 0; background: var(--surface-2);">
+        <div class="container">
+            <h2 class="section-title">🛡️ The "Wait, Stop!" Feature</h2>
+            <p
+                style="text-align: center; margin-bottom: 2rem; color: var(--text-muted); max-width: 600px; margin-left: auto; margin-right: auto;"
+            >
+                The only migration tool that <strong>reads your code</strong> before
+                it touches your data.
+            </p>
+
+            <div
+                style="max-width: 700px; margin: 0 auto; background: #0d1117; border-radius: 12px; overflow: hidden; border: 1px solid #30363d;"
+            >
+                <div
+                    style="background: #161b22; padding: 0.75rem 1rem; border-bottom: 1px solid #30363d; display: flex; align-items: center; gap: 0.5rem;"
+                >
+                    <span
+                        style="width: 12px; height: 12px; background: #ff5f56; border-radius: 50%;"
+                    ></span>
+                    <span
+                        style="width: 12px; height: 12px; background: #ffbd2e; border-radius: 50%;"
+                    ></span>
+                    <span
+                        style="width: 12px; height: 12px; background: #27c93f; border-radius: 50%;"
+                    ></span>
+                    <span
+                        style="color: #8b949e; font-size: 0.8rem; margin-left: 0.5rem;"
+                        >Terminal</span
+                    >
+                </div>
+                <pre
+                    style="margin: 0; padding: 1.5rem; font-family: 'SF Mono', Monaco, monospace; font-size: 0.85rem; line-height: 1.6; overflow-x: auto;"><code style="color: #c9d1d9;"><span style="color: #8b949e;">$</span> qail migrate up schema.qail <span style="color: #8b949e;">--codebase ./src</span>
+
+<span style="color: #f85149;">🛑 BLOCKED: Safety Check Failed</span>
+
+<span style="color: #8b949e;">You are dropping column</span> <span style="color: #ffa657;">'status'</span><span style="color: #8b949e;">, but it is still used in:</span>
+
+   <span style="color: #58a6ff;">📄 src/queries.ts:25</span>  → <span style="color: #7ee787;">get portfolio fields status</span>
+   <span style="color: #58a6ff;">📄 src/api.rs:102</span>     → <span style="color: #7ee787;">QailCmd::get("portfolio").filter("status"...)</span>
+
+<span style="color: #8b949e;">Fix your code first, or use</span> <span style="color: #ffa657;">--force</span> <span style="color: #8b949e;">to proceed.</span></code></pre>
+            </div>
+
+            <div
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-top: 2rem; max-width: 800px; margin-left: auto; margin-right: auto;"
+            >
+                <div
+                    style="padding: 1.5rem; background: var(--surface-1); border-radius: 12px; text-align: center;"
+                >
+                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">
+                        🔍
+                    </div>
+                    <h4 style="margin: 0 0 0.5rem;">Scans Before Running</h4>
+                    <p
+                        style="margin: 0; color: var(--text-muted); font-size: 0.9rem;"
+                    >
+                        Searches .rs, .ts, .js, .py for queries that reference
+                        changing columns
+                    </p>
+                </div>
+                <div
+                    style="padding: 1.5rem; background: var(--surface-1); border-radius: 12px; text-align: center;"
+                >
+                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">
+                        📍
+                    </div>
+                    <h4 style="margin: 0 0 0.5rem;">Points to Line Numbers</h4>
+                    <p
+                        style="margin: 0; color: var(--text-muted); font-size: 0.9rem;"
+                    >
+                        Shows exactly where your code needs updating before
+                        migration
+                    </p>
+                </div>
+                <div
+                    style="padding: 1.5rem; background: var(--surface-1); border-radius: 12px; text-align: center;"
+                >
+                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">
+                        🎯
+                    </div>
+                    <h4 style="margin: 0 0 0.5rem;">You're the Boss</h4>
+                    <p
+                        style="margin: 0; color: var(--text-muted); font-size: 0.9rem;"
+                    >
+                        Use <code
+                            style="background: rgba(255,255,255,0.1); padding: 0.1rem 0.4rem; border-radius: 4px;"
+                            >--force</code
+                        > to override when you know better
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
 </BaseLayout>
 
 <!-- Platforms -->

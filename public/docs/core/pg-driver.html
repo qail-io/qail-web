@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "coal";
             const default_dark_theme = "coal";
-            window.path_to_searchindex_js = "../searchindex-e3083e64.js";
+            window.path_to_searchindex_js = "../searchindex-d95e44b2.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-07f5cd42.js"></script>
@@ -233,7 +233,7 @@ let conn = PgConnection::connect_mtls("localhost", 5432, "user", "db", config).a
 <h2 id="ast-native-queries"><a class="header" href="#ast-native-queries">AST-Native Queries</a></h2>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>let cmd = QailCmd::get("users").select_all().limit(10);
+</span>let cmd = Qail::get("users").select_all().limit(10);
 
 // Fetch all rows
 let rows = driver.fetch_all(&amp;cmd).await?;
@@ -293,7 +293,7 @@ let config = PoolConfig::new("localhost", 5432, "user", "db")
 </span><span class="boring">fn main() {
 </span>use qail_core::ast::Value;
 
-let cmd = QailCmd::add("users").columns(&amp;["name", "email"]);
+let cmd = Qail::add("users").columns(&amp;["name", "email"]);
 
 let rows = vec![
     vec![Value::Text("Alice".into()), Value::Text("a@x.com".into())],
@@ -308,7 +308,7 @@ let count = driver.copy_bulk(&amp;cmd, &amp;rows).await?;
 <p>Stream large result sets in batches:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>let cmd = QailCmd::get("logs").select_all();
+</span>let cmd = Qail::get("logs").select_all();
 
 let batches = driver.stream_cmd(&amp;cmd, 1000).await?;
 for batch in batches {
