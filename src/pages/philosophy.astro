@@ -1,5 +1,23 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import ComparisonGrid from "../components/ComparisonGrid.astro";
+
+const qailExample = `Qail::get("users")
+  .columns(["id", "email"])
+  .filter("active", Eq, true)
+  .limit(10)`;
+
+const sqlExample = `SELECT id, email
+FROM users
+WHERE active = true
+LIMIT 10`;
+
+const ormCode = `user.posts().comments().author()
+// 3+ hidden queries?`;
+
+const qailCode = `Qail::get("posts")
+  .left_join("comments", "post_id", "id")
+  .left_join("users", "author_id", "id")`;
 ---
 
 <BaseLayout
@@ -82,7 +100,8 @@ import BaseLayout from "../layouts/BaseLayout.astro";
                 <h2>The Realization: "SQL is Assembly"</h2>
                 <p>
                     We realized something profound: <strong
-                        >SQL is not source code. SQL is Assembly.</strong>
+                        >SQL is not source code. SQL is Assembly.</strong
+                    >
                 </p>
                 <p>
                     SQL is verbose, powerful, and dangerous. It is the low-level
@@ -119,22 +138,14 @@ import BaseLayout from "../layouts/BaseLayout.astro";
                     structure that works the same way in Rust, Go, Node, and PHP.
                 </p>
 
-                <div class="comparison-grid">
-                    <div class="code-block qail">
-                        <small>Build This (Rust)</small>
-                        <code
-                            >Qail::get("users") .columns(["id", "email"])
-                            .filter("active", Eq, true) .limit(10)</code
-                        >
-                    </div>
-                    <div class="code-block sql">
-                        <small>Encodes To (Wire Protocol)</small>
-                        <code
-                            >SELECT id, email FROM users WHERE active = true
-                            LIMIT 10</code
-                        >
-                    </div>
-                </div>
+                <ComparisonGrid
+                    leftTitle="Build This (Rust)"
+                    leftCode={qailExample}
+                    leftVariant="qail"
+                    rightTitle="Encodes To (Wire Protocol)"
+                    rightCode={sqlExample}
+                    rightVariant="sql"
+                />
 
                 <p>
                     Now, your team builds with <strong>one AST</strong>. The
@@ -322,6 +333,222 @@ import BaseLayout from "../layouts/BaseLayout.astro";
                     <em>"QAIL: Sound by Construction."</em>
                 </p>
             </section>
+
+            <section>
+                <h2>🚫 Why QAIL is NOT an ORM</h2>
+                <p>
+                    QAIL intentionally does <strong>not</strong> provide type codegen
+                    or ORM patterns like relations and lazy loading. This is not a
+                    limitation—it's a <strong
+                        >deliberate architectural choice</strong
+                    >.
+                </p>
+
+                <h3>What QAIL Is</h3>
+                <table style="width: 100%; margin: 1rem 0;">
+                    <thead>
+                        <tr>
+                            <th>ORMs (Prisma, Diesel, SeaORM)</th>
+                            <th>QAIL</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Object-Relational Mapper</td>
+                            <td
+                                ><strong>Query Language & Wire Protocol</strong
+                                ></td
+                            >
+                        </tr>
+                        <tr>
+                            <td>Hide SQL behind objects</td>
+                            <td
+                                ><strong>Make queries portable & safe</strong
+                                ></td
+                            >
+                        </tr>
+                        <tr>
+                            <td>Generate structs from schema</td>
+                            <td><strong>You define your own structs</strong></td
+                            >
+                        </tr>
+                        <tr>
+                            <td>"Don't think about SQL"</td>
+                            <td
+                                ><strong>"Think in queries, not strings"</strong
+                                ></td
+                            >
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Why No Type Codegen?</h3>
+                <ul>
+                    <li>
+                        <strong>You already have structs</strong> — You define them
+                        in your code, not generate them from a schema. This keeps
+                        you in control.
+                    </li>
+                    <li>
+                        <strong>Codegen creates coupling</strong> — Schema change
+                        = regenerate = rebuild everything. QAIL queries work with
+                        any struct you provide.
+                    </li>
+                    <li>
+                        <strong>Flexibility</strong> — Same query, different structs
+                        for different use cases (API response vs internal model).
+                    </li>
+                </ul>
+
+                <h3>Why No Relations or Lazy Loading?</h3>
+                <ul>
+                    <li>
+                        <strong>N+1 is an anti-pattern</strong> — Lazy loading hides
+                        performance problems. Explicit JOINs make queries predictable.
+                    </li>
+                    <li>
+                        <strong>Wire protocol focus</strong> — QAIL sends bytes to
+                        the database, not object graphs. Relations are application
+                        logic.
+                    </li>
+                    <li>
+                        <strong>Explicit is better</strong> — CTEs + JOINs are clearer
+                        than magic <code>.include()</code> methods.
+                    </li>
+                </ul>
+
+                <ComparisonGrid
+                    leftTitle="ORM Way (Hidden Queries)"
+                    leftCode={ormCode}
+                    leftVariant="qail"
+                    rightTitle="QAIL Way (Explicit)"
+                    rightCode={qailCode}
+                    rightVariant="sql"
+                />
+
+                <h3>What QAIL Focuses On</h3>
+                <ul>
+                    <li>
+                        ✅ <strong>Best-in-class query syntax</strong> — 3-5x shorter
+                        than SQL
+                    </li>
+                    <li>
+                        ✅ <strong>Direct wire protocol encoding</strong> — No string
+                        layer
+                    </li>
+                    <li>
+                        ✅ <strong
+                            >Migration tooling with impact analysis</strong
+                        > — Unique to QAIL
+                    </li>
+                    <li>
+                        ✅ <strong>Multi-database AST portability</strong> — Write
+                        once, run anywhere
+                    </li>
+                </ul>
+
+                <blockquote
+                    style="border-left: 4px solid var(--accent-purple); padding-left: 1rem; margin: 1.5rem 0; font-style: italic; background: rgba(168, 85, 247, 0.05);"
+                >
+                    "QAIL is the query transport layer, not an ORM. If you need
+                    relations and codegen, use Prisma or Diesel. If you want the
+                    fastest, safest way to talk to your database, use QAIL."
+                </blockquote>
+            </section>
         </div>
     </main>
 </BaseLayout>
+
+<style>
+    /* Table Styling */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1.5rem 0;
+        font-size: 0.9em;
+        border: 1px solid var(--surface-3);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    th,
+    td {
+        padding: 0.75rem 1rem;
+        text-align: left;
+        border: 1px solid var(--surface-3);
+    }
+
+    th {
+        background-color: var(--surface-2);
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    tr:nth-child(even) {
+        background-color: rgba(255, 255, 255, 0.02);
+    }
+
+    /* Code Block Styling */
+    .code-block {
+        background: var(--surface-2);
+        border-radius: 8px;
+        padding: 1rem;
+        border: 1px solid var(--surface-3);
+    }
+
+    .code-block code {
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        display: block;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.85rem;
+        line-height: 1.5;
+    }
+
+    .code-block.qail {
+        border-left: 3px solid var(--accent);
+    }
+
+    .code-block.sql {
+        border-left: 3px solid #3b82f6;
+        background: rgba(59, 130, 246, 0.05);
+    }
+
+    .code-block small {
+        display: block;
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+        font-size: 0.75rem;
+    }
+
+    /* Comparison Grid */
+    .comparison-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin: 1.5rem 0;
+    }
+
+    @media (max-width: 768px) {
+        .comparison-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Prose Styling */
+    .prose ul {
+        padding-left: 1.5rem;
+    }
+
+    .prose li {
+        margin: 0.5rem 0;
+    }
+
+    .prose code {
+        background: var(--surface-3);
+        padding: 0.15rem 0.4rem;
+        border-radius: 4px;
+        font-size: 0.85em;
+        font-family: "JetBrains Mono", monospace;
+    }
+</style>

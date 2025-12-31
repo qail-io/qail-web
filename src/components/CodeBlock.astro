@@ -1,0 +1,160 @@
+---
+/**
+ * CodeBlock Component
+ *
+ * A reusable code block component with proper formatting and copy button.
+ *
+ * Usage:
+ * <CodeBlock title="Example" variant="qail">
+ *   Qail::get("users")
+ *     .columns(["id", "email"])
+ * </CodeBlock>
+ */
+
+interface Props {
+    title?: string;
+    variant?: "default" | "qail" | "sql";
+    code: string;
+}
+
+const { title, variant = "default", code } = Astro.props;
+---
+
+<div class={`code-block ${variant}`}>
+    <div class="code-header">
+        {title && <small>{title}</small>}
+        <button class="copy-btn" data-code={code} title="Copy to clipboard">
+            <svg
+                class="copy-icon"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+            >
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path
+                    d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+                ></path>
+            </svg>
+            <svg
+                class="check-icon"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                style="display: none;"
+            >
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+        </button>
+    </div>
+    <pre><code>{code}</code></pre>
+</div>
+
+<style>
+    .code-block {
+        background: #0d1117;
+        border-radius: 8px;
+        padding: 1rem;
+        border: 1px solid #30363d;
+        margin: 0.5rem 0;
+        position: relative;
+    }
+
+    .code-block.qail {
+        border-left: 3px solid var(--accent);
+        background: #0d1117;
+    }
+
+    .code-block.sql {
+        border-left: 3px solid #3b82f6;
+        background: #0c1929;
+    }
+
+    .code-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .code-block small {
+        color: var(--text-muted);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .copy-btn {
+        background: transparent;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+
+    .copy-btn:hover {
+        color: var(--text-primary);
+        background: var(--surface-3);
+    }
+
+    .copy-btn.copied {
+        color: #22c55e;
+    }
+
+    .code-block pre {
+        margin: 0;
+        padding: 0;
+        background: transparent;
+        overflow-x: auto;
+    }
+
+    .code-block code {
+        font-family: "JetBrains Mono", "Fira Code", monospace;
+        font-size: 0.85rem;
+        line-height: 1.6;
+        color: var(--text-primary);
+        white-space: pre;
+        display: block;
+    }
+</style>
+
+<script>
+    document.querySelectorAll(".copy-btn").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+            const code = btn.getAttribute("data-code");
+            const copyIcon = btn.querySelector(
+                ".copy-icon",
+            ) as HTMLElement | null;
+            const checkIcon = btn.querySelector(
+                ".check-icon",
+            ) as HTMLElement | null;
+
+            if (!copyIcon || !checkIcon) return;
+
+            try {
+                await navigator.clipboard.writeText(code || "");
+                btn.classList.add("copied");
+                copyIcon.style.display = "none";
+                checkIcon.style.display = "block";
+
+                setTimeout(() => {
+                    btn.classList.remove("copied");
+                    copyIcon.style.display = "block";
+                    checkIcon.style.display = "none";
+                }, 2000);
+            } catch (err) {
+                console.error("Failed to copy:", err);
+            }
+        });
+    });
+</script>

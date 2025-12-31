@@ -1,0 +1,375 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+    title="Changelog | QAIL"
+    description="Release history and changes for QAIL - the AST-native query builder."
+>
+    <header class="page-header">
+        <div class="container">
+            <h1>Changelog</h1>
+            <p class="subtitle">Release History</p>
+        </div>
+    </header>
+
+    <main class="page-content">
+        <div class="container" style="max-width: 900px;">
+            <!-- v0.14.4 -->
+            <section class="release-section">
+                <div class="release-header">
+                    <h2>v0.14.4</h2>
+                    <span class="release-date">December 31, 2025</span>
+                    <span class="status-badge full">Latest</span>
+                </div>
+
+                <div class="release-highlight">
+                    <span style="font-size: 1.5rem;">🏎️</span>
+                    <strong>27% Faster Than SQLx</strong> - Zero-alloc + LRU Cache
+                </div>
+
+                <h4>Performance (Zero-Alloc Encoding)</h4>
+                <ul class="changelog-list">
+                    <li>
+                        Reusable <code>sql_buf</code> and <code>params_buf</code
+                        > on PgConnection
+                    </li>
+                    <li>
+                        <code>fetch_all()</code> now uses prepared statement caching
+                        by default
+                    </li>
+                    <li>
+                        LIMIT/OFFSET use parameterized values ($N) -
+                        dramatically improves cache hits
+                    </li>
+                </ul>
+
+                <h4>Enterprise Memory Management (LRU Cache)</h4>
+                <ul class="changelog-list">
+                    <li>
+                        Bounded LRU cache for prepared statements (default:
+                        1000)
+                    </li>
+                    <li>
+                        Auto-evicts least recently used statements when full
+                    </li>
+                    <li>
+                        New <code>clear_cache()</code> and <code
+                            >cache_stats()</code
+                        > methods
+                    </li>
+                </ul>
+
+                <h4>Benchmark Results (50K iterations)</h4>
+                <ul class="changelog-list">
+                    <li>
+                        <strong>qail-pg (cached):</strong> 4,534 q/s (221μs)
+                    </li>
+                    <li><strong>SeaORM:</strong> 4,032 q/s - 12% slower</li>
+                    <li><strong>SQLx:</strong> 3,573 q/s - 27% slower</li>
+                </ul>
+            </section>
+
+            <!-- v0.14.3 -->
+            <section class="release-section">
+                <div class="release-header">
+                    <h2>v0.14.3</h2>
+                    <span class="release-date">December 31, 2025</span>
+                </div>
+
+                <h4>Added</h4>
+                <ul class="changelog-list">
+                    <li>
+                        <code>qail migrate create</code> now generates timestamped
+                        <code>.up.qail</code> and <code>.down.qail</code> file pairs
+                    </li>
+                    <li>
+                        Format: <code>YYYYMMDDHHMMSS_name.up.qail</code> /
+                        <code>YYYYMMDDHHMMSS_name.down.qail</code>
+                    </li>
+                    <li>
+                        Inline metadata: <code>@name</code>, <code
+                            >@created</code
+                        >,
+                        <code>@author</code>, <code>@depends</code>
+                    </li>
+                    <li>
+                        Example: <code
+                            >qail migrate create add_users --author "orion"</code
+                        >
+                    </li>
+                </ul>
+            </section>
+
+            <!-- v0.14.2 -->
+            <section class="release-section">
+                <div class="release-header">
+                    <h2>v0.14.2</h2>
+                    <span class="release-date">December 31, 2025</span>
+                </div>
+
+                <div class="release-highlight">
+                    <span style="font-size: 1.5rem;">🎉</span>
+                    <strong>100% PostgreSQL Coverage</strong> - Expressions, DML,
+                    and DDL
+                </div>
+
+                <h4>Wire Protocol Encoders (AST-Native)</h4>
+                <ul class="changelog-list">
+                    <li><code>DISTINCT ON (col1, col2, ...)</code> queries</li>
+                    <li>
+                        <code>COUNT(*) FILTER (WHERE ...)</code> aggregate syntax
+                    </li>
+                    <li>
+                        Window <code>FRAME</code> clause (<code
+                            >ROWS/RANGE BETWEEN ... AND ...</code
+                        >)
+                    </li>
+                    <li>
+                        <code>GROUP BY</code> with <code>ROLLUP</code>, <code
+                            >CUBE</code
+                        >, and <code>GROUPING SETS</code>
+                    </li>
+                    <li>
+                        <code>CREATE VIEW</code> and <code>DROP VIEW</code> DDL
+                    </li>
+                    <li>
+                        Comprehensive tests: <code>complex_test.rs</code>, <code
+                            >expr_test.rs</code
+                        >
+                    </li>
+                </ul>
+
+                <h4>Expression System (100% Grammar Coverage)</h4>
+                <ul class="changelog-list">
+                    <li>
+                        <code>Expr::ArrayConstructor</code> - <code
+                            >ARRAY[col1, col2, ...]</code
+                        >
+                    </li>
+                    <li>
+                        <code>Expr::RowConstructor</code> - <code
+                            >ROW(a, b, c)</code
+                        >
+                    </li>
+                    <li>
+                        <code>Expr::Subscript</code> - Array/string subscripting <code
+                            >arr[1]</code
+                        >
+                    </li>
+                    <li>
+                        <code>Expr::Collate</code> - Collation expressions <code
+                            >col COLLATE "C"</code
+                        >
+                    </li>
+                    <li>
+                        <code>Expr::FieldAccess</code> - Composite field selection
+                        <code>(row).field</code>
+                    </li>
+                    <li>
+                        <code>GroupByMode::GroupingSets</code> - <code
+                            >GROUPING SETS ((a, b), (c))</code
+                        >
+                    </li>
+                    <li>
+                        <code>Action::CreateView</code> and <code
+                            >Action::DropView</code
+                        >
+                    </li>
+                </ul>
+
+                <h4>CLI Improvements</h4>
+                <ul class="changelog-list">
+                    <li>
+                        <code>qail diff --pretty</code> displays <code
+                            >MigrationClass</code
+                        > (reversible/data-losing/irreversible)
+                    </li>
+                </ul>
+
+                <h4>Changed</h4>
+                <ul class="changelog-list">
+                    <li>
+                        <code>Expr::Window.params</code> from <code
+                            >Vec&lt;Value&gt;</code
+                        > to <code>Vec&lt;Expr&gt;</code> for native AST philosophy
+                    </li>
+                </ul>
+            </section>
+
+            <!-- v0.14.1 -->
+            <section class="release-section">
+                <div class="release-header">
+                    <h2>v0.14.1</h2>
+                    <span class="release-date">December 30, 2025</span>
+                </div>
+
+                <h4>Fixed</h4>
+                <ul class="changelog-list">
+                    <li>
+                        Critical bug in <code>encode_update()</code> where column
+                        names were encoded as <code>$1</code> placeholders
+                    </li>
+                </ul>
+
+                <h4>Added</h4>
+                <ul class="changelog-list">
+                    <li>
+                        Comprehensive battle test suite (<code
+                            >battle_test.rs</code
+                        >) with 19 query operations
+                    </li>
+                    <li>
+                        Modularized <code>values.rs</code> into <code
+                            >values/</code
+                        > directory
+                    </li>
+                </ul>
+            </section>
+
+            <!-- v0.14.0 -->
+            <section class="release-section">
+                <div class="release-header">
+                    <h2>v0.14.0</h2>
+                    <span class="release-date">December 30, 2025</span>
+                </div>
+
+                <h4>Added</h4>
+                <ul class="changelog-list">
+                    <li>
+                        <code>MigrationClass</code> enum for classifying migrations:
+                        <code>Reversible</code>, <code>DataLosing</code>, <code
+                            >Irreversible</code
+                        >
+                    </li>
+                    <li>Type safety warnings for unsafe rollbacks</li>
+                    <li>
+                        FK ordering regression tests for parent-before-child
+                        table creation
+                    </li>
+                </ul>
+
+                <h4>Changed</h4>
+                <ul class="changelog-list">
+                    <li>
+                        Modularized <code>migrations.rs</code> (1044 lines) into 9
+                        focused modules
+                    </li>
+                </ul>
+            </section>
+
+            <!-- v0.13.x -->
+            <section class="release-section">
+                <div class="release-header">
+                    <h2>v0.13.x</h2>
+                    <span class="release-date">December 2025</span>
+                </div>
+
+                <ul class="changelog-list">
+                    <li>CTE with <code>RECURSIVE</code> support</li>
+                    <li>Connection pooling for qail-pg</li>
+                    <li>Enhanced JOIN condition encoding</li>
+                    <li>COPY protocol for bulk inserts</li>
+                </ul>
+            </section>
+
+            <!-- Earlier versions -->
+            <section class="release-section">
+                <div class="release-header">
+                    <h2>Earlier Versions</h2>
+                </div>
+                <p style="color: var(--text-muted);">
+                    For complete history, see the
+                    <a
+                        href="https://github.com/qail-io/qail/blob/main/CHANGELOG.md"
+                        target="_blank"
+                        rel="noopener"
+                    >
+                        full changelog on GitHub
+                    </a>.
+                </p>
+            </section>
+        </div>
+    </main>
+</BaseLayout>
+
+<style>
+    .release-section {
+        background: var(--surface-2);
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .release-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .release-header h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-family: "JetBrains Mono", monospace;
+    }
+
+    .release-date {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
+
+    .release-highlight {
+        background: linear-gradient(
+            135deg,
+            rgba(59, 130, 246, 0.1),
+            rgba(168, 85, 247, 0.1)
+        );
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .release-section h4 {
+        color: var(--accent);
+        margin: 1.5rem 0 0.75rem;
+        font-size: 1rem;
+    }
+
+    .changelog-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .changelog-list li {
+        padding: 0.5rem 0;
+        padding-left: 1.5rem;
+        position: relative;
+        border-bottom: 1px solid var(--surface-3);
+    }
+
+    .changelog-list li:last-child {
+        border-bottom: none;
+    }
+
+    .changelog-list li::before {
+        content: "→";
+        position: absolute;
+        left: 0;
+        color: var(--accent);
+    }
+
+    .changelog-list code {
+        background: var(--surface-3);
+        padding: 0.15rem 0.4rem;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-family: "JetBrains Mono", monospace;
+    }
+</style>

@@ -37,10 +37,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "coal";
-            window.path_to_searchindex_js = "searchindex-d95e44b2.js";
+            window.path_to_searchindex_js = "searchindex-10c225ba.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-07f5cd42.js"></script>
+        <script src="toc-79c9fb58.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -297,6 +297,12 @@ Qail::get("users").filter("id", Operator::Eq, user_input)
 <li><a href="https://github.com/qail-io/qail">GitHub Repository</a></li>
 <li><a href="https://github.com/qail-io/qail/issues">Issue Tracker</a></li>
 </ul>
+<h2 id="-contributing--support"><a class="header" href="#-contributing--support">🤝 Contributing &amp; Support</a></h2>
+<p>We welcome issue reports on GitHub! Please provide detailed descriptions to help us reproduce and fix the problem. We aim to address critical issues within 1-5 business days.</p>
+<blockquote class="blockquote-tag blockquote-tag-caution">
+<p class="blockquote-tag-title"><svg viewbox="0 0 16 16" width="18" height="18"><path d="M4.47.22A.749.749 0 0 1 5 0h6c.199 0 .389.079.53.22l4.25 4.25c.141.14.22.331.22.53v6a.749.749 0 0 1-.22.53l-4.25 4.25A.749.749 0 0 1 11 16H5a.749.749 0 0 1-.53-.22L.22 11.53A.749.749 0 0 1 0 11V5c0-.199.079-.389.22-.53Zm.84 1.28L1.5 5.31v5.38l3.81 3.81h5.38l3.81-3.81V5.31L10.69 1.5ZM8 4a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 8 4Zm0 8a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path></svg>Caution</p>
+<p><strong>Alpha Software</strong>: QAIL is currently in <strong>alpha</strong>. While we strive for stability, the API is evolving to ensure it remains ergonomic and truly AST-native. <strong>Do not use in production environments yet.</strong></p>
+</blockquote>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="installation"><a class="header" href="#installation">Installation</a></h1>
 <h2 id="rust-recommended"><a class="header" href="#rust-recommended">Rust (Recommended)</a></h2>
@@ -338,10 +344,10 @@ async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
 <h2 id="execute-your-first-query"><a class="header" href="#execute-your-first-query">Execute Your First Query</a></h2>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>use qail_core::ast::{Qail, Operator};
+</span>use qail_core::ast::{QailCmd, Operator};
 
 // Build a SELECT query
-let cmd = Qail::get("users")
+let cmd = QailCmd::get("users")
     .columns(["id", "email"])
     .filter("active", Operator::Eq, true)
     .limit(10);
@@ -453,6 +459,242 @@ let cmd = Qail::get("users")
 </table>
 </div>
 <div style="break-before: page; page-break-before: always;"></div>
+<h1 id="expression-types"><a class="header" href="#expression-types">Expression Types</a></h1>
+<p>QAIL v0.14.2 provides <strong>100% PostgreSQL expression coverage</strong>. All expression types are native AST nodes that encode directly to wire protocol bytes.</p>
+<h2 id="coverage"><a class="header" href="#coverage">Coverage</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Category</th><th>Coverage</th></tr>
+</thead>
+<tbody>
+<tr><td>Expressions</td><td>100%</td></tr>
+<tr><td>DML (SELECT, INSERT, UPDATE, DELETE)</td><td>100%</td></tr>
+<tr><td>DDL (CREATE, DROP, ALTER)</td><td>100%</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="basic-expressions"><a class="header" href="#basic-expressions">Basic Expressions</a></h2>
+<h3 id="column-reference"><a class="header" href="#column-reference">Column Reference</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use qail_core::ast::Expr;
+
+// Simple column
+let expr = Expr::Named("email".to_string());
+// → email
+
+// With alias
+let expr = Expr::Aliased {
+    name: "users.email".to_string(),
+    alias: "user_email".to_string(),
+};
+// → users.email AS user_email
+<span class="boring">}</span></code></pre>
+<h3 id="literals"><a class="header" href="#literals">Literals</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use qail_core::ast::{Expr, Value};
+
+let expr = Expr::Literal(Value::Int(42));
+// → 42
+
+let expr = Expr::Literal(Value::String("hello".into()));
+// → 'hello'
+<span class="boring">}</span></code></pre>
+<h2 id="aggregate-functions"><a class="header" href="#aggregate-functions">Aggregate Functions</a></h2>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use qail_core::ast::{Expr, AggregateFunc};
+
+let expr = Expr::Aggregate {
+    func: AggregateFunc::Count,
+    col: "*".into(),
+    distinct: false,
+    filter: None,
+    alias: Some("total".into()),
+};
+// → COUNT(*) AS total
+<span class="boring">}</span></code></pre>
+<h3 id="with-filter-clause-v0142"><a class="header" href="#with-filter-clause-v0142">With FILTER Clause (v0.14.2+)</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let expr = Expr::Aggregate {
+    func: AggregateFunc::Sum,
+    col: "amount".into(),
+    distinct: false,
+    filter: Some(vec![condition]),  // WHERE condition
+    alias: Some("filtered_sum".into()),
+};
+// → SUM(amount) FILTER (WHERE ...) AS filtered_sum
+<span class="boring">}</span></code></pre>
+<h2 id="window-functions"><a class="header" href="#window-functions">Window Functions</a></h2>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use qail_core::ast::{Expr, WindowFrame, FrameBound};
+
+let expr = Expr::Window {
+    func: "SUM".into(),
+    params: vec![Expr::Named("amount".into())],
+    partition: vec!["department".into()],
+    order: vec![order_spec],
+    frame: Some(WindowFrame::Rows {
+        start: FrameBound::UnboundedPreceding,
+        end: FrameBound::CurrentRow,
+    }),
+    alias: Some("running_total".into()),
+};
+// → SUM(amount) OVER (
+//     PARTITION BY department
+//     ORDER BY date
+//     ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+//   ) AS running_total
+<span class="boring">}</span></code></pre>
+<h2 id="case-expressions"><a class="header" href="#case-expressions">CASE Expressions</a></h2>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let expr = Expr::Case {
+    when_clauses: vec![
+        (condition1, Value::String("A".into())),
+        (condition2, Value::String("B".into())),
+    ],
+    else_value: Some(Value::String("C".into())),
+    alias: Some("grade".into()),
+};
+// → CASE WHEN ... THEN 'A' WHEN ... THEN 'B' ELSE 'C' END AS grade
+<span class="boring">}</span></code></pre>
+<h2 id="new-in-v0142"><a class="header" href="#new-in-v0142">New in v0.14.2</a></h2>
+<h3 id="array-constructor"><a class="header" href="#array-constructor">Array Constructor</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let expr = Expr::ArrayConstructor {
+    elements: vec![
+        Expr::Named("col1".into()),
+        Expr::Named("col2".into()),
+    ],
+    alias: Some("arr".into()),
+};
+// → ARRAY[col1, col2] AS arr
+<span class="boring">}</span></code></pre>
+<h3 id="row-constructor"><a class="header" href="#row-constructor">Row Constructor</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let expr = Expr::RowConstructor {
+    elements: vec![
+        Expr::Named("id".into()),
+        Expr::Named("name".into()),
+    ],
+    alias: Some("person".into()),
+};
+// → ROW(id, name) AS person
+<span class="boring">}</span></code></pre>
+<h3 id="subscript-array-access"><a class="header" href="#subscript-array-access">Subscript (Array Access)</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let expr = Expr::Subscript {
+    expr: Box::new(Expr::Named("tags".into())),
+    index: Box::new(Expr::Literal(Value::Int(1))),
+    alias: Some("first_tag".into()),
+};
+// → tags[1] AS first_tag
+<span class="boring">}</span></code></pre>
+<h3 id="collation"><a class="header" href="#collation">Collation</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let expr = Expr::Collate {
+    expr: Box::new(Expr::Named("name".into())),
+    collation: "C".into(),
+    alias: None,
+};
+// → name COLLATE "C"
+<span class="boring">}</span></code></pre>
+<h3 id="field-access-composite-types"><a class="header" href="#field-access-composite-types">Field Access (Composite Types)</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let expr = Expr::FieldAccess {
+    expr: Box::new(Expr::Named("address".into())),
+    field: "city".into(),
+    alias: Some("city".into()),
+};
+// → (address).city AS city
+<span class="boring">}</span></code></pre>
+<h2 id="type-casting"><a class="header" href="#type-casting">Type Casting</a></h2>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let expr = Expr::Cast {
+    expr: Box::new(Expr::Named("id".into())),
+    target_type: "TEXT".into(),
+    alias: None,
+};
+// → id::TEXT
+<span class="boring">}</span></code></pre>
+<h2 id="json-access"><a class="header" href="#json-access">JSON Access</a></h2>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let expr = Expr::JsonAccess {
+    column: "data".into(),
+    path_segments: vec![
+        ("user".into(), false),  // -&gt;
+        ("name".into(), true),   // -&gt;&gt;
+    ],
+    alias: Some("name".into()),
+};
+// → data-&gt;'user'-&gt;&gt;'name' AS name
+<span class="boring">}</span></code></pre>
+<h2 id="group-by-modes"><a class="header" href="#group-by-modes">GROUP BY Modes</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Mode</th><th>SQL</th><th>Status</th></tr>
+</thead>
+<tbody>
+<tr><td><code>GroupByMode::Simple</code></td><td><code>GROUP BY a, b</code></td><td>✓</td></tr>
+<tr><td><code>GroupByMode::Rollup</code></td><td><code>GROUP BY ROLLUP(a, b)</code></td><td>✓</td></tr>
+<tr><td><code>GroupByMode::Cube</code></td><td><code>GROUP BY CUBE(a, b)</code></td><td>✓</td></tr>
+<tr><td><code>GroupByMode::GroupingSets</code></td><td><code>GROUP BY GROUPING SETS ((a, b), (c))</code></td><td>✓ v0.14.2</td></tr>
+</tbody>
+</table>
+</div>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use qail_core::ast::GroupByMode;
+
+// GROUPING SETS
+let mode = GroupByMode::GroupingSets(vec![
+    vec!["year".into(), "month".into()],
+    vec!["year".into()],
+    vec![],  // grand total
+]);
+// → GROUP BY GROUPING SETS ((year, month), (year), ())
+<span class="boring">}</span></code></pre>
+<h2 id="ddl-actions"><a class="header" href="#ddl-actions">DDL Actions</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Action</th><th>SQL</th><th>Status</th></tr>
+</thead>
+<tbody>
+<tr><td><code>Action::Make</code></td><td><code>CREATE TABLE</code></td><td>✓</td></tr>
+<tr><td><code>Action::Drop</code></td><td><code>DROP TABLE</code></td><td>✓</td></tr>
+<tr><td><code>Action::Index</code></td><td><code>CREATE INDEX</code></td><td>✓</td></tr>
+<tr><td><code>Action::CreateView</code></td><td><code>CREATE VIEW AS</code></td><td>✓ v0.14.2</td></tr>
+<tr><td><code>Action::DropView</code></td><td><code>DROP VIEW</code></td><td>✓ v0.14.2</td></tr>
+</tbody>
+</table>
+</div>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use qail_core::ast::{Qail, Action};
+
+// Create view
+let mut cmd = Qail::get("orders")
+    .columns(["customer_id", "SUM(amount) AS total"])
+    .group_by(["customer_id"]);
+cmd.action = Action::CreateView;
+cmd.table = "customer_totals".into();
+// → CREATE VIEW customer_totals AS SELECT ...
+<span class="boring">}</span></code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
 <h1 id="expression-builders"><a class="header" href="#expression-builders">Expression Builders</a></h1>
 <p>QAIL provides ergonomic builder functions for constructing AST expressions without verbose struct creation.</p>
 <h2 id="import"><a class="header" href="#import">Import</a></h2>
@@ -469,7 +711,7 @@ col("phone_number")
 // Star (*)
 star()
 <span class="boring">}</span></code></pre>
-<h2 id="aggregate-functions"><a class="header" href="#aggregate-functions">Aggregate Functions</a></h2>
+<h2 id="aggregate-functions-1"><a class="header" href="#aggregate-functions-1">Aggregate Functions</a></h2>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>// COUNT(*)
@@ -511,7 +753,7 @@ now_minus("24 hours")
 // NOW() + INTERVAL 'duration'
 now_plus("7 days")
 <span class="boring">}</span></code></pre>
-<h2 id="type-casting"><a class="header" href="#type-casting">Type Casting</a></h2>
+<h2 id="type-casting-1"><a class="header" href="#type-casting-1">Type Casting</a></h2>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>// expr::type
@@ -585,7 +827,7 @@ binary(
     cast(col("total"), "float8")
 ).alias("success_rate")
 <span class="boring">}</span></code></pre>
-<h2 id="literals"><a class="header" href="#literals">Literals</a></h2>
+<h2 id="literals-1"><a class="header" href="#literals-1">Literals</a></h2>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>int(42)           // Integer literal
@@ -793,6 +1035,8 @@ ColumnType::Jsonb.supports_indexing()     // false - warned before migration
 <h2 id="features"><a class="header" href="#features">Features</a></h2>
 <ul>
 <li><strong>AST-Native</strong> — Direct AST to wire protocol, no SQL strings</li>
+<li><strong>Zero-Alloc</strong> — Reusable buffers, no heap allocation per query</li>
+<li><strong>LRU Statement Cache</strong> — Bounded cache (1000 max), auto-evicts</li>
 <li><strong>SSL/TLS</strong> — Full TLS with mutual TLS (mTLS) support</li>
 <li><strong>SCRAM-SHA-256</strong> — Secure password authentication</li>
 <li><strong>Connection Pooling</strong> — Efficient resource management</li>
@@ -801,6 +1045,31 @@ ColumnType::Jsonb.supports_indexing()     // false - warned before migration
 <li><strong>Transactions</strong> — BEGIN/COMMIT/ROLLBACK</li>
 </ul>
 <hr>
+<h2 id="statement-cache-lru"><a class="header" href="#statement-cache-lru">Statement Cache (LRU)</a></h2>
+<p>Prepared statements are cached automatically for best performance.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Cache is bounded (default: 1000 statements)
+// Auto-evicts least recently used when full
+
+let (size, capacity) = driver.cache_stats();  // (42, 1000)
+
+// Manual clear if needed
+driver.clear_cache();
+<span class="boring">}</span></code></pre>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Method</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>fetch_all()</code></td><td>Uses cache (4,500+ q/s)</td></tr>
+<tr><td><code>fetch_all_uncached()</code></td><td>Skips cache</td></tr>
+<tr><td><code>cache_stats()</code></td><td>Returns (current, max)</td></tr>
+<tr><td><code>clear_cache()</code></td><td>Frees all cached statements</td></tr>
+</tbody>
+</table>
+</div>
 <h2 id="connection"><a class="header" href="#connection">Connection</a></h2>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -1770,7 +2039,7 @@ qail lint schema.qail --strict
 <h2 id="key-types"><a class="header" href="#key-types">Key Types</a></h2>
 <h3 id="qail-core"><a class="header" href="#qail-core">qail-core</a></h3>
 <ul>
-<li><code>Qail</code> - Query command builder</li>
+<li><code>QailCmd</code> - Query command builder</li>
 <li><code>Operator</code> - Comparison operators</li>
 <li><code>SortOrder</code> - ASC/DESC</li>
 <li><code>Expr</code> - Expression AST nodes</li>

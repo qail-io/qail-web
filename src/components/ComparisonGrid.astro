@@ -1,0 +1,57 @@
+---
+/**
+ * ComparisonGrid Component
+ *
+ * A side-by-side comparison of two code blocks.
+ *
+ * Usage:
+ * <ComparisonGrid
+ *   leftTitle="Before"
+ *   leftCode={`old code`}
+ *   leftVariant="qail"
+ *   rightTitle="After"
+ *   rightCode={`new code`}
+ *   rightVariant="sql"
+ * />
+ */
+
+import CodeBlock from "./CodeBlock.astro";
+
+interface Props {
+    leftTitle: string;
+    leftCode: string;
+    leftVariant?: "default" | "qail" | "sql";
+    rightTitle: string;
+    rightCode: string;
+    rightVariant?: "default" | "qail" | "sql";
+}
+
+const {
+    leftTitle,
+    leftCode,
+    leftVariant = "qail",
+    rightTitle,
+    rightCode,
+    rightVariant = "sql",
+} = Astro.props;
+---
+
+<div class="comparison-grid">
+    <CodeBlock title={leftTitle} code={leftCode} variant={leftVariant} />
+    <CodeBlock title={rightTitle} code={rightCode} variant={rightVariant} />
+</div>
+
+<style>
+    .comparison-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin: 1.5rem 0;
+    }
+
+    @media (max-width: 768px) {
+        .comparison-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>

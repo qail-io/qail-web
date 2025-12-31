@@ -1,0 +1,233 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+    title="ORM Benchmark: 50K Queries | QAIL"
+    description="qail-pg beats SQLx by 27% and SeaORM by 12% in fair ORM comparison."
+>
+    <style is:global>
+        .benchmark-hero {
+            text-align: center;
+            padding: 3rem 0;
+            background: linear-gradient(
+                135deg,
+                rgba(139, 92, 246, 0.1),
+                rgba(59, 130, 246, 0.05)
+            );
+            border-bottom: 1px solid #30363d;
+        }
+        .benchmark-hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        .benchmark-hero .date {
+            color: #8b949e;
+            font-size: 0.95rem;
+        }
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            font-size: 1rem;
+        }
+        .results-table th,
+        .results-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #30363d;
+        }
+        .results-table th {
+            background: #161b22;
+            color: #8b949e;
+            font-weight: 600;
+        }
+        .results-table tr:hover {
+            background: rgba(139, 92, 246, 0.05);
+        }
+        .winner {
+            color: #4ade80;
+            font-weight: 700;
+        }
+        .metric-card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+        .metric-card .value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #8b5cf6;
+        }
+        .metric-card .label {
+            color: #8b949e;
+            margin-top: 0.5rem;
+        }
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        @media (max-width: 768px) {
+            .metric-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .code-block {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 1.5rem;
+            overflow-x: auto;
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.85rem;
+            color: #e6edf3;
+        }
+        .section-title {
+            font-size: 1.5rem;
+            margin: 3rem 0 1rem;
+            color: #e6edf3;
+        }
+        .optimization-list {
+            list-style: none;
+            padding: 0;
+        }
+        .optimization-list li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #21262d;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+        .optimization-list li::before {
+            content: "✓";
+            color: #4ade80;
+            font-weight: bold;
+        }
+    </style>
+
+    <header class="benchmark-hero">
+        <div class="container">
+            <p class="date">December 31, 2025 • v0.14.4</p>
+            <h1>🏎️ ORM Benchmark: 50K Queries</h1>
+            <p style="color: #94a3b8; max-width: 600px; margin: 0 auto;">
+                Fair comparison of qail-pg, SQLx, and SeaORM with identical
+                query workloads. Complex CTE with JOIN, WHERE, ORDER BY, LIMIT.
+            </p>
+        </div>
+    </header>
+
+    <main class="page-content">
+        <div class="container" style="max-width: 900px;">
+            <div class="metric-grid">
+                <div class="metric-card">
+                    <div class="value">4,534</div>
+                    <div class="label">qail-pg (cached) q/s</div>
+                </div>
+                <div class="metric-card">
+                    <div class="value">27%</div>
+                    <div class="label">Faster than SQLx</div>
+                </div>
+                <div class="metric-card">
+                    <div class="value">12%</div>
+                    <div class="label">Faster than SeaORM</div>
+                </div>
+            </div>
+
+            <h2 class="section-title">Results</h2>
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th>Driver</th>
+                        <th>Queries/Sec</th>
+                        <th>Latency</th>
+                        <th>vs qail-pg cached</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="winner">qail-pg (cached) ⭐</td>
+                        <td class="winner">4,534 q/s</td>
+                        <td>221 μs</td>
+                        <td>—</td>
+                    </tr>
+                    <tr>
+                        <td>SeaORM</td>
+                        <td>4,032 q/s</td>
+                        <td>248 μs</td>
+                        <td>12% slower</td>
+                    </tr>
+                    <tr>
+                        <td>SQLx</td>
+                        <td>3,573 q/s</td>
+                        <td>280 μs</td>
+                        <td>27% slower</td>
+                    </tr>
+                    <tr>
+                        <td>qail-pg (fast)</td>
+                        <td>3,531 q/s</td>
+                        <td>283 μs</td>
+                        <td>28% slower</td>
+                    </tr>
+                    <tr>
+                        <td>qail-pg (basic)</td>
+                        <td>2,640 q/s</td>
+                        <td>379 μs</td>
+                        <td>72% slower</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h2 class="section-title">Optimizations Applied (v0.14.4)</h2>
+            <ul class="optimization-list">
+                <li>
+                    <strong>Zero-Alloc Encoding:</strong> Reusable <code
+                        >sql_buf</code
+                    > and <code>params_buf</code> on PgConnection eliminate heap allocations
+                </li>
+                <li>
+                    <strong>LRU Statement Cache:</strong> Bounded cache (1000 max)
+                    with auto-eviction — prevents memory leaks
+                </li>
+                <li>
+                    <strong>Parameterized LIMIT/OFFSET:</strong> Uses $N parameters
+                    instead of embedded values — same SQL = same cache entry
+                </li>
+                <li>
+                    <strong>SQL Hash Caching:</strong> Prepared statements cached
+                    by SQL hash — Parse message skipped on cache hits
+                </li>
+            </ul>
+
+            <h2 class="section-title">Test Query</h2>
+            <div class="code-block">
+                <pre>WITH high_earners AS (
+    SELECT * FROM employees WHERE salary > 80000
+)
+SELECT e.*, d.name as dept_name 
+FROM high_earners e
+JOIN departments d ON e.department_id = d.id
+WHERE e.status = 'active'
+ORDER BY e.salary DESC
+LIMIT 100</pre>
+            </div>
+
+            <h2 class="section-title">Reproduce</h2>
+            <div class="code-block">
+                <pre># Clone and run
+git clone https://github.com/qail-io/qail.git
+cd qail
+cargo run --example orm_benchmark --release</pre>
+            </div>
+
+            <div style="text-align: center; margin-top: 3rem;">
+                <a href="/benchmarks" class="btn btn-secondary"
+                    >← All Benchmarks</a
+                >
+            </div>
+        </div>
+    </main>
+</BaseLayout>

@@ -1,0 +1,425 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+// Expression examples - defined here to avoid JSX issues
+const expressions = [
+    {
+        name: "Expr::Named",
+        code: `Expr::Named("email".into())`,
+        sql: "email",
+        isNew: false,
+    },
+    {
+        name: "Expr::Aliased",
+        code: `Expr::Aliased(name, alias)`,
+        sql: "users.email AS user_email",
+        isNew: false,
+    },
+    {
+        name: "Expr::Aggregate",
+        code: `Expr::Aggregate(func, col, filter)`,
+        sql: "COUNT(*) FILTER (WHERE ...) AS cnt",
+        isNew: false,
+    },
+    {
+        name: "Expr::Window",
+        code: `Expr::Window(func, partition, order, frame)`,
+        sql: "SUM(amount) OVER (PARTITION BY dept ORDER BY date)",
+        isNew: false,
+    },
+    {
+        name: "Expr::Case",
+        code: `Expr::Case(when_clauses, else_value)`,
+        sql: "CASE WHEN ... THEN 'A' ELSE 'B' END",
+        isNew: false,
+    },
+    {
+        name: "Expr::ArrayConstructor",
+        code: `Expr::ArrayConstructor(elements, alias)`,
+        sql: "ARRAY[col1, col2] AS arr",
+        isNew: true,
+    },
+    {
+        name: "Expr::RowConstructor",
+        code: `Expr::RowConstructor(elements, alias)`,
+        sql: "ROW(id, name) AS person",
+        isNew: true,
+    },
+    {
+        name: "Expr::Subscript",
+        code: `Expr::Subscript(expr, index, alias)`,
+        sql: "tags[1] AS first_tag",
+        isNew: true,
+    },
+    {
+        name: "Expr::Collate",
+        code: `Expr::Collate(expr, collation)`,
+        sql: `name COLLATE "C"`,
+        isNew: true,
+    },
+    {
+        name: "Expr::FieldAccess",
+        code: `Expr::FieldAccess(expr, field, alias)`,
+        sql: "(address).city AS city",
+        isNew: true,
+    },
+    {
+        name: "Expr::Cast",
+        code: `Expr::Cast(expr, target_type)`,
+        sql: "id::TEXT",
+        isNew: false,
+    },
+    {
+        name: "Expr::JsonAccess",
+        code: `Expr::JsonAccess(column, path_segments)`,
+        sql: "data->'user'->>'name' AS name",
+        isNew: false,
+    },
+];
+---
+
+<BaseLayout
+    title="PostgreSQL Expressions | QAIL"
+    description="Complete guide to QAIL's PostgreSQL expression support - 100% grammar coverage."
+>
+    <header class="page-header">
+        <div class="container">
+            <h1>PostgreSQL Expressions</h1>
+            <p class="subtitle">100% Grammar Coverage in v0.14.2</p>
+        </div>
+    </header>
+
+    <main class="page-content">
+        <div class="container" style="max-width: 1100px;">
+            <!-- Coverage Banner -->
+            <section class="coverage-banner">
+                <div class="coverage-stats">
+                    <div class="stat">
+                        <span class="stat-value">100%</span>
+                        <span class="stat-label">Expressions</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-value">100%</span>
+                        <span class="stat-label">DML</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-value">100%</span>
+                        <span class="stat-label">DDL</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Expression Types Grid -->
+            <section style="margin-top: 3rem;">
+                <h2 class="section-title">Expression Types</h2>
+
+                <div class="expr-grid">
+                    {
+                        expressions.map((expr) => (
+                            <div class={`expr-card ${expr.isNew ? "new" : ""}`}>
+                                <div class="expr-header">
+                                    <code>{expr.name}</code>
+                                    {expr.isNew ? (
+                                        <span
+                                            class="status-badge partial"
+                                            style="background: #f7a41d; color: #000;"
+                                        >
+                                            NEW
+                                        </span>
+                                    ) : (
+                                        <span class="status-badge full">✓</span>
+                                    )}
+                                </div>
+                                <div class="expr-example">
+                                    <pre>{expr.code}</pre>
+                                    <div class="arrow">→</div>
+                                    <pre class="sql">{expr.sql}</pre>
+                                </div>
+                            </div>
+                        ))
+                    }
+                </div>
+            </section>
+
+            <!-- GROUP BY Modes -->
+            <section style="margin-top: 3rem;">
+                <h2 class="section-title">GROUP BY Modes</h2>
+
+                <div class="matrix-wrapper">
+                    <table class="status-matrix">
+                        <thead>
+                            <tr>
+                                <th>Mode</th>
+                                <th>Example SQL</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="feature-name"
+                                    ><code>GroupByMode::Simple</code></td
+                                >
+                                <td><code>GROUP BY a, b</code></td>
+                                <td class="status-cell"
+                                    ><span class="status-badge full">✓</span
+                                    ></td
+                                >
+                            </tr>
+                            <tr>
+                                <td class="feature-name"
+                                    ><code>GroupByMode::Rollup</code></td
+                                >
+                                <td><code>GROUP BY ROLLUP(a, b)</code></td>
+                                <td class="status-cell"
+                                    ><span class="status-badge full">✓</span
+                                    ></td
+                                >
+                            </tr>
+                            <tr>
+                                <td class="feature-name"
+                                    ><code>GroupByMode::Cube</code></td
+                                >
+                                <td><code>GROUP BY CUBE(a, b)</code></td>
+                                <td class="status-cell"
+                                    ><span class="status-badge full">✓</span
+                                    ></td
+                                >
+                            </tr>
+                            <tr>
+                                <td class="feature-name"
+                                    ><code>GroupByMode::GroupingSets</code></td
+                                >
+                                <td
+                                    ><code
+                                        >GROUP BY GROUPING SETS ((a, b), (c))</code
+                                    ></td
+                                >
+                                <td class="status-cell"
+                                    ><span
+                                        class="status-badge partial"
+                                        style="background: #f7a41d; color: #000;"
+                                        >NEW</span
+                                    ></td
+                                >
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- DDL Actions -->
+            <section style="margin-top: 3rem;">
+                <h2 class="section-title">DDL Actions</h2>
+
+                <div class="matrix-wrapper">
+                    <table class="status-matrix">
+                        <thead>
+                            <tr>
+                                <th>Action</th>
+                                <th>Example SQL</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="feature-name"
+                                    ><code>Action::Make</code></td
+                                >
+                                <td><code>CREATE TABLE ...</code></td>
+                                <td class="status-cell"
+                                    ><span class="status-badge full">✓</span
+                                    ></td
+                                >
+                            </tr>
+                            <tr>
+                                <td class="feature-name"
+                                    ><code>Action::Drop</code></td
+                                >
+                                <td><code>DROP TABLE ...</code></td>
+                                <td class="status-cell"
+                                    ><span class="status-badge full">✓</span
+                                    ></td
+                                >
+                            </tr>
+                            <tr>
+                                <td class="feature-name"
+                                    ><code>Action::Index</code></td
+                                >
+                                <td><code>CREATE INDEX ...</code></td>
+                                <td class="status-cell"
+                                    ><span class="status-badge full">✓</span
+                                    ></td
+                                >
+                            </tr>
+                            <tr>
+                                <td class="feature-name"
+                                    ><code>Action::CreateView</code></td
+                                >
+                                <td><code>CREATE VIEW ... AS SELECT</code></td>
+                                <td class="status-cell"
+                                    ><span
+                                        class="status-badge partial"
+                                        style="background: #f7a41d; color: #000;"
+                                        >NEW</span
+                                    ></td
+                                >
+                            </tr>
+                            <tr>
+                                <td class="feature-name"
+                                    ><code>Action::DropView</code></td
+                                >
+                                <td><code>DROP VIEW IF EXISTS ...</code></td>
+                                <td class="status-cell"
+                                    ><span
+                                        class="status-badge partial"
+                                        style="background: #f7a41d; color: #000;"
+                                        >NEW</span
+                                    ></td
+                                >
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- CTA -->
+            <section style="margin-top: 3rem; text-align: center;">
+                <a href="/playground" class="cta-button">Try in Playground →</a>
+                <a
+                    href="https://docs.rs/qail-core"
+                    target="_blank"
+                    rel="noopener"
+                    class="cta-button secondary"
+                    style="margin-left: 1rem;">API Docs →</a
+                >
+            </section>
+        </div>
+    </main>
+</BaseLayout>
+
+<style>
+    .coverage-banner {
+        background: linear-gradient(
+            135deg,
+            rgba(34, 197, 94, 0.1),
+            rgba(59, 130, 246, 0.1)
+        );
+        border: 1px solid rgba(34, 197, 94, 0.3);
+        border-radius: 12px;
+        padding: 2rem;
+    }
+
+    .coverage-stats {
+        display: flex;
+        justify-content: center;
+        gap: 3rem;
+        flex-wrap: wrap;
+    }
+
+    .stat {
+        text-align: center;
+    }
+
+    .stat-value {
+        display: block;
+        font-size: 2.5rem;
+        font-weight: 700;
+        font-family: "JetBrains Mono", monospace;
+        color: #22c55e;
+    }
+
+    .stat-label {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
+
+    .expr-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+        gap: 1.5rem;
+    }
+
+    @media (max-width: 600px) {
+        .expr-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .expr-card {
+        background: var(--surface-2);
+        border-radius: 12px;
+        padding: 1.5rem;
+        border: 1px solid var(--surface-3);
+    }
+
+    .expr-card.new {
+        border-color: rgba(247, 164, 29, 0.5);
+    }
+
+    .expr-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid var(--surface-3);
+    }
+
+    .expr-header code {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--accent);
+    }
+
+    .expr-example {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .expr-example pre {
+        background: var(--surface-3);
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        overflow-x: auto;
+        margin: 0;
+        font-family: "JetBrains Mono", monospace;
+        line-height: 1.4;
+    }
+
+    .expr-example pre.sql {
+        background: rgba(59, 130, 246, 0.1);
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        color: #60a5fa;
+    }
+
+    .arrow {
+        text-align: center;
+        color: var(--accent);
+        font-size: 1.2rem;
+    }
+
+    .cta-button {
+        display: inline-block;
+        background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        transition:
+            transform 0.2s,
+            box-shadow 0.2s;
+    }
+
+    .cta-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
+    }
+
+    .cta-button.secondary {
+        background: var(--surface-2);
+        border: 1px solid var(--surface-3);
+    }
+</style>

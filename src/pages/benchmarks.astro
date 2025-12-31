@@ -88,11 +88,26 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     <main class="page-content">
         <div class="container">
             <div class="benchmark-list">
+                <!-- ORM Benchmark - Latest -->
+                <a href="/benchmark/orm-50k" class="benchmark-card">
+                    <div class="date">
+                        December 31, 2025 <span class="latest-badge">NEW</span>
+                    </div>
+                    <div class="title">
+                        🏎️ ORM Benchmark: 50K Queries <span class="badge-metric"
+                            >27% faster</span
+                        >
+                    </div>
+                    <div class="summary">
+                        qail-pg (cached) achieves 4,534 q/s — 27% faster than
+                        SQLx (3,573 q/s) and 12% faster than SeaORM (4,032 q/s).
+                        Zero-alloc encoding + SQL hash caching.
+                    </div>
+                </a>
+
                 <!-- Go IPC 50M Benchmark -->
                 <a href="/benchmark/go-ipc-50m" class="benchmark-card">
-                    <div class="date">
-                        December 27, 2025 <span class="latest-badge">NEW</span>
-                    </div>
+                    <div class="date">December 27, 2025</div>
                     <div class="title">
                         🔌 Go IPC: 50 Million Queries <span class="badge-metric"
                             >99% pgx</span

@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "coal";
             const default_dark_theme = "coal";
-            window.path_to_searchindex_js = "../searchindex-d95e44b2.js";
+            window.path_to_searchindex_js = "../searchindex-10c225ba.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-07f5cd42.js"></script>
+        <script src="../toc-79c9fb58.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -186,6 +186,8 @@
 <h2 id="features"><a class="header" href="#features">Features</a></h2>
 <ul>
 <li><strong>AST-Native</strong> — Direct AST to wire protocol, no SQL strings</li>
+<li><strong>Zero-Alloc</strong> — Reusable buffers, no heap allocation per query</li>
+<li><strong>LRU Statement Cache</strong> — Bounded cache (1000 max), auto-evicts</li>
 <li><strong>SSL/TLS</strong> — Full TLS with mutual TLS (mTLS) support</li>
 <li><strong>SCRAM-SHA-256</strong> — Secure password authentication</li>
 <li><strong>Connection Pooling</strong> — Efficient resource management</li>
@@ -194,6 +196,31 @@
 <li><strong>Transactions</strong> — BEGIN/COMMIT/ROLLBACK</li>
 </ul>
 <hr>
+<h2 id="statement-cache-lru"><a class="header" href="#statement-cache-lru">Statement Cache (LRU)</a></h2>
+<p>Prepared statements are cached automatically for best performance.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Cache is bounded (default: 1000 statements)
+// Auto-evicts least recently used when full
+
+let (size, capacity) = driver.cache_stats();  // (42, 1000)
+
+// Manual clear if needed
+driver.clear_cache();
+<span class="boring">}</span></code></pre>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Method</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>fetch_all()</code></td><td>Uses cache (4,500+ q/s)</td></tr>
+<tr><td><code>fetch_all_uncached()</code></td><td>Skips cache</td></tr>
+<tr><td><code>cache_stats()</code></td><td>Returns (current, max)</td></tr>
+<tr><td><code>clear_cache()</code></td><td>Frees all cached statements</td></tr>
+</tbody>
+</table>
+</div>
 <h2 id="connection"><a class="header" href="#connection">Connection</a></h2>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
