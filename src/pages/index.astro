@@ -24,40 +24,32 @@ import BaseLayout from "../layouts/BaseLayout.astro";
                     <div class="demo-target" style="order: 1;">
                         <div class="demo-new">
                             <span class="demo-label">QAIL AST</span>
-                            <code class="qail-code" style="font-size: 0.75rem;">Qail::get("users")
-  .select_all()
-  .filter("active", Eq, true)</code>
+                            <code class="qail-code" style="font-size: 0.75rem;"
+                                >Qail::get("users") .select_all()
+                                .filter("active", Eq, true)</code
+                            >
                         </div>
                     </div>
 
                     <div class="demo-connectors" style="order: 2;">
                         <svg
-                            viewBox="0 0 100 300"
+                            viewBox="0 0 100 200"
                             style="width: 100%; height: 100%;"
                             preserveAspectRatio="none"
                         >
-                            <!-- Source (0, 150) to Targets (100, y) -->
-                            <!-- Card centers: 32, 111, 190, 269 (63px cards, 16px gaps, 300px container) -->
+                            <!-- Source (0, 100) to Targets (100, y) -->
                             <!-- 1. Postgres (Top) -->
                             <path
-                                d="M 0 150 C 50 150, 50 32, 100 32"
+                                d="M 0 100 C 50 100, 50 50, 100 50"
                                 class="connector-line"></path>
-                            <!-- 2. SQLite -->
+                            <!-- 2. Qdrant (Bottom) -->
                             <path
-                                d="M 0 150 C 40 150, 60 111, 100 111"
-                                class="connector-line"></path>
-                            <!-- 3. MongoDB -->
-                            <path
-                                d="M 0 150 C 40 150, 60 190, 100 190"
-                                class="connector-line"></path>
-                            <!-- 4. Qdrant (Bottom) -->
-                            <path
-                                d="M 0 150 C 50 150, 50 269, 100 269"
+                                d="M 0 100 C 50 100, 50 150, 100 150"
                                 class="connector-line"></path>
                         </svg>
                     </div>
 
-                    <!-- Target: Multiple Databases -->
+                    <!-- Target: PostgreSQL and Qdrant -->
                     <div class="demo-sources" style="order: 3;">
                         <div class="demo-source-card">
                             <span class="demo-label">PostgreSQL</span>
@@ -65,24 +57,15 @@ import BaseLayout from "../layouts/BaseLayout.astro";
                                 >SELECT * FROM users WHERE active = true</code
                             >
                         </div>
-                        <div class="demo-source-card">
-                            <span class="demo-label">SQLite</span>
-                            <code style="font-size: 0.7rem;"
-                                >SELECT * FROM "users" WHERE "active" = 1</code
+                        <div
+                            class="demo-source-card"
+                            style="border-color: #24a1de;"
+                        >
+                            <span class="demo-label" style="color: #24a1de;"
+                                >Qdrant</span
                             >
-                        </div>
-                        <div class="demo-source-card">
-                            <span class="demo-label">MongoDB</span>
-                            <code style="font-size: 0.7rem;"
-                                >{'db.users.find({ "active": true })'}</code
-                            >
-                        </div>
-                        <div class="demo-source-card">
-                            <span class="demo-label">Qdrant</span>
-                            <code style="font-size: 0.7rem;"
-                                >{
-                                    'filter: { must: [{ key: "active", match: { value: true } }] }'
-                                }</code
+                            <code style="font-size: 0.7rem; color: #24a1de;"
+                                >{"filter: { must: [...] }"}</code
                             >
                         </div>
                     </div>
@@ -328,10 +311,10 @@ import BaseLayout from "../layouts/BaseLayout.astro";
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">🌐</div>
-                    <h3>Polyglot by Design</h3>
+                    <h3>SQL + Vector Unified</h3>
                     <p>
-                        Same Qail AST encodes to Postgres, MySQL, MongoDB, and
-                        more. Truly database-agnostic.
+                        Same Qail AST encodes to PostgreSQL and Qdrant.
+                        Relational AND vector search, one syntax.
                     </p>
                 </div>
                 <div class="feature-card">
@@ -407,55 +390,70 @@ import BaseLayout from "../layouts/BaseLayout.astro";
             <p
                 style="text-align: center; margin-bottom: 2rem; color: var(--text-muted);"
             >
-                One AST. Multimodal Targets. SQL and Document.
+                One AST. Two powerhouses. SQL + Vector.
             </p>
 
-            <h3
-                style="text-align: center; font-size: 1.1rem; color: var(--text-muted); margin-bottom: 1rem;"
-            >
-                SQL-AST (Tier 1)
-            </h3>
             <div
-                style="display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; margin-bottom: 2rem;"
+                style="display: flex; flex-wrap: wrap; justify-content: center; gap: 2rem; margin-bottom: 2rem;"
             >
-                <div class="db-badge">
+                <div
+                    class="db-card"
+                    style="background: linear-gradient(135deg, #336791 0%, #4a7faa 100%); padding: 2rem; border-radius: 16px; text-align: center; min-width: 280px;"
+                >
                     <img
                         src="/icons/postgresql.svg"
                         alt="PostgreSQL"
-                        width="24"
-                    />PostgreSQL
+                        width="64"
+                        style="margin-bottom: 1rem;"
+                    />
+                    <h3 style="color: white; margin: 0 0 0.5rem;">
+                        PostgreSQL
+                    </h3>
+                    <p
+                        style="color: rgba(255,255,255,0.8); margin: 0; font-size: 0.9rem;"
+                    >
+                        Relational • Transactions • ACID
+                    </p>
+                    <div
+                        style="margin-top: 1rem; padding: 0.5rem 1rem; background: rgba(255,255,255,0.2); border-radius: 20px; display: inline-block;"
+                    >
+                        <span style="color: #22c55e; font-weight: 600;"
+                            >✓ Production Ready</span
+                        >
+                    </div>
                 </div>
-                <div class="db-badge">
+                <div
+                    class="db-card"
+                    style="background: linear-gradient(135deg, #24a1de 0%, #5cc4f0 100%); padding: 2rem; border-radius: 16px; text-align: center; min-width: 280px;"
+                >
                     <img
-                        src="/icons/sqlite.svg"
-                        alt="SQLite"
-                        width="24"
-                    />SQLite
+                        src="/icons/qdrant.svg"
+                        alt="Qdrant"
+                        width="64"
+                        style="margin-bottom: 1rem;"
+                    />
+                    <h3 style="color: white; margin: 0 0 0.5rem;">Qdrant</h3>
+                    <p
+                        style="color: rgba(255,255,255,0.8); margin: 0; font-size: 0.9rem;"
+                    >
+                        Vector • AI/ML • Semantic Search
+                    </p>
+                    <div
+                        style="margin-top: 1rem; padding: 0.5rem 1rem; background: rgba(255,255,255,0.2); border-radius: 20px; display: inline-block;"
+                    >
+                        <span style="color: #fbbf24; font-weight: 600;"
+                            >β Beta</span
+                        >
+                    </div>
                 </div>
             </div>
 
-            <h3
-                style="text-align: center; font-size: 1.1rem; color: var(--text-muted); margin-bottom: 1rem;"
+            <p
+                style="text-align: center; color: var(--text-muted); font-size: 0.9rem;"
             >
-                Document-AST (Tier 2)
-            </h3>
-            <div
-                style="display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem;"
-            >
-                <div class="db-badge nosql">
-                    <img
-                        src="/icons/mongodb.svg"
-                        alt="MongoDB"
-                        width="24"
-                    />MongoDB
-                </div>
-                <div class="db-badge nosql">
-                    <img src="/icons/dynamodb.svg" alt="DynamoDB" width="24" /> DynamoDB
-                </div>
-                <div class="db-badge nosql">
-                    <img src="/icons/qdrant.svg" alt="Qdrant" width="24" /> Qdrant
-                </div>
-            </div>
+                The modern stack: Relational data in PostgreSQL, intelligent
+                search in Qdrant.
+            </p>
         </div>
     </section>
 
