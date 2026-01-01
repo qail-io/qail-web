@@ -37,10 +37,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "coal";
-            window.path_to_searchindex_js = "searchindex-8b4a691a.js";
+            window.path_to_searchindex_js = "searchindex-dc583769.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-79c9fb58.js"></script>
+        <script src="toc-d4490c5e.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -1276,7 +1276,150 @@ if row.is_null_by_name("deleted_at") { ... }
 </table>
 </div>
 <div style="break-before: page; page-break-before: always;"></div>
+<h1 id="redis-driver"><a class="header" href="#redis-driver">Redis Driver</a></h1>
+<p><strong>“Redis stores time — QAIL decides.”</strong></p>
+<p>The <code>qail-redis</code> crate provides a unified Qail AST interface for Redis operations.</p>
+<h2 id="installation-1"><a class="header" href="#installation-1">Installation</a></h2>
+<pre><code class="language-toml">[dependencies]
+qail-redis = "0.14"
+</code></pre>
+<h2 id="quick-start-1"><a class="header" href="#quick-start-1">Quick Start</a></h2>
+<pre class="playground"><code class="language-rust">use qail_redis::{RedisDriver, RedisExt};
+use qail_core::prelude::*;
+
+#[tokio::main]
+async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+    let mut driver = RedisDriver::connect("127.0.0.1", 6379).await?;
+    
+    // Unified Qail AST - same pattern as PostgreSQL/Qdrant
+    driver.execute(&amp;Qail::redis_set("session:123", b"data".to_vec()).redis_ex(3600)).await?;
+    
+    let value = driver.get_str("session:123").await?;
+    println!("Value: {:?}", value);
+    
+    Ok(())
+}</code></pre>
+<h2 id="unified-api"><a class="header" href="#unified-api">Unified API</a></h2>
+<p>Redis uses the same <code>Qail</code> type as PostgreSQL and Qdrant:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Database</th><th>Constructor</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td>PostgreSQL</td><td><code>Qail::get("users")</code></td><td>Query facts</td></tr>
+<tr><td>Qdrant</td><td><code>Qail::search("products")</code></td><td>Search meaning</td></tr>
+<tr><td>Redis</td><td><code>Qail::redis_get("session")</code></td><td>Retrieve time-bound data</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="available-commands"><a class="header" href="#available-commands">Available Commands</a></h2>
+<h3 id="string-commands"><a class="header" href="#string-commands">String Commands</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// GET key
+Qail::redis_get("mykey")
+
+// SET key value
+Qail::redis_set("mykey", b"value".to_vec())
+
+// SET with TTL (seconds)
+Qail::redis_set("mykey", b"value".to_vec()).redis_ex(3600)
+
+// SET only if not exists
+Qail::redis_set("mykey", b"value".to_vec()).redis_nx()
+
+// SET only if exists
+Qail::redis_set("mykey", b"value".to_vec()).redis_xx()
+<span class="boring">}</span></code></pre>
+<h3 id="counter-commands"><a class="header" href="#counter-commands">Counter Commands</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// INCR key
+Qail::redis_incr("counter")
+
+// DECR key  
+Qail::redis_decr("counter")
+<span class="boring">}</span></code></pre>
+<h3 id="key-commands"><a class="header" href="#key-commands">Key Commands</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// DEL key
+Qail::redis_del("mykey")
+
+// EXISTS key
+Qail::redis_exists("mykey")
+
+// TTL key
+Qail::redis_ttl("mykey")
+
+// EXPIRE key seconds
+Qail::redis_expire("mykey", 60)
+<span class="boring">}</span></code></pre>
+<h3 id="other-commands"><a class="header" href="#other-commands">Other Commands</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// PING
+Qail::redis_ping()
+<span class="boring">}</span></code></pre>
+<h2 id="redisext-trait"><a class="header" href="#redisext-trait">RedisExt Trait</a></h2>
+<p>The <code>RedisExt</code> trait provides fluent methods for Redis-specific options:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use qail_redis::RedisExt;
+
+// Chain TTL onto SET
+Qail::redis_set("key", b"value".to_vec())
+    .redis_ex(3600)  // EX seconds
+    .redis_nx()       // Only if not exists
+<span class="boring">}</span></code></pre>
+<h2 id="connection-pooling-1"><a class="header" href="#connection-pooling-1">Connection Pooling</a></h2>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use qail_redis::{RedisPool, PoolConfig};
+
+let config = PoolConfig::new("127.0.0.1", 6379)
+    .max_connections(10);
+
+let pool = RedisPool::new(config);
+
+// Get a connection from the pool
+let mut conn = pool.get().await?;
+conn.set("key", b"value").await?;
+<span class="boring">}</span></code></pre>
+<h2 id="native-resp3-protocol"><a class="header" href="#native-resp3-protocol">Native RESP3 Protocol</a></h2>
+<p><code>qail-redis</code> implements native RESP3 protocol encoding/decoding:</p>
+<ul>
+<li><strong>Zero string parsing</strong>: Commands are encoded directly from AST</li>
+<li><strong>Full RESP3 support</strong>: Booleans, doubles, maps, nulls</li>
+<li><strong>Efficient</strong>: Direct wire protocol writes</li>
+</ul>
+<h2 id="the-qail-vision"><a class="header" href="#the-qail-vision">The QAIL Vision</a></h2>
+<blockquote>
+<p>“Postgres stores facts, Qdrant stores meaning, Redis stores time — QAIL decides.”</p>
+</blockquote>
+<p>With <code>qail-redis</code>, you now have a unified API across all three database paradigms:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Facts (PostgreSQL)
+Qail::get("users").filter("active", Eq, true)
+
+// Meaning (Qdrant)
+Qail::search("products").vector(&amp;embedding).limit(10)
+
+// Time (Redis)
+Qail::redis_set("session:123", session_data).redis_ex(3600)
+<span class="boring">}</span></code></pre>
+<p>Same <code>Qail</code> type. Same philosophy. Different backends.</p>
+<div style="break-before: page; page-break-before: always;"></div>
 <h1 id="migrations"><a class="header" href="#migrations">Migrations</a></h1>
+<p>QAIL supports two migration workflows:</p>
+<ol>
+<li><strong>Schema-Diff (State-Based):</strong> Compare standard schema files (good for evolving production DBs)</li>
+<li><strong>File-Based (Sequential):</strong> Apply <code>.qail</code> files from <code>migrations/</code> directory (good for hybrid setups)</li>
+</ol>
+<hr>
+<h2 id="1-schema-diff-workflow-state-based"><a class="header" href="#1-schema-diff-workflow-state-based">1. Schema-Diff Workflow (State-Based)</a></h2>
 <p>QAIL uses an <strong>intent-aware</strong> <code>.qail</code> schema format that solves the ambiguity problem of state-based migrations.</p>
 <h2 id="the-problem-with-jsonstate-based-migrations"><a class="header" href="#the-problem-with-jsonstate-based-migrations">The Problem with JSON/State-Based Migrations</a></h2>
 <pre><code class="language-json">// v1: {"users": {"username": "text"}}
@@ -1320,6 +1463,25 @@ rename users.username -&gt; users.name
 </code></pre>
 <h3 id="5-rollback-if-needed"><a class="header" href="#5-rollback-if-needed">5. Rollback (if needed)</a></h3>
 <pre><code class="language-bash">qail migrate down v1.qail:v2.qail postgres://...
+</code></pre>
+<hr>
+<h2 id="2-file-based-workflow-sequential"><a class="header" href="#2-file-based-workflow-sequential">2. File-Based Workflow (Sequential)</a></h2>
+<p>For hybrid projects or simple setups, you can use sequential <code>.qail</code> files in the <code>migrations/</code> directory.</p>
+<h3 id="structure"><a class="header" href="#structure">Structure</a></h3>
+<pre><code class="language-text">migrations/
+  ├── 001_initial_schema.up.qail
+  ├── 001_initial_schema.down.qail
+  ├── 002_add_users.up.qail
+  └── 002_add_users.down.qail
+</code></pre>
+<h3 id="applying-migrations"><a class="header" href="#applying-migrations">Applying Migrations</a></h3>
+<pre><code class="language-bash"># Applies all pending .up.qail files
+qail migrate apply
+</code></pre>
+<h3 id="generating-from-sync-rules"><a class="header" href="#generating-from-sync-rules">Generating from Sync Rules</a></h3>
+<p>Hybrid projects can auto-generate migrations for sync triggers:</p>
+<pre><code class="language-bash">qail sync generate
+# Creates: migrations/00X_qail_sync_triggers.up.qail
 </code></pre>
 <h2 id="migration-hints"><a class="header" href="#migration-hints">Migration Hints</a></h2>
 <div class="table-wrapper">
@@ -1755,7 +1917,7 @@ schema.validate()?;
 </li>
 </ol>
 <div style="break-before: page; page-break-before: always;"></div>
-<h1 id="connection-pooling-1"><a class="header" href="#connection-pooling-1">Connection Pooling</a></h1>
+<h1 id="connection-pooling-2"><a class="header" href="#connection-pooling-2">Connection Pooling</a></h1>
 <p>Efficient connection reuse with <code>PgPool</code>.</p>
 <h2 id="configuration-1"><a class="header" href="#configuration-1">Configuration</a></h2>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -1812,6 +1974,76 @@ tokio::spawn(async move {
     // ...
 });
 <span class="boring">}</span></code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="hybrid-architecture"><a class="header" href="#hybrid-architecture">Hybrid Architecture</a></h1>
+<p>QAIL bridges the gap between relational data (PostgreSQL) and vector search (Qdrant) using a robust <strong>Outbox Pattern</strong>.</p>
+<h2 id="overview-1"><a class="header" href="#overview-1">Overview</a></h2>
+<p>Instead of dual-writing to both databases (which is prone to inconsistencies), QAIL uses a transactional outbox approach:</p>
+<ol>
+<li><strong>Transactional Write:</strong> You write to your PostgreSQL tables.</li>
+<li><strong>Auto-Trigger:</strong> A database trigger captures the change and writes a “sync event” to the <code>_qail_queue</code> table <em>in the same transaction</em>.</li>
+<li><strong>Async Worker:</strong> The <code>qail worker</code> daemon polls the queue and reliably syncs data to Qdrant.</li>
+</ol>
+<p><img src="features/images/hybrid_arch.svg" alt="Architecture Diagram"></p>
+<h2 id="setup"><a class="header" href="#setup">Setup</a></h2>
+<h3 id="1-initialize-hybrid-project"><a class="header" href="#1-initialize-hybrid-project">1. Initialize Hybrid Project</a></h3>
+<pre><code class="language-bash">qail init
+# Select "3. Hybrid (PostgreSQL + Qdrant)" when prompted
+</code></pre>
+<p>This creates a <code>migrations/001_qail_queue.up.qail</code> file defining the <code>_qail_queue</code> table.</p>
+<h3 id="2-configure-sync-rules"><a class="header" href="#2-configure-sync-rules">2. Configure Sync Rules</a></h3>
+<p>Define which tables should sync to Qdrant in <code>qail.toml</code>:</p>
+<pre><code class="language-toml">[[sync]]
+source_table = "products"           # Table to watch
+trigger_column = "description"      # Only sync if this column changes (optional optimization)
+target_collection = "products_search" # Qdrant collection name
+embedding_model = "candle:bert-base"  # (Coming soon)
+</code></pre>
+<h3 id="3-generate-triggers"><a class="header" href="#3-generate-triggers">3. Generate Triggers</a></h3>
+<p>Run the command to generate PostgreSQL triggers based on your rules:</p>
+<pre><code class="language-bash">qail sync generate
+# Creates migrations/002_qail_sync_triggers.up.qail
+</code></pre>
+<p>This generates triggers that:</p>
+<ul>
+<li><strong>INSERT:</strong> Adds <code>UPSERT</code> event to queue.</li>
+<li><strong>UPDATE:</strong> Adds <code>UPSERT</code> event (only if <code>trigger_column</code> changed).</li>
+<li><strong>DELETE:</strong> Adds <code>DELETE</code> event to queue.</li>
+</ul>
+<h3 id="4-apply-migrations"><a class="header" href="#4-apply-migrations">4. Apply Migrations</a></h3>
+<p>Apply the migration files to your database:</p>
+<pre><code class="language-bash">qail migrate apply
+</code></pre>
+<h3 id="5-start-worker"><a class="header" href="#5-start-worker">5. Start Worker</a></h3>
+<p>Start the background worker to process the queue:</p>
+<pre><code class="language-bash">qail worker
+</code></pre>
+<h2 id="resilience"><a class="header" href="#resilience">Resilience</a></h2>
+<p>The <code>qail worker</code> is designed for production reliability:</p>
+<ul>
+<li><strong>At-Least-Once Delivery:</strong> Events are only removed from the queue after successful sync to Qdrant.</li>
+<li><strong>Circuit Breaker:</strong> If Qdrant goes down, the worker pauses and retries with exponential backoff (up to 30s).</li>
+<li><strong>Per-Item Error Handling:</strong> A single reduced item won’t crash the worker; it will be marked with an error and retried later.</li>
+<li><strong>Batch Processing:</strong> Updates are sent to Qdrant in batches for high throughput.</li>
+</ul>
+<h2 id="the-_qail_queue-table"><a class="header" href="#the-_qail_queue-table">The <code>_qail_queue</code> Table</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Column</th><th>Type</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>id</code></td><td>SERIAL</td><td>Sequence ID for ordering</td></tr>
+<tr><td><code>ref_table</code></td><td>TEXT</td><td>Source table name</td></tr>
+<tr><td><code>ref_id</code></td><td>TEXT</td><td>Primary key of the source row</td></tr>
+<tr><td><code>operation</code></td><td>TEXT</td><td><code>UPSERT</code> or <code>DELETE</code></td></tr>
+<tr><td><code>payload</code></td><td>JSONB</td><td>Full row data (snapshot)</td></tr>
+<tr><td><code>status</code></td><td>TEXT</td><td><code>pending</code>, <code>processing</code>, <code>failed</code></td></tr>
+<tr><td><code>retry_count</code></td><td>INT</td><td>Number of failed attempts</td></tr>
+<tr><td><code>error_message</code></td><td>TEXT</td><td>Last error message</td></tr>
+</tbody>
+</table>
+</div>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="type-system"><a class="header" href="#type-system">Type System</a></h1>
 <p>QAIL provides type conversion between Rust and PostgreSQL.</p>
@@ -1912,10 +2144,22 @@ impl ToPg for MyType {
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="cli-commands"><a class="header" href="#cli-commands">CLI Commands</a></h1>
 <p>The <code>qail</code> command-line tool.</p>
-<h2 id="installation-1"><a class="header" href="#installation-1">Installation</a></h2>
+<h2 id="installation-2"><a class="header" href="#installation-2">Installation</a></h2>
 <pre><code class="language-bash">cargo install qail
 </code></pre>
 <h2 id="commands"><a class="header" href="#commands">Commands</a></h2>
+<h3 id="qail-init"><a class="header" href="#qail-init"><code>qail init</code></a></h3>
+<p>Initialize a new QAIL project with interactive setup:</p>
+<pre><code class="language-bash">qail init
+# 🪝 QAIL Project Initialization
+# Project name: my_app
+# Select database mode:
+#   1. PostgreSQL only
+#   2. Qdrant only
+#   3. Hybrid (PostgreSQL + Qdrant)
+# ...
+</code></pre>
+<p>Generates <code>qail.toml</code> and necessary migration files.</p>
 <h3 id="qail-parse"><a class="header" href="#qail-parse"><code>qail parse</code></a></h3>
 <p>Parse QAIL text syntax to SQL:</p>
 <pre><code class="language-bash">qail parse "get users fields * where active = true"
@@ -1954,6 +2198,15 @@ qail check old.qail:new.qail
 <p>Rollback migrations:</p>
 <pre><code class="language-bash">qail migrate down old.qail:new.qail postgres://...
 </code></pre>
+<h3 id="qail-migrate-apply"><a class="header" href="#qail-migrate-apply"><code>qail migrate apply</code></a></h3>
+<p>Apply file-based migrations from <code>migrations/</code> directory:</p>
+<pre><code class="language-bash">qail migrate apply
+# → Found 1 migrations to apply
+# ✓ Connected to qail_test
+#   → 001_qail_queue.up.qail... ✓
+# ✓ All migrations applied successfully!
+</code></pre>
+<p>Reads <code>qail.toml</code> for database connection if not provided via <code>--url</code>.</p>
 <h3 id="qail-migrate-plan"><a class="header" href="#qail-migrate-plan"><code>qail migrate plan</code></a></h3>
 <p>Preview migration SQL without executing (dry-run):</p>
 <pre><code class="language-bash">qail migrate plan old.qail:new.qail
@@ -2027,6 +2280,27 @@ qail lint schema.qail --strict
 </tbody>
 </table>
 </div>
+<h3 id="qail-sync-generate"><a class="header" href="#qail-sync-generate"><code>qail sync generate</code></a></h3>
+<p>Generate trigger migrations from <code>[[sync]]</code> rules in <code>qail.toml</code>:</p>
+<pre><code class="language-bash">qail sync generate
+# → Generating sync triggers...
+# ✓ Created migrations/002_qail_sync_triggers.up.qail
+</code></pre>
+<p>Used in Hybrid mode to automatically create PostgreSQL triggers that push changes to the <code>_qail_queue</code> table.</p>
+<h3 id="qail-worker"><a class="header" href="#qail-worker"><code>qail worker</code></a></h3>
+<p>Start the background worker to sync data from PostgreSQL to Qdrant:</p>
+<pre><code class="language-bash">qail worker --interval 1000 --batch 100
+# 👷 QAIL Hybrid Worker v0.14.12
+# 🔌 Qdrant: Connected (localhost:6334)
+# 🐘 Postgres: Connected (5 connections)
+# 
+# [2026-01-02 10:00:00] 🔄 Syncing... (pending: 0)
+</code></pre>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>--interval &lt;ms&gt;</code>: Polling interval (default: 1000ms)</li>
+<li><code>--batch &lt;size&gt;</code>: Batch size for sync (default: 100)</li>
+</ul>
 <h3 id="qail-migrate-status"><a class="header" href="#qail-migrate-status"><code>qail migrate status</code></a></h3>
 <p>View migration history for a database:</p>
 <pre><code class="language-bash">qail migrate status postgres://...

@@ -325,36 +325,58 @@ import BaseLayout from "../layouts/BaseLayout.astro";
             </section>
 
             <section>
-                <h2>🚀 In Progress: v0.9.0</h2>
+                <h2>🚀 In Progress: v0.15.0</h2>
                 <p>
-                    <strong>Theme:</strong> "AST to Bytes, No Strings Attached"
+                    <strong>Theme:</strong> "Performance & Polish"
                 </p>
 
                 <div class="roadmap-section">
                     <h3>
-                        <span class="badge badge-progress">In Progress</span> Wire
-                        Protocol
+                        <span class="badge badge-done">Done</span> Wire Protocol
                     </h3>
                     <ul class="task-list">
                         <li>
-                            <span class="check check-pending">○</span> Extended Query
+                            <span class="check check-done">✓</span> Extended Query
                             Protocol (Parse/Bind/Execute)
                         </li>
                         <li>
-                            <span class="check check-pending">○</span> Parameter binding
+                            <span class="check check-done">✓</span> Parameter binding
                             in wire protocol
                         </li>
                         <li>
-                            <span class="check check-pending">○</span> Row decoding
-                            (bytes → typed values)
+                            <span class="check check-done">✓</span> Row decoding (bytes
+                            → typed values)
                         </li>
                         <li>
-                            <span class="check check-pending">○</span> Connection
-                            pooling skeleton
+                            <span class="check check-done">✓</span> Connection pooling
+                            (PostgreSQL & Qdrant)
                         </li>
                         <li>
-                            <span class="check check-pending">○</span> Transaction
-                            support (BEGIN/COMMIT/ROLLBACK)
+                            <span class="check check-done">✓</span> Transaction support
+                            (BEGIN/COMMIT/ROLLBACK)
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="roadmap-section">
+                    <h3>
+                        <span class="badge badge-done">Done</span> Hybrid Architecture
+                    </h3>
+                    <ul class="task-list">
+                        <li>
+                            <span class="check check-done">✓</span> Qdrant Driver
+                            (Zero-Copy gRPC)
+                        </li>
+                        <li>
+                            <span class="check check-done">✓</span> Sync Worker (PostgreSQL
+                            → Qdrant)
+                        </li>
+                        <li>
+                            <span class="check check-done">✓</span> File-Based Migrations
+                        </li>
+                        <li>
+                            <span class="check check-done">✓</span> Automatic Trigger
+                            Generation
                         </li>
                     </ul>
                 </div>

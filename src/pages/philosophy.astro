@@ -171,6 +171,58 @@ const qailCode = `Qail::get("posts")
             </section>
 
             <section>
+                <h2>The Vision: Facts, Meaning, and Time</h2>
+                <blockquote
+                    class="manifesto-quote"
+                    style="border-left-color: var(--primary); background: rgba(99, 102, 241, 0.08); font-size: 1.1rem; text-align: center;"
+                >
+                    "Postgres stores facts, Qdrant stores meaning, Redis stores
+                    time — QAIL decides."
+                </blockquote>
+                <p>
+                    Modern applications don't run on a single database. They
+                    need
+                    <strong>specialized engines</strong> for specialized workloads:
+                </p>
+                <table style="width: 100%; margin: 1rem 0;">
+                    <thead>
+                        <tr>
+                            <th>Engine</th>
+                            <th>Role</th>
+                            <th>Examples</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>PostgreSQL</strong></td>
+                            <td
+                                >Source of truth. ACID transactions. Relational
+                                data.</td
+                            >
+                            <td>Users, orders, inventory</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Qdrant</strong></td>
+                            <td
+                                >Semantic understanding. Vector embeddings. AI
+                                search.</td
+                            >
+                            <td>Recommendations, similarity, RAG</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Redis</strong></td>
+                            <td>Ephemeral state. Caching. TTL-managed data.</td>
+                            <td>Sessions, rate limits, queues</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p>
+                    QAIL is the <strong>decision layer</strong> that unifies these
+                    engines. One AST. Three powerhouses. Facts + Meaning + Time.
+                </p>
+            </section>
+
+            <section>
                 <h2>The Architecture: Native Power</h2>
                 <p>
                     QAIL is written in <strong>Pure Rust</strong>. It exposes:

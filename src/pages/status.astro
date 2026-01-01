@@ -36,7 +36,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 │           Async I/O, Connection Pooling (tokio)             │
 │                                                             │
 │                 Layer 4: Reality (databases)                │
-│           PostgreSQL, SQLite, MongoDB, DynamoDB             │
+│              PostgreSQL, Qdrant, Redis                       │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
 </pre>
@@ -172,21 +172,40 @@ import BaseLayout from "../layouts/BaseLayout.astro";
                             </tr>
                             <tr>
                                 <td class="feature-name"
-                                    ><img src="/icons/sqlite.svg" width="20" /> SQLite</td
+                                    ><img src="/icons/qdrant.svg" width="20" /> Qdrant</td
+                                >
+                                <td class="status-cell"
+                                    ><span class="status-badge partial"
+                                        >Alpha</span
+                                    ></td
+                                >
+                                <td class="status-cell"
+                                    ><span class="status-badge partial"
+                                        >gRPC</span
+                                    ></td
+                                >
+                                <td class="status-cell"
+                                    ><span class="status-badge full">100%</span
+                                    ></td
+                                >
+                            </tr>
+                            <tr>
+                                <td class="feature-name"
+                                    ><img src="/icons/redis.svg" width="20" /> Redis</td
                                 >
                                 <td class="status-cell"
                                     ><span class="status-badge planned"
-                                        >v1.0</span
+                                        >Planned</span
                                     ></td
                                 >
                                 <td class="status-cell"
                                     ><span class="status-badge planned"
-                                        >v1.0</span
+                                        >RESP</span
                                     ></td
                                 >
                                 <td class="status-cell"
                                     ><span class="status-badge planned"
-                                        >v1.0</span
+                                        >Planned</span
                                     ></td
                                 >
                             </tr>
@@ -300,7 +319,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
                     AST → SQL String (for compatibility, WASM playground)
                 </p>
                 <div
-                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; max-width: 800px; margin: 0 auto;"
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; max-width: 400px; margin: 0 auto;"
                 >
                     <div
                         class="feature-card"
@@ -312,48 +331,6 @@ import BaseLayout from "../layouts/BaseLayout.astro";
                             style="margin-bottom: 8px;"
                         />
                         <div style="font-size: 0.85rem;">PostgreSQL</div>
-                        <span class="status-badge full" style="margin-top: 8px;"
-                            >✓</span
-                        >
-                    </div>
-                    <div
-                        class="feature-card"
-                        style="padding: 16px; text-align: center;"
-                    >
-                        <img
-                            src="/icons/sqlite.svg"
-                            width="24"
-                            style="margin-bottom: 8px;"
-                        />
-                        <div style="font-size: 0.85rem;">SQLite</div>
-                        <span class="status-badge full" style="margin-top: 8px;"
-                            >✓</span
-                        >
-                    </div>
-                    <div
-                        class="feature-card"
-                        style="padding: 16px; text-align: center;"
-                    >
-                        <img
-                            src="/icons/mongodb.svg"
-                            width="24"
-                            style="margin-bottom: 8px;"
-                        />
-                        <div style="font-size: 0.85rem;">MongoDB</div>
-                        <span class="status-badge full" style="margin-top: 8px;"
-                            >✓</span
-                        >
-                    </div>
-                    <div
-                        class="feature-card"
-                        style="padding: 16px; text-align: center;"
-                    >
-                        <img
-                            src="/icons/dynamodb.svg"
-                            width="24"
-                            style="margin-bottom: 8px;"
-                        />
-                        <div style="font-size: 0.85rem;">DynamoDB</div>
                         <span class="status-badge full" style="margin-top: 8px;"
                             >✓</span
                         >
@@ -376,7 +353,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
                 <p
                     style="text-align: center; color: var(--text-muted); margin-top: 1.5rem; font-size: 0.85rem;"
                 >
-                    Note: Only databases with open protocols are fully supported
+                    Used for WASM playground and compatibility layers
                 </p>
             </section>
 

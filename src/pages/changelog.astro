@@ -15,12 +15,98 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
     <main class="page-content">
         <div class="container" style="max-width: 900px;">
-            <!-- v0.14.11 -->
+            <!-- Latest Release -->
             <section class="release-section">
                 <div class="release-header">
-                    <h2>v0.14.11</h2>
-                    <span class="release-date">January 1, 2026</span>
                     <span class="status-badge full">Latest</span>
+                </div>
+
+                <div class="release-highlight">
+                    <span style="font-size: 1.5rem;">🎯</span>
+                    <strong>Unified Qail AST</strong> — "QAIL Decides" across all
+                    databases
+                </div>
+
+                <h4>New: qail-redis with Unified API</h4>
+                <ul class="changelog-list">
+                    <li>
+                        <strong>Same Qail Pattern:</strong>
+                        <code>Qail::redis_get()</code>, <code
+                            >Qail::redis_set().redis_ex(3600)</code
+                        >
+                    </li>
+                    <li>
+                        <strong>Three Backends:</strong>
+                        PostgreSQL (facts) + Qdrant (meaning) + Redis (time)
+                    </li>
+                    <li>
+                        <strong>Core Integration:</strong>
+                        Redis actions in <code>Action</code> enum, <code
+                            >RedisExt</code
+                        > trait
+                    </li>
+                    <li>
+                        <strong>Native RESP3:</strong>
+                        Direct wire encoding, connection pooling, 16 tests passing
+                    </li>
+                </ul>
+            </section>
+
+            <!-- v0.14.13 -->
+            <section class="release-section">
+                <div class="release-header">
+                    <h2>v0.14.13</h2>
+                    <span class="release-date">January 2, 2026</span>
+                </div>
+
+                <div class="release-highlight">
+                    <span style="font-size: 1.5rem;">🎯</span>
+                    <strong>Unified Qail AST</strong> — Same API across PostgreSQL,
+                    Qdrant, Redis
+                </div>
+
+                <h4>qail-redis: Unified API</h4>
+                <ul class="changelog-list">
+                    <li>
+                        <strong>Qail Constructors:</strong>
+                        <code>Qail::redis_get()</code>, <code
+                            >Qail::redis_set()</code
+                        >, <code>Qail::redis_incr()</code>
+                    </li>
+                    <li>
+                        <strong>RedisExt Trait:</strong>
+                        <code>.redis_ex(seconds)</code>, <code>.redis_nx()</code
+                        >, <code>.redis_xx()</code>
+                    </li>
+                    <li>
+                        <strong>Core Integration:</strong>
+                        Redis actions added to <code>Action</code> enum
+                    </li>
+                    <li>
+                        <strong>Native RESP3:</strong>
+                        Direct wire encoding, connection pooling
+                    </li>
+                </ul>
+
+                <h4>Vision: "QAIL Decides"</h4>
+                <ul class="changelog-list">
+                    <li>
+                        <code>Qail::get("users")</code> — PostgreSQL (facts)
+                    </li>
+                    <li>
+                        <code>Qail::search("products")</code> — Qdrant (meaning)
+                    </li>
+                    <li>
+                        <code>Qail::redis_get("session")</code> — Redis (time)
+                    </li>
+                </ul>
+            </section>
+
+            <!-- v0.14.12 -->
+            <section class="release-section">
+                <div class="release-header">
+                    <h2>v0.14.12</h2>
+                    <span class="release-date">January 2, 2026</span>
                 </div>
 
                 <div class="release-highlight">
@@ -503,86 +589,86 @@ import BaseLayout from "../layouts/BaseLayout.astro";
                 </p>
             </section>
         </div>
+
+        <style>
+            .release-section {
+                background: var(--surface-2);
+                border-radius: 12px;
+                padding: 2rem;
+                margin-bottom: 2rem;
+            }
+
+            .release-header {
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+                margin-bottom: 1.5rem;
+                flex-wrap: wrap;
+            }
+
+            .release-header h2 {
+                margin: 0;
+                font-size: 1.5rem;
+                font-family: "JetBrains Mono", monospace;
+            }
+
+            .release-date {
+                color: var(--text-muted);
+                font-size: 0.9rem;
+            }
+
+            .release-highlight {
+                background: linear-gradient(
+                    135deg,
+                    rgba(59, 130, 246, 0.1),
+                    rgba(168, 85, 247, 0.1)
+                );
+                border: 1px solid rgba(59, 130, 246, 0.3);
+                border-radius: 8px;
+                padding: 1rem;
+                margin-bottom: 1.5rem;
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+            }
+
+            .release-section h4 {
+                color: var(--accent);
+                margin: 1.5rem 0 0.75rem;
+                font-size: 1rem;
+            }
+
+            .changelog-list {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+            }
+
+            .changelog-list li {
+                padding: 0.5rem 0;
+                padding-left: 1.5rem;
+                position: relative;
+                border-bottom: 1px solid var(--surface-3);
+            }
+
+            .changelog-list li:last-child {
+                border-bottom: none;
+            }
+
+            .changelog-list li::before {
+                content: "→";
+                position: absolute;
+                left: 0;
+                color: var(--accent);
+            }
+
+            .changelog-list code {
+                background: var(--surface-3);
+                padding: 0.15rem 0.4rem;
+                border-radius: 4px;
+                font-size: 0.85rem;
+                font-family: "JetBrains Mono", monospace;
+            }
+        </style>
     </main>
 </BaseLayout>
-
-<style>
-    .release-section {
-        background: var(--surface-2);
-        border-radius: 12px;
-        padding: 2rem;
-        margin-bottom: 2rem;
-    }
-
-    .release-header {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-        flex-wrap: wrap;
-    }
-
-    .release-header h2 {
-        margin: 0;
-        font-size: 1.5rem;
-        font-family: "JetBrains Mono", monospace;
-    }
-
-    .release-date {
-        color: var(--text-muted);
-        font-size: 0.9rem;
-    }
-
-    .release-highlight {
-        background: linear-gradient(
-            135deg,
-            rgba(59, 130, 246, 0.1),
-            rgba(168, 85, 247, 0.1)
-        );
-        border: 1px solid rgba(59, 130, 246, 0.3);
-        border-radius: 8px;
-        padding: 1rem;
-        margin-bottom: 1.5rem;
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-    }
-
-    .release-section h4 {
-        color: var(--accent);
-        margin: 1.5rem 0 0.75rem;
-        font-size: 1rem;
-    }
-
-    .changelog-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-
-    .changelog-list li {
-        padding: 0.5rem 0;
-        padding-left: 1.5rem;
-        position: relative;
-        border-bottom: 1px solid var(--surface-3);
-    }
-
-    .changelog-list li:last-child {
-        border-bottom: none;
-    }
-
-    .changelog-list li::before {
-        content: "→";
-        position: absolute;
-        left: 0;
-        color: var(--accent);
-    }
-
-    .changelog-list code {
-        background: var(--surface-3);
-        padding: 0.15rem 0.4rem;
-        border-radius: 4px;
-        font-size: 0.85rem;
-        font-family: "JetBrains Mono", monospace;
-    }
-</style>
