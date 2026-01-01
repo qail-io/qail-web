@@ -15,12 +15,88 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
     <main class="page-content">
         <div class="container" style="max-width: 900px;">
+            <!-- v0.14.11 -->
+            <section class="release-section">
+                <div class="release-header">
+                    <h2>v0.14.11</h2>
+                    <span class="release-date">January 1, 2026</span>
+                    <span class="status-badge full">Latest</span>
+                </div>
+
+                <div class="release-highlight">
+                    <span style="font-size: 1.5rem;">⚡</span>
+                    <strong>4x Qdrant Speedup</strong> - HTTP/2 Pipelining & Pooling
+                </div>
+
+                <h4>Performance</h4>
+                <ul class="changelog-list">
+                    <li>
+                        <strong>HTTP/2 Pipelining:</strong>
+                        <code>search_batch()</code> multiplexes requests (4.00x faster)
+                    </li>
+                    <li>
+                        <strong>Connection Pooling:</strong>
+                        <code>QdrantPool</code> with semaphore concurrency (1.46x
+                        faster)
+                    </li>
+                    <li>
+                        <strong>Zero-Copy:</strong> Buffer splitting replaces cloning
+                        for true zero-alloc
+                    </li>
+                </ul>
+            </section>
+
+            <!-- v0.14.10 -->
+            <section class="release-section">
+                <div class="release-header">
+                    <h2>v0.14.10</h2>
+                    <span class="release-date">January 1, 2026</span>
+                </div>
+
+                <h4>New Crate: qail-qdrant</h4>
+                <ul class="changelog-list">
+                    <li>
+                        <strong>Zero-Copy gRPC Driver:</strong> Direct protobuf wire
+                        encoding (1.17x faster than official)
+                    </li>
+                    <li>
+                        <strong>REST Driver:</strong> Full Point/Payload API support
+                    </li>
+                    <li>
+                        <strong>Vector Support:</strong>
+                        <code>Value::Vector(Vec&lt;f32&gt;)</code> AST extension
+                    </li>
+                </ul>
+            </section>
+
+            <!-- v0.14.9 -->
+            <section class="release-section">
+                <div class="release-header">
+                    <h2>v0.14.9</h2>
+                    <span class="release-date">January 1, 2026</span>
+                </div>
+
+                <h4>Security</h4>
+                <ul class="changelog-list">
+                    <li>
+                        <strong>PG:</strong> Reject literal NULL bytes (0x00) in <code
+                            >execute_raw()</code
+                        >
+                    </li>
+                    <li>
+                        <strong>PG:</strong>
+                        <code>encode_value()</code> now returns <code
+                            >Result</code
+                        > for safe error handling
+                    </li>
+                </ul>
+            </section>
+
             <!-- v0.14.8 -->
             <section class="release-section">
                 <div class="release-header">
                     <h2>v0.14.8</h2>
                     <span class="release-date">January 1, 2026</span>
-                    <span class="status-badge full">Latest</span>
                 </div>
 
                 <div class="release-highlight">
