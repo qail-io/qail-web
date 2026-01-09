@@ -23,32 +23,74 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
                 <div class="release-highlight">
                     <span style="font-size: 1.5rem;">🎯</span>
-                    <strong>Unified Qail AST</strong> — "QAIL Decides" across all
-                    databases
+                    <strong>Type-Safe Seeding</strong> — <code>qail exec</code> for
+                    AST-native database execution
                 </div>
 
-                <h4>New: qail-redis with Unified API</h4>
+                <h4>New: qail exec Command</h4>
                 <ul class="changelog-list">
                     <li>
-                        <strong>Same Qail Pattern:</strong>
-                        <code>Qail::redis_get()</code>, <code
-                            >Qail::redis_set().redis_ex(3600)</code
+                        <strong>Type-Safe Execution:</strong>
+                        <code>qail exec "get::users" --url postgres://...</code>
+                    </li>
+                    <li>
+                        <strong>File-Based Seeding:</strong>
+                        <code>qail exec -f seed.qail --url postgres://...</code>
+                    </li>
+                    <li>
+                        <strong>Transaction Support:</strong>
+                        <code>--tx</code> wraps all statements with auto-rollback
+                        on error
+                    </li>
+                    <li>
+                        <strong>Dry-Run Mode:</strong>
+                        <code>--dry-run</code> previews generated SQL without executing
+                    </li>
+                    <li>
+                        <strong>Batch Execution:</strong>
+                        Multiple QAIL statements per file (one per line)
+                    </li>
+                </ul>
+            </section>
+
+            <!-- v0.14.18 -->
+            <section class="release-section">
+                <div class="release-header">
+                    <h2>v0.14.18</h2>
+                    <span class="release-date">January 9, 2026</span>
+                </div>
+
+                <div class="release-highlight">
+                    <span style="font-size: 1.5rem;">🎯</span>
+                    <strong>Type-Safe Seeding</strong> — qail exec for database operations
+                </div>
+
+                <h4>qail exec Command</h4>
+                <ul class="changelog-list">
+                    <li>
+                        <strong>Type-Safe:</strong>
+                        Uses <code>driver.execute(ast)</code> — no raw SQL
+                    </li>
+                    <li>
+                        <strong>QAIL Syntax:</strong>
+                        <code
+                            >qail exec "get users fields id where active = true"</code
                         >
                     </li>
                     <li>
-                        <strong>Three Backends:</strong>
-                        PostgreSQL (facts) + Qdrant (meaning) + Redis (time)
+                        <strong>Batch Support:</strong>
+                        Execute multiple statements from <code>.qail</code> files
                     </li>
                     <li>
-                        <strong>Core Integration:</strong>
-                        Redis actions in <code>Action</code> enum, <code
-                            >RedisExt</code
-                        > trait
+                        <strong>Transaction:</strong>
+                        <code>--tx</code> flag with automatic rollback on error
                     </li>
-                    <li>
-                        <strong>Native RESP3:</strong>
-                        Direct wire encoding, connection pooling, 16 tests passing
-                    </li>
+                </ul>
+
+                <h4>Documentation</h4>
+                <ul class="changelog-list">
+                    <li>Updated CLI doc comments to v2 QAIL syntax examples</li>
+                    <li>Added <code>qail exec</code> to CLI reference docs</li>
                 </ul>
             </section>
 
