@@ -507,6 +507,84 @@ const qailCode = `Qail::get("posts")
                     fastest, safest way to talk to your database, use QAIL."
                 </blockquote>
             </section>
+
+            <section>
+                <h2>🚀 The Future: QAIL Gateway</h2>
+                <p>
+                    Today, QAIL is a <strong>query language and driver</strong>.
+                    Tomorrow, it will be a <strong>complete data layer</strong> that
+                    can replace REST APIs and GraphQL.
+                </p>
+
+                <blockquote
+                    class="manifesto-quote"
+                    style="border-left-color: #22c55e; background: rgba(34, 197, 94, 0.08);"
+                >
+                    "What if your client could speak QAIL binary directly to
+                    your database? No JSON serialization. No REST overhead.
+                    Native binary protocol."
+                </blockquote>
+
+                <h3>The Vision</h3>
+                <table style="width: 100%; margin: 1rem 0;">
+                    <thead>
+                        <tr>
+                            <th>Layer</th>
+                            <th>Today</th>
+                            <th>Tomorrow</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Client</td>
+                            <td>REST JSON / GraphQL</td>
+                            <td><strong>QAIL AST (binary)</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Server</td>
+                            <td>Your API code</td>
+                            <td><strong>QAIL Gateway</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Database</td>
+                            <td>PostgreSQL</td>
+                            <td>Postgres + Qdrant + Redis</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>What Makes It Different</h3>
+                <ul>
+                    <li>
+                        <strong>Binary wire format</strong> — Not JSON over HTTP,
+                        but QAIL AST binary
+                    </li>
+                    <li>
+                        <strong>Row-level security</strong> — Policies defined in
+                        schema.qail
+                    </li>
+                    <li>
+                        <strong>~1ms latency</strong> — vs ~10ms for REST/GraphQL
+                    </li>
+                    <li>
+                        <strong>Tiny client SDK</strong> — ~5KB vs 50KB+ for GraphQL
+                    </li>
+                </ul>
+
+                <p
+                    style="text-align: center; color: var(--text-muted); margin-top: 2rem;"
+                >
+                    <em
+                        >This is the long-term vision. Today, QAIL is
+                        production-ready as a query language and driver—powering
+                        real applications like
+                        <a
+                            href="https://sailtix.com"
+                            style="color: var(--primary);">Sailtix</a
+                        >.</em
+                    >
+                </p>
+            </section>
         </div>
     </main>
 </BaseLayout>

@@ -37,10 +37,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "coal";
-            window.path_to_searchindex_js = "searchindex-f5d45903.js";
+            window.path_to_searchindex_js = "searchindex-daef3368.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-d4490c5e.js"></script>
+        <script src="toc-2795dc80.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -2142,6 +2142,137 @@ impl ToPg for MyType {
 }
 <span class="boring">}</span></code></pre>
 <div style="break-before: page; page-break-before: always;"></div>
+<h1 id="compile-time-type-safety-1"><a class="header" href="#compile-time-type-safety-1">Compile-Time Type Safety</a></h1>
+<blockquote>
+<p><strong>New in v0.14.20</strong> — Full Diesel-like type checking for QAIL queries</p>
+</blockquote>
+<p>QAIL now supports compile-time type validation through generated schema files, similar to Diesel but with AST-native architecture.</p>
+<h2 id="quick-start-2"><a class="header" href="#quick-start-2">Quick Start</a></h2>
+<h3 id="1-generate-schema"><a class="header" href="#1-generate-schema">1. Generate Schema</a></h3>
+<pre><code class="language-bash">qail types schema.qail -o src/schema.rs
+</code></pre>
+<h3 id="2-use-type-safe-builders"><a class="header" href="#2-use-type-safe-builders">2. Use Type-Safe Builders</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use crate::schema::users;
+
+let query = Qail::get(users::TABLE)
+    .typed_column(users::id())
+    .typed_column(users::email())
+    .typed_eq(users::active(), true)  // Compile-time: active must be bool
+    .typed_gt(users::age(), 18);       // Compile-time: age must be numeric
+<span class="boring">}</span></code></pre>
+<h2 id="schema-generation"><a class="header" href="#schema-generation">Schema Generation</a></h2>
+<h3 id="input-schemaqail"><a class="header" href="#input-schemaqail">Input: <code>schema.qail</code></a></h3>
+<pre><code class="language-qail">table users {
+    id          uuid primary_key
+    email       text not_null unique
+    name        text
+    active      boolean default(true)
+    age         integer
+    created_at  timestamptz default(now())
+}
+</code></pre>
+<h3 id="output-schemars"><a class="header" href="#output-schemars">Output: <code>schema.rs</code></a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub mod users {
+    use qail_core::typed::{TypedColumn, Table};
+    
+    pub const TABLE: &amp;str = "users";
+    
+    pub fn id() -&gt; TypedColumn&lt;uuid::Uuid&gt; {
+        TypedColumn::new("id")
+    }
+    
+    pub fn email() -&gt; TypedColumn&lt;String&gt; {
+        TypedColumn::new("email")
+    }
+    
+    pub fn active() -&gt; TypedColumn&lt;bool&gt; {
+        TypedColumn::new("active")
+    }
+    
+    pub fn age() -&gt; TypedColumn&lt;i32&gt; {
+        TypedColumn::new("age")
+    }
+}
+<span class="boring">}</span></code></pre>
+<h2 id="type-safe-methods"><a class="header" href="#type-safe-methods">Type-Safe Methods</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Method</th><th>Description</th><th>Example</th></tr>
+</thead>
+<tbody>
+<tr><td><code>typed_eq(col, val)</code></td><td>Type-safe equality</td><td><code>typed_eq(users::active(), true)</code></td></tr>
+<tr><td><code>typed_ne(col, val)</code></td><td>Type-safe not-equal</td><td><code>typed_ne(users::status(), "banned")</code></td></tr>
+<tr><td><code>typed_gt(col, val)</code></td><td>Type-safe greater-than</td><td><code>typed_gt(users::age(), 18)</code></td></tr>
+<tr><td><code>typed_lt(col, val)</code></td><td>Type-safe less-than</td><td><code>typed_lt(users::balance(), 0.0)</code></td></tr>
+<tr><td><code>typed_gte(col, val)</code></td><td>Greater-than or equal</td><td><code>typed_gte(users::score(), 100)</code></td></tr>
+<tr><td><code>typed_lte(col, val)</code></td><td>Less-than or equal</td><td><code>typed_lte(users::priority(), 5)</code></td></tr>
+<tr><td><code>typed_column(col)</code></td><td>Add typed column</td><td><code>typed_column(users::email())</code></td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="sql-to-rust-type-mapping"><a class="header" href="#sql-to-rust-type-mapping">SQL to Rust Type Mapping</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>SQL Type</th><th>Rust Type</th></tr>
+</thead>
+<tbody>
+<tr><td><code>uuid</code></td><td><code>uuid::Uuid</code></td></tr>
+<tr><td><code>text</code>, <code>varchar</code></td><td><code>String</code></td></tr>
+<tr><td><code>integer</code>, <code>int4</code></td><td><code>i32</code></td></tr>
+<tr><td><code>bigint</code>, <code>int8</code></td><td><code>i64</code></td></tr>
+<tr><td><code>smallint</code>, <code>int2</code></td><td><code>i16</code></td></tr>
+<tr><td><code>boolean</code>, <code>bool</code></td><td><code>bool</code></td></tr>
+<tr><td><code>real</code>, <code>float4</code></td><td><code>f32</code></td></tr>
+<tr><td><code>double precision</code>, <code>float8</code></td><td><code>f64</code></td></tr>
+<tr><td><code>numeric</code>, <code>decimal</code></td><td><code>f64</code></td></tr>
+<tr><td><code>timestamptz</code>, <code>timestamp</code></td><td><code>chrono::DateTime&lt;Utc&gt;</code></td></tr>
+<tr><td><code>date</code></td><td><code>chrono::NaiveDate</code></td></tr>
+<tr><td><code>jsonb</code>, <code>json</code></td><td><code>serde_json::Value</code></td></tr>
+<tr><td><code>bytea</code></td><td><code>Vec&lt;u8&gt;</code></td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="reserved-keywords"><a class="header" href="#reserved-keywords">Reserved Keywords</a></h2>
+<p>Rust reserved keywords are automatically escaped:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Column Name</th><th>Generated Function</th></tr>
+</thead>
+<tbody>
+<tr><td><code>type</code></td><td><code>fn r#type()</code></td></tr>
+<tr><td><code>fn</code></td><td><code>fn r#fn()</code></td></tr>
+<tr><td><code>struct</code></td><td><code>fn r#struct()</code></td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="compile-time-errors"><a class="header" href="#compile-time-errors">Compile-Time Errors</a></h2>
+<p>Type mismatches are caught at compile time:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ✅ Compiles - active is bool
+query.typed_eq(users::active(), true);
+
+// ❌ Compile error - age is i32, not string
+query.typed_eq(users::age(), "eighteen");
+// error[E0277]: the trait bound `&amp;str: ColumnValue&lt;i32&gt;` is not satisfied
+<span class="boring">}</span></code></pre>
+<h2 id="integration-with-existing-code"><a class="header" href="#integration-with-existing-code">Integration with Existing Code</a></h2>
+<p>Type-safe methods can be mixed with dynamic methods:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let query = Qail::get(users::TABLE)
+    .typed_eq(users::active(), true)  // Type-safe
+    .filter("created_at", Operator::Gte, "2024-01-01")  // Dynamic
+    .typed_column(users::email());
+<span class="boring">}</span></code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
 <h1 id="cli-commands"><a class="header" href="#cli-commands">CLI Commands</a></h1>
 <p>The <code>qail</code> command-line tool.</p>
 <h2 id="installation-2"><a class="header" href="#installation-2">Installation</a></h2>
@@ -2313,13 +2444,13 @@ qail lint schema.qail --strict
 <p>Execute type-safe QAIL statements against a database:</p>
 <pre><code class="language-bash"># Inline QAIL execution
 qail exec "get users fields id, email where active = true" --url postgres://...
-qail exec "add::users" --url postgres://... --tx
+qail exec "add users fields name, email values 'Alice', 'a@test.com'" --url postgres://... --tx
 
 # From file
 qail exec -f seed.qail --url postgres://...
 
 # Dry-run (preview generated SQL)
-qail exec "get::users" --dry-run
+qail exec "get users fields *" --dry-run
 # 📋 Parsed 1 QAIL statement(s)
 # 🔍 DRY-RUN MODE - Generated SQL:
 # Statement 1:
