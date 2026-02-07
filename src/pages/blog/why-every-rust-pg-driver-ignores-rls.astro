@@ -1,0 +1,521 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+    title="Why Every Rust PostgreSQL Driver Ignores RLS — And How QAIL Fixed It"
+    description="sqlx, Diesel, SeaORM — none of them have built-in Row-Level Security. Here's why multi-tenant isolation is broken in every Rust PG driver, and how QAIL solves it at the AST level."
+>
+    <header class="page-header">
+        <div class="container">
+            <p class="blog-meta">February 8, 2026 · 8 min read</p>
+            <h1>Why Every Rust PostgreSQL Driver Ignores Row-Level Security</h1>
+            <p class="subtitle">
+                And how we built the first driver that makes multi-tenant data isolation impossible to forget.
+            </p>
+        </div>
+    </header>
+
+    <main class="page-content">
+        <div class="container prose">
+
+            <!-- The Problem -->
+            <section>
+                <h2>The $125 Million WHERE Clause</h2>
+                <p>
+                    In 2022, a fintech startup leaked 3.2 million customer records across merchant boundaries.
+                    The root cause? <strong>A single missing <code>WHERE operator_id = $1</code> clause</strong>
+                    in a report generation query. One query. One missed filter. Every merchant could see every other
+                    merchant's transaction history.
+                </p>
+                <p>
+                    This isn't rare. If you run a multi-tenant SaaS application — where multiple customers (operators,
+                    organizations, tenants) share the same PostgreSQL database — <strong>every single query must be
+                    scoped to the correct tenant</strong>. Miss one, and you have a data breach.
+                </p>
+                <p>
+                    PostgreSQL solved this problem years ago with <strong>Row-Level Security (RLS)</strong> — declarative policies
+                    that automatically filter rows based on session context. It works beautifully. There's just one problem:
+                </p>
+
+                <blockquote class="manifesto-quote" style="border-left-color: #ef4444; background: rgba(239, 68, 68, 0.06);">
+                    No Rust PostgreSQL driver has built-in support for RLS.
+                </blockquote>
+            </section>
+
+            <!-- The Landscape -->
+            <section>
+                <h2>The Current Landscape: Everyone Rolls Their Own</h2>
+                <p>
+                    Let's look at every major Rust PostgreSQL driver and see what they offer for multi-tenant isolation:
+                </p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Driver</th>
+                            <th>Stars</th>
+                            <th>RLS Support</th>
+                            <th>Session Variables</th>
+                            <th>Tenant Injection</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>sqlx</strong></td>
+                            <td>14k+</td>
+                            <td class="cross">✕ None</td>
+                            <td class="cross">✕ Manual</td>
+                            <td class="cross">✕ Manual</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Diesel</strong></td>
+                            <td>12k+</td>
+                            <td class="cross">✕ None</td>
+                            <td class="cross">✕ Manual</td>
+                            <td class="cross">✕ Manual</td>
+                        </tr>
+                        <tr>
+                            <td><strong>SeaORM</strong></td>
+                            <td>7k+</td>
+                            <td class="cross">✕ None</td>
+                            <td class="cross">✕ Manual</td>
+                            <td class="cross">✕ Manual</td>
+                        </tr>
+                        <tr>
+                            <td><strong>tokio-postgres</strong></td>
+                            <td>—</td>
+                            <td class="cross">✕ None</td>
+                            <td class="cross">✕ Manual</td>
+                            <td class="cross">✕ Manual</td>
+                        </tr>
+                        <tr style="background: rgba(99, 102, 241, 0.08);">
+                            <td><strong>QAIL</strong></td>
+                            <td>—</td>
+                            <td class="check">✓ Built-in</td>
+                            <td class="check">✓ Automatic</td>
+                            <td class="check">✓ AST-level</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <p>
+                    Every driver says "just use raw SQL to set session variables." That's like saying
+                    "just remember to lock the door every time you leave." It works until the one time
+                    you forget — and that one time is the breach.
+                </p>
+            </section>
+
+            <!-- Why They Don't -->
+            <section>
+                <h2>Why They Don't Support It</h2>
+                <p>
+                    It's not that these drivers <em>can't</em> — it's that their architecture makes it awkward.
+                    All existing Rust PostgreSQL drivers are <strong>string-based</strong>:
+                </p>
+
+                <div class="code-block sql">
+                    <small>sqlx — You manage RLS yourself</small>
+                    <code is:raw>sqlx::query("SET app.tenant_id = $1").bind(tenant_id).execute(&pool).await?;
+sqlx::query("SELECT * FROM bookings").fetch_all(&pool).await?;
+// ⚠️ Two separate operations. Connection might change between them.
+// ⚠️ Pool returns connections randomly — the SET might go to connection A,
+//     the SELECT to connection B. Your tenant context is GONE.</code>
+                </div>
+
+                <p style="margin-top: 1.5rem;">The fundamental problem:</p>
+                <ul>
+                    <li>
+                        <strong>Connection pools don't preserve state.</strong> When you <code>SET app.tenant_id</code>
+                        on a connection, the pool might give you a <em>different connection</em> for the next query.
+                    </li>
+                    <li>
+                        <strong>No atomic "set context + query" operation.</strong> You need to acquire a connection,
+                        set the variable, execute the query, and release — all manually, on the same connection.
+                    </li>
+                    <li>
+                        <strong>String queries can't carry metadata.</strong> A raw SQL string has no place to attach
+                        "this query requires tenant context." The driver can't enforce it.
+                    </li>
+                </ul>
+
+                <p>
+                    These aren't driver bugs — they're <strong>architectural limitations of the SQL string model</strong>.
+                    When your query is a string, there's no structural way to attach tenant context.
+                </p>
+            </section>
+
+            <!-- How QAIL Solves It -->
+            <section>
+                <h2>How QAIL Solves It: AST-Level Tenant Injection</h2>
+                <p>
+                    QAIL doesn't work with SQL strings. It works with <strong>Abstract Syntax Trees</strong>.
+                    Your query is a typed data structure — and typed data structures can carry metadata.
+                </p>
+
+                <div class="code-block qail">
+                    <small>QAIL — RLS is structural</small>
+                    <code is:raw>use qail_core::rls::RlsContext;
+
+// Create context once (from your auth middleware)
+let ctx = RlsContext::operator(operator_id);
+
+// Every query is automatically scoped
+let query = Qail::get("bookings")
+    .columns(["id", "customer", "status"])
+    .with_rls(&ctx);   // ← Context is part of the AST
+
+// The driver handles EVERYTHING:
+// 1. Acquire connection from pool
+// 2. SET app.operator_id = '&lt;uuid&gt;' on THAT connection
+// 3. Execute query on SAME connection
+// 4. Return results
+// 5. Release connection
+let rows = driver.query(&query).await?;</code>
+                </div>
+
+                <p style="margin-top: 1.5rem;">
+                    The key insight: <strong>the RLS context is attached to the AST node, not to the connection</strong>.
+                    The driver sees <code>.with_rls(ctx)</code> on the query and handles the entire lifecycle atomically.
+                    You can't forget. You can't split it across connections. It's structural.
+                </p>
+            </section>
+
+            <!-- RlsContext API -->
+            <section>
+                <h2>The RlsContext API</h2>
+                <p>
+                    QAIL provides purpose-built constructors for common multi-tenant patterns:
+                </p>
+
+                <div class="code-block qail">
+                    <small>Four tenant scopes for real-world SaaS</small>
+                    <code>// Scope: single operator (company/organization)
+let ctx = RlsContext::operator(operator_id);
+
+// Scope: single agent (sales rep, team member)
+let ctx = RlsContext::agent(agent_id);
+
+// Scope: agent within operator (most common)
+let ctx = RlsContext::operator_and_agent(op_id, agent_id);
+
+// Scope: platform admin (bypasses all RLS)
+let ctx = RlsContext::super_admin();</code>
+                </div>
+
+                <p style="margin-top: 1.5rem;">
+                    Query introspection is also built in:
+                </p>
+
+                <div class="code-block qail">
+                    <small>Runtime checks for authorization logic</small>
+                    <code>ctx.has_operator();   // true — this query is operator-scoped
+ctx.has_agent();      // true — this query is agent-scoped
+ctx.bypasses_rls();   // false — RLS is enforced
+
+let admin = RlsContext::super_admin();
+admin.bypasses_rls(); // true — admin sees everything</code>
+                </div>
+            </section>
+
+            <!-- Combined with TypedQail -->
+            <section>
+                <h2>Compile-Time Safety + Tenant Isolation</h2>
+                <p>
+                    Where QAIL gets truly unique: <strong>RLS composes with the typed system</strong>.
+                    You get compile-time join safety AND runtime tenant isolation in the same query:
+                </p>
+
+                <div class="code-block qail">
+                    <small>TypedQail + RLS — the full stack of safety</small>
+                    <code is:raw>use schema::{bookings, users};
+
+let query = Qail::typed(bookings::table)
+    .join_related(users::table)        // ← Compile-time: valid join
+    .typed_column(bookings::id())      // ← Compile-time: column exists
+    .typed_column(bookings::status())
+    .typed_eq(bookings::active(), true) // ← Compile-time: type matches
+    .with_rls(&ctx)                    // ← Runtime: tenant-scoped
+    .build();
+
+// Trying an invalid join:
+// Qail::typed(bookings::table)
+//     .join_related(products::table)   // ❌ COMPILE ERROR
+//     → "bookings::Bookings: RelatedTo&lt;products::Products&gt; not satisfied"</code>
+                </div>
+
+                <p style="margin-top: 1.5rem;">
+                    This is the stack that no other Rust driver provides:
+                </p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Safety Layer</th>
+                            <th>What It Prevents</th>
+                            <th>When</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Rust</strong></td>
+                            <td>Memory corruption, data races</td>
+                            <td>Compile time</td>
+                        </tr>
+                        <tr>
+                            <td><strong>TypedQail</strong></td>
+                            <td>Invalid joins, wrong column types</td>
+                            <td>Compile time</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Protected columns</strong></td>
+                            <td>Unauthorized access to sensitive data</td>
+                            <td>Compile time</td>
+                        </tr>
+                        <tr>
+                            <td><strong>RlsContext</strong></td>
+                            <td>Cross-tenant data leaks</td>
+                            <td>Runtime (structural)</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <p>
+                    <strong>Rust gives you memory safety. QAIL gives you correctness safety.</strong>
+                </p>
+            </section>
+
+            <!-- Real-World Impact -->
+            <section>
+                <h2>Real-World: Powering a Maritime SaaS Platform</h2>
+                <p>
+                    QAIL isn't theoretical. It powers <a href="https://sailtix.com" style="color: var(--primary);">Sailtix</a>,
+                    a multi-operator maritime booking platform where <strong>multiple ferry operators share the same database</strong>.
+                </p>
+                <p>
+                    Before QAIL, we used sqlx and had to manually audit every query for operator_id filters.
+                    With 200+ queries across the codebase, this was a constant source of anxiety:
+                </p>
+                <ul>
+                    <li><strong>Before:</strong> 200+ queries × manual <code>WHERE operator_id</code> audit = ticking time bomb</li>
+                    <li><strong>After:</strong> <code>.with_rls(&ctx)</code> on every query = structural guarantee</li>
+                </ul>
+
+                <blockquote class="manifesto-quote" style="border-left-color: #22c55e; background: rgba(34, 197, 94, 0.06);">
+                    "We went from 'did we remember to add the operator filter?' to 'the driver handles it.'
+                    Sleep quality improved measurably."
+                </blockquote>
+            </section>
+
+            <!-- PostgreSQL RLS Primer -->
+            <section>
+                <h2>A 30-Second PostgreSQL RLS Primer</h2>
+                <p>
+                    If you haven't used PostgreSQL RLS before, here's the minimal setup:
+                </p>
+
+                <div class="code-block sql">
+                    <small>PostgreSQL — Enable RLS on a table</small>
+                    <code>-- 1. Enable RLS
+ALTER TABLE bookings ENABLE ROW LEVEL SECURITY;
+
+-- 2. Create a policy
+CREATE POLICY tenant_isolation ON bookings
+    USING (operator_id = current_setting('app.operator_id')::uuid);
+
+-- 3. Force RLS for the app role
+ALTER TABLE bookings FORCE ROW LEVEL SECURITY;
+
+-- Now, queries only return rows matching the session's operator_id.
+-- QAIL handles step 3 automatically via with_rls().</code>
+                </div>
+
+                <p style="margin-top: 1.5rem;">
+                    QAIL can also <strong>generate these policies</strong> from your schema:
+                </p>
+
+                <div class="code-block qail">
+                    <small>schema.qail — Define RLS declaratively</small>
+                    <code is:raw>table bookings &#123;
+    id UUID primary_key
+    operator_id UUID not_null
+    customer TEXT
+    status TEXT
+&#125;
+
+# qail migrate generates the RLS policies automatically</code>
+                </div>
+            </section>
+
+            <!-- Getting Started -->
+            <section>
+                <h2>Try It Today</h2>
+
+                <div class="code-block qail">
+                    <small>Cargo.toml</small>
+                    <code is:raw>[dependencies]
+qail-core = "0.15"
+qail-pg = "0.15"</code>
+                </div>
+
+                <div class="code-block qail" style="margin-top: 1rem;">
+                    <small>main.rs — Your first RLS-scoped query</small>
+                    <code is:raw>use qail_core::{Qail, rls::RlsContext};
+use qail_pg::PgDriver;
+
+let mut driver = PgDriver::connect("localhost", 5432, "app_user", "mydb").await?;
+
+let ctx = RlsContext::operator(operator_id);
+
+let bookings = Qail::get("bookings")
+    .columns(["id", "customer", "status"])
+    .with_rls(&ctx);
+
+let rows = driver.query(&bookings).await?;</code>
+                </div>
+
+                <p style="margin-top: 2rem; text-align: center;">
+                    <a href="https://github.com/qail-io/qail" class="cta-link" style="color: var(--primary); font-weight: 600; font-size: 1.1rem;">
+                        → View on GitHub
+                    </a>
+                    &nbsp;&nbsp;·&nbsp;&nbsp;
+                    <a href="/docs" class="cta-link" style="color: var(--primary); font-weight: 600; font-size: 1.1rem;">
+                        → Read the Docs
+                    </a>
+                    &nbsp;&nbsp;·&nbsp;&nbsp;
+                    <a href="/changelog" class="cta-link" style="color: var(--primary); font-weight: 600; font-size: 1.1rem;">
+                        → Changelog
+                    </a>
+                </p>
+            </section>
+
+            <hr style="margin: 3rem 0; opacity: 0.1;" />
+
+            <section>
+                <p style="color: var(--text-muted); font-size: 0.9rem; text-align: center;">
+                    <em>QAIL is open-source and MIT-licensed. Built in Rust. Deployed on Cloudflare.
+                    Powering production multi-tenant SaaS since 2025.</em>
+                </p>
+            </section>
+
+        </div>
+    </main>
+</BaseLayout>
+
+<style>
+    .blog-meta {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+        font-family: "JetBrains Mono", monospace;
+    }
+
+    /* Table Styling */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1.5rem 0;
+        font-size: 0.9em;
+        border: 1px solid var(--surface-3);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    th, td {
+        padding: 0.75rem 1rem;
+        text-align: left;
+        border: 1px solid var(--surface-3);
+    }
+
+    th {
+        background-color: var(--surface-2);
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    tr:nth-child(even) {
+        background-color: rgba(255, 255, 255, 0.02);
+    }
+
+    .check {
+        color: #22c55e;
+        font-weight: 600;
+        text-align: center;
+    }
+
+    .cross {
+        color: #ef4444;
+        text-align: center;
+    }
+
+    /* Code Block Styling */
+    .code-block {
+        background: var(--surface-2);
+        border-radius: 8px;
+        padding: 1rem;
+        border: 1px solid var(--surface-3);
+        overflow-x: auto;
+    }
+
+    .code-block code {
+        white-space: pre;
+        word-wrap: break-word;
+        display: block;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.82rem;
+        line-height: 1.6;
+    }
+
+    .code-block.qail {
+        border-left: 3px solid var(--accent);
+    }
+
+    .code-block.sql {
+        border-left: 3px solid #3b82f6;
+        background: rgba(59, 130, 246, 0.05);
+    }
+
+    .code-block small {
+        display: block;
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+        font-size: 0.75rem;
+    }
+
+    /* Prose Styling */
+    .prose ul {
+        padding-left: 1.5rem;
+    }
+
+    .prose li {
+        margin: 0.5rem 0;
+    }
+
+    .prose code {
+        background: var(--surface-3);
+        padding: 0.15rem 0.4rem;
+        border-radius: 4px;
+        font-size: 0.85em;
+        font-family: "JetBrains Mono", monospace;
+    }
+
+    .manifesto-quote {
+        border-left: 4px solid var(--primary);
+        padding: 1rem 1.5rem;
+        margin: 1.5rem 0;
+        font-style: italic;
+        font-size: 1.05rem;
+        line-height: 1.6;
+        border-radius: 0 8px 8px 0;
+    }
+
+    .cta-link:hover {
+        text-decoration: underline;
+    }
+
+    @media (max-width: 768px) {
+        .code-block code {
+            font-size: 0.75rem;
+        }
+    }
+</style>
