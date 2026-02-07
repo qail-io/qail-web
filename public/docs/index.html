@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "coal";
-            window.path_to_searchindex_js = "searchindex-2b291636.js";
+            window.path_to_searchindex_js = "searchindex-9f866f02.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-940ee290.js"></script>
+        <script src="toc-33019e04.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -183,9 +183,9 @@
                     <main>
                         <h1 id="qail-documentation"><a class="header" href="#qail-documentation">QAIL Documentation</a></h1>
 <blockquote>
-<p><strong>The AST-Native Query Compiler</strong></p>
+<p><strong>The AST-Native Query Compiler with Built-in Row-Level Security</strong></p>
 </blockquote>
-<p>QAIL compiles typed query ASTs directly to database wire protocols. No SQL strings. No injection surface. Just pure, type-safe queries.</p>
+<p>QAIL compiles typed query ASTs directly to database wire protocols. No SQL strings. No injection surface. Built-in multi-tenant data isolation via RLS. The only Rust PostgreSQL driver with AST-level tenant injection.</p>
 <h2 id="philosophy-ast--meaning"><a class="header" href="#philosophy-ast--meaning">Philosophy: AST = Meaning</a></h2>
 <blockquote>
 <p><strong>If a database doesn’t let us encode semantic intent, we don’t fake it.</strong></p>
@@ -261,6 +261,10 @@ let rows = driver.query(&amp;cmd).await?;
 <tr><td>LOCK TABLE</td><td>✅</td></tr>
 <tr><td>Connection Timeout</td><td>✅</td></tr>
 <tr><td>Materialized Views</td><td>✅</td></tr>
+<tr><td>Row-Level Security (RLS)</td><td>✅</td></tr>
+<tr><td>Multi-Tenant Isolation</td><td>✅</td></tr>
+<tr><td>TypedQail<t> Relations</t></td><td>✅</td></tr>
+<tr><td>Protected Columns</td><td>✅</td></tr>
 </tbody>
 </table>
 </div>

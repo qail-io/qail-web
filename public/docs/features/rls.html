@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>CLI Commands - QAIL Documentation</title>
+        <title>Row-Level Security (RLS) - QAIL Documentation</title>
 
 
         <!-- Custom HTML head -->
@@ -147,7 +147,7 @@
                         <a href="https://github.com/qail-io/qail" title="Git repository" aria-label="Git repository">
                             <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></span>
                         </a>
-                        <a href="https://github.com/qail-io/qail/edit/main/docs/src/reference/cli.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                        <a href="https://github.com/qail-io/qail/edit/main/docs/src/features/rls.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
                             <span class=fa-svg id="git-edit-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M421.7 220.3l-11.3 11.3-22.6 22.6-205 205c-6.6 6.6-14.8 11.5-23.8 14.1L30.8 511c-8.4 2.5-17.5 .2-23.7-6.1S-1.5 489.7 1 481.2L38.7 353.1c2.6-9 7.5-17.2 14.1-23.8l205-205 22.6-22.6 11.3-11.3 33.9 33.9 62.1 62.1 33.9 33.9zM96 353.9l-9.3 9.3c-.9 .9-1.6 2.1-2 3.4l-25.3 86 86-25.3c1.3-.4 2.5-1.1 3.4-2l9.3-9.3H112c-8.8 0-16-7.2-16-16V353.9zM453.3 19.3l39.4 39.4c25 25 25 65.5 0 90.5l-14.5 14.5-22.6 22.6-11.3 11.3-33.9-33.9-62.1-62.1L314.3 67.7l11.3-11.3 22.6-22.6 14.5-14.5c25-25 65.5-25 90.5 0z"/></svg></span>
                         </a>
 
@@ -181,233 +181,142 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="cli-commands"><a class="header" href="#cli-commands">CLI Commands</a></h1>
-<p>The <code>qail</code> command-line tool.</p>
-<h2 id="installation"><a class="header" href="#installation">Installation</a></h2>
-<pre><code class="language-bash">cargo install qail
-</code></pre>
-<h2 id="commands"><a class="header" href="#commands">Commands</a></h2>
-<h3 id="qail-init"><a class="header" href="#qail-init"><code>qail init</code></a></h3>
-<p>Initialize a new QAIL project with interactive setup:</p>
-<pre><code class="language-bash">qail init
-# 🪝 QAIL Project Initialization
-# Project name: my_app
-# Select database mode:
-#   1. PostgreSQL only
-#   2. Qdrant only
-#   3. Hybrid (PostgreSQL + Qdrant)
-# ...
-</code></pre>
-<p>Generates <code>qail.toml</code> and necessary migration files.</p>
-<h3 id="qail-parse"><a class="header" href="#qail-parse"><code>qail parse</code></a></h3>
-<p>Parse QAIL text syntax to SQL:</p>
-<pre><code class="language-bash">qail parse "get users fields * where active = true"
-# SELECT * FROM users WHERE active = true
-</code></pre>
-<h3 id="qail-pull"><a class="header" href="#qail-pull"><code>qail pull</code></a></h3>
-<p>Extract schema from database:</p>
-<pre><code class="language-bash">qail pull postgres://user:pass@localhost/db &gt; schema.qail
-</code></pre>
-<h3 id="qail-diff"><a class="header" href="#qail-diff"><code>qail diff</code></a></h3>
-<p>Compare two schemas and show migration commands:</p>
-<pre><code class="language-bash">qail diff old.qail new.qail
-</code></pre>
-<h3 id="qail-check"><a class="header" href="#qail-check"><code>qail check</code></a></h3>
-<p>Validate a schema file or preview migration safety:</p>
-<pre><code class="language-bash"># Validate schema
-qail check schema.qail
-# ✓ Schema is valid
-#   Tables: 80
-#   Columns: 1110
-#   Indexes: 287
-#   ✓ 82 primary key(s)
+                        <h1 id="row-level-security-rls"><a class="header" href="#row-level-security-rls">Row-Level Security (RLS)</a></h1>
+<blockquote>
+<p><strong>New in v0.15.6</strong> — The first Rust PostgreSQL driver with built-in multi-tenant data isolation</p>
+</blockquote>
+<p>QAIL injects tenant context at the <strong>AST level</strong>, ensuring every query is automatically scoped to the correct operator, agent, or user — without manual <code>WHERE</code> clauses.</p>
+<h2 id="the-problem"><a class="header" href="#the-problem">The Problem</a></h2>
+<p>Every multi-tenant SaaS app needs data isolation. Traditional solutions are fragile:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ Manual WHERE clauses — easy to forget, impossible to audit
+let sql = "SELECT * FROM bookings WHERE operator_id = $1";
 
-# Check migration safety
-qail check old.qail:new.qail
-# ✓ Both schemas are valid
-# Migration preview: 4 operation(s)
-#   ✓ 3 safe operation(s)
-#   ⚠️  1 reversible operation(s)
-</code></pre>
-<h3 id="qail-migrate-up"><a class="header" href="#qail-migrate-up"><code>qail migrate up</code></a></h3>
-<p>Apply migrations:</p>
-<pre><code class="language-bash">qail migrate up old.qail:new.qail postgres://...
-</code></pre>
-<h3 id="qail-migrate-down"><a class="header" href="#qail-migrate-down"><code>qail migrate down</code></a></h3>
-<p>Rollback migrations:</p>
-<pre><code class="language-bash">qail migrate down old.qail:new.qail postgres://...
-</code></pre>
-<h3 id="qail-migrate-apply"><a class="header" href="#qail-migrate-apply"><code>qail migrate apply</code></a></h3>
-<p>Apply file-based migrations from <code>migrations/</code> directory:</p>
-<pre><code class="language-bash">qail migrate apply
-# → Found 1 migrations to apply
-# ✓ Connected to qail_test
-#   → 001_qail_queue.up.qail... ✓
-# ✓ All migrations applied successfully!
-</code></pre>
-<p>Reads <code>qail.toml</code> for database connection if not provided via <code>--url</code>.</p>
-<h3 id="qail-migrate-plan"><a class="header" href="#qail-migrate-plan"><code>qail migrate plan</code></a></h3>
-<p>Preview migration SQL without executing (dry-run):</p>
-<pre><code class="language-bash">qail migrate plan old.qail:new.qail
-# 📋 Migration Plan (dry-run)
-# ┌─ UP (2 operations) ─────────────────────────────────┐
-# │ 1. ALTER TABLE users ADD COLUMN verified BOOLEAN
-# │ 2. CREATE INDEX idx_users_email ON users (email)
-# └─────────────────────────────────────────────────────┘
-# ┌─ DOWN (2 operations) ───────────────────────────────┐
-# │ 1. ALTER TABLE users DROP COLUMN verified
-# │ 2. DROP INDEX IF EXISTS idx_users_email
-# └─────────────────────────────────────────────────────┘
+// ❌ Every query must remember to add the filter
+let sql = "SELECT * FROM invoices"; // BUG: leaks ALL operator data
+<span class="boring">}</span></code></pre>
+<p>One missed <code>WHERE</code> clause = cross-tenant data leak. In a codebase with 200+ queries, this is a ticking time bomb.</p>
+<h2 id="the-solution-ast-level-rls"><a class="header" href="#the-solution-ast-level-rls">The Solution: AST-Level RLS</a></h2>
+<p>QAIL solves this at the driver level:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use qail_core::rls::RlsContext;
 
-# Save to file
-qail migrate plan old.qail:new.qail --output migration.sql
-</code></pre>
-<h3 id="qail-migrate-analyze"><a class="header" href="#qail-migrate-analyze"><code>qail migrate analyze</code></a></h3>
-<p>Analyze codebase for breaking changes before migrating:</p>
-<pre><code class="language-bash">qail migrate analyze old.qail:new.qail --codebase ./src
-# 🔍 Migration Impact Analyzer
-# Scanning codebase...
-#   Found 395 query references
-#
-# ⚠️  BREAKING CHANGES DETECTED
-# ┌─ DROP TABLE promotions (6 references) ─────────────┐
-# │ ❌ src/repository/promotion.rs:89 → INSERT INTO...
-# │ ❌ src/repository/promotion.rs:264 → SELECT...
-# └────────────────────────────────────────────────────┘
-</code></pre>
-<h3 id="qail-watch"><a class="header" href="#qail-watch"><code>qail watch</code></a></h3>
-<p>Watch schema file for changes and auto-generate migrations:</p>
-<pre><code class="language-bash">qail watch schema.qail
-# 👀 QAIL Schema Watch Mode
-#    Watching: schema.qail
-#    Press Ctrl+C to stop
-# [14:32:15] ✓ Detected 2 change(s):
-#        ALTER TABLE users ADD COLUMN avatar_url TEXT
+// Create context from authenticated session
+let ctx = RlsContext::operator(operator_id);
 
-# With database connection
-qail watch schema.qail --url postgres://... --auto-apply
-</code></pre>
-<h3 id="qail-lint"><a class="header" href="#qail-lint"><code>qail lint</code></a></h3>
-<p>Check schema for best practices and potential issues:</p>
-<pre><code class="language-bash">qail lint schema.qail
-# 🔍 Schema Linter
-# ⚠ 144 warning(s)
-# ℹ 266 info(s)
-#
-# ⚠ users.customer_id Possible FK column without references()
-#   → Consider adding '.references("table", "id")' for referential integrity
-#
-# ⚠ orders Missing updated_at column
-#   → Add 'updated_at TIMESTAMPTZ not_null' for audit trail
+// Every query is automatically scoped
+let query = Qail::get("bookings")
+    .columns(["id", "customer", "status"])
+    .with_rls(&amp;ctx);  // ← RLS injected at AST level
 
-# Strict mode (errors only, for CI)
-qail lint schema.qail --strict
-</code></pre>
-<p><strong>Lint Checks:</strong></p>
+// Generated SQL: SELECT ... FROM bookings
+// But the connection has: SET app.operator_id = '&lt;uuid&gt;'
+// PostgreSQL RLS policy handles the rest
+<span class="boring">}</span></code></pre>
+<h2 id="rlscontext-constructors"><a class="header" href="#rlscontext-constructors">RlsContext Constructors</a></h2>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Check</th><th>Level</th><th>Description</th></tr>
+<tr><th>Constructor</th><th>Scope</th><th>Use Case</th></tr>
 </thead>
 <tbody>
-<tr><td>Missing primary key</td><td>🔴 ERROR</td><td>Every table needs a PK</td></tr>
-<tr><td>Missing created_at/updated_at</td><td>⚠️ WARNING</td><td>Audit trail columns</td></tr>
-<tr><td><code>_id</code> column without <code>references()</code></td><td>⚠️ WARNING</td><td>FK integrity</td></tr>
-<tr><td>Uppercase table names</td><td>⚠️ WARNING</td><td>Use snake_case</td></tr>
-<tr><td>SERIAL vs UUID</td><td>ℹ️ INFO</td><td>Consider UUID for distributed</td></tr>
-<tr><td>Nullable without default</td><td>ℹ️ INFO</td><td>Consider default value</td></tr>
+<tr><td><code>RlsContext::operator(id)</code></td><td>Single operator</td><td>Operator dashboard</td></tr>
+<tr><td><code>RlsContext::agent(id)</code></td><td>Single agent</td><td>Agent portal</td></tr>
+<tr><td><code>RlsContext::operator_and_agent(op, ag)</code></td><td>Both</td><td>Agent within operator</td></tr>
+<tr><td><code>RlsContext::super_admin()</code></td><td>Bypasses RLS</td><td>Platform admin</td></tr>
 </tbody>
 </table>
 </div>
-<h3 id="qail-sync-generate"><a class="header" href="#qail-sync-generate"><code>qail sync generate</code></a></h3>
-<p>Generate trigger migrations from <code>[[sync]]</code> rules in <code>qail.toml</code>:</p>
-<pre><code class="language-bash">qail sync generate
-# → Generating sync triggers...
-# ✓ Created migrations/002_qail_sync_triggers.up.qail
-</code></pre>
-<p>Used in Hybrid mode to automatically create PostgreSQL triggers that push changes to the <code>_qail_queue</code> table.</p>
-<h3 id="qail-worker"><a class="header" href="#qail-worker"><code>qail worker</code></a></h3>
-<p>Start the background worker to sync data from PostgreSQL to Qdrant:</p>
-<pre><code class="language-bash">qail worker --interval 1000 --batch 100
-# 👷 QAIL Hybrid Worker v0.14.12
-# 🔌 Qdrant: Connected (localhost:6334)
-# 🐘 Postgres: Connected (5 connections)
-# 
-# [2026-01-02 10:00:00] 🔄 Syncing... (pending: 0)
-</code></pre>
-<p><strong>Options:</strong></p>
-<ul>
-<li><code>--interval &lt;ms&gt;</code>: Polling interval (default: 1000ms)</li>
-<li><code>--batch &lt;size&gt;</code>: Batch size for sync (default: 100)</li>
-</ul>
-<h3 id="qail-migrate-status"><a class="header" href="#qail-migrate-status"><code>qail migrate status</code></a></h3>
-<p>View migration history for a database:</p>
-<pre><code class="language-bash">qail migrate status postgres://...
-# 📋 Migration Status
-#   Database: mydb
-#   Migration table: _qail_migrations
-#   ✓ Migration history table is ready
-</code></pre>
-<h3 id="qail-exec"><a class="header" href="#qail-exec"><code>qail exec</code></a></h3>
-<p>Execute type-safe QAIL statements against a database:</p>
-<pre><code class="language-bash"># Inline QAIL execution
-qail exec "get users fields id, email where active = true" --url postgres://...
-qail exec "add users fields name, email values 'Alice', 'a@test.com'" --url postgres://... --tx
+<h2 id="query-methods"><a class="header" href="#query-methods">Query Methods</a></h2>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let ctx = RlsContext::operator_and_agent(op_id, agent_id);
 
-# From file
-qail exec -f seed.qail --url postgres://...
+ctx.has_operator();   // true
+ctx.has_agent();      // true
+ctx.bypasses_rls();   // false
 
-# Dry-run (preview generated SQL)
-qail exec "get users fields *" --dry-run
-# 📋 Parsed 1 QAIL statement(s)
-# 🔍 DRY-RUN MODE - Generated SQL:
-# Statement 1:
-#   SELECT * FROM users
-# No changes made.
+let admin = RlsContext::super_admin();
+admin.bypasses_rls(); // true
+<span class="boring">}</span></code></pre>
+<h2 id="how-it-works"><a class="header" href="#how-it-works">How It Works</a></h2>
+<pre><code>┌─────────────────────────────────────────────────┐
+│  Application Code                                │
+│                                                   │
+│  Qail::get("bookings").with_rls(&amp;ctx)            │
+│       ↓                                           │
+│  AST Builder adds RLS context to query            │
+│       ↓                                           │
+│  PgDriver::execute()                              │
+│  ├─ SET app.operator_id = '&lt;uuid&gt;'               │
+│  ├─ SET app.agent_id = '&lt;uuid&gt;'                  │
+│  └─ Execute query on SAME connection             │
+│       ↓                                           │
+│  PostgreSQL RLS Policy                            │
+│  CREATE POLICY tenant_isolation ON bookings       │
+│    USING (operator_id = current_setting(          │
+│           'app.operator_id')::uuid)              │
+│       ↓                                           │
+│  Only matching rows returned                      │
+└─────────────────────────────────────────────────┘
 </code></pre>
-<p><strong>Options:</strong></p>
-<ul>
-<li><code>-f, --file &lt;FILE&gt;</code>: Path to <code>.qail</code> file with statements (one per line)</li>
-<li><code>-u, --url &lt;URL&gt;</code>: Database connection URL</li>
-<li><code>--tx</code>: Wrap all statements in a transaction</li>
-<li><code>--dry-run</code>: Preview generated SQL without executing</li>
-</ul>
-<p><strong>Features:</strong></p>
-<ul>
-<li>Type-safe execution via QAIL AST (<code>driver.execute(ast)</code>)</li>
-<li>Batch execution (multiple statements per file)</li>
-<li>Transaction support with automatic rollback on error</li>
-<li>Comments supported (<code>#</code> and <code>--</code>)</li>
-</ul>
-<h3 id="qail-fmt"><a class="header" href="#qail-fmt"><code>qail fmt</code></a></h3>
-<p>Format QAIL text:</p>
-<pre><code class="language-bash">qail fmt "get users fields *" --indent
-</code></pre>
-<h2 id="options"><a class="header" href="#options">Options</a></h2>
+<h2 id="why-ast-level"><a class="header" href="#why-ast-level">Why AST-Level?</a></h2>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Flag</th><th>Description</th></tr>
+<tr><th>Approach</th><th>Reliability</th><th>Audit</th><th>Performance</th></tr>
 </thead>
 <tbody>
-<tr><td><code>-d, --dialect</code></td><td>Target SQL dialect (pg, mysql)</td></tr>
-<tr><td><code>-f, --format</code></td><td>Output format (sql, ast, json)</td></tr>
-<tr><td><code>-v, --verbose</code></td><td>Verbose output</td></tr>
-<tr><td><code>--version</code></td><td>Show version</td></tr>
-<tr><td><code>--help</code></td><td>Show help</td></tr>
+<tr><td>Manual <code>WHERE</code></td><td>❌ Easy to forget</td><td>❌ Grep every query</td><td>✅ Fast</td></tr>
+<tr><td>ORM middleware</td><td>⚠️ Can be bypassed</td><td>⚠️ Framework-specific</td><td>⚠️ Overhead</td></tr>
+<tr><td><strong>QAIL RLS</strong></td><td>✅ Structural</td><td>✅ Single entry point</td><td>✅ Native PG</td></tr>
 </tbody>
 </table>
 </div>
+<p>QAIL’s approach is <strong>structural</strong> — the RLS context is part of the query pipeline, not an afterthought bolted onto SQL strings.</p>
+<h2 id="combined-with-typedqail"><a class="header" href="#combined-with-typedqail">Combined with TypedQail</a></h2>
+<p>RLS works with the typed API too:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use schema::{bookings, users};
+
+let query = Qail::typed(bookings::table)
+    .join_related(users::table)       // Compile-time safe join
+    .typed_column(bookings::id())
+    .typed_column(bookings::status())
+    .with_rls(&amp;ctx)                   // Multi-tenant isolation
+    .build();
+<span class="boring">}</span></code></pre>
+<h2 id="comparison-with-other-drivers"><a class="header" href="#comparison-with-other-drivers">Comparison with Other Drivers</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Feature</th><th>QAIL</th><th>sqlx</th><th>Diesel</th><th>SeaORM</th></tr>
+</thead>
+<tbody>
+<tr><td>Built-in RLS</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td></tr>
+<tr><td>AST-level injection</td><td>✅</td><td>N/A</td><td>N/A</td><td>N/A</td></tr>
+<tr><td><code>with_rls()</code> API</td><td>✅</td><td>N/A</td><td>N/A</td><td>N/A</td></tr>
+<tr><td>Session variable management</td><td>✅ Auto</td><td>Manual</td><td>Manual</td><td>Manual</td></tr>
+<tr><td>Connection-scoped context</td><td>✅</td><td>Manual</td><td>Manual</td><td>Manual</td></tr>
+</tbody>
+</table>
+</div>
+<blockquote>
+<p><strong>QAIL is the only Rust PostgreSQL driver with built-in Row-Level Security support.</strong></p>
+</blockquote>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../features/rls.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../features/type-safety.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                             </a>
 
-                            <a rel="next prefetch" href="../reference/api.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../reference/cli.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                             </a>
 
@@ -417,11 +326,11 @@ qail exec "get users fields *" --dry-run
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../features/rls.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../features/type-safety.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                     </a>
 
-                    <a rel="next prefetch" href="../reference/api.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../reference/cli.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                     </a>
             </nav>
