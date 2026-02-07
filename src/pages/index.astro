@@ -2,7 +2,7 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 ---
 
-<BaseLayout title="QAIL — The AST-Native Query Compiler">
+<BaseLayout title="QAIL — AST-Native PostgreSQL Driver with Built-in RLS for Rust" description="The only Rust PostgreSQL driver with built-in Row-Level Security (RLS), compile-time relation safety, and AST-level tenant injection. Multi-tenant SaaS made safe.">
     <!-- Hero -->
     <header class="hero">
         <div class="hero-bg"></div>
@@ -343,6 +343,21 @@ import BaseLayout from "../layouts/BaseLayout.astro";
                     <p>
                         Schema validation at build time. Wrong queries don't
                         compile. Wrong types don't bind.
+                    </p>
+                </div>
+                <div class="feature-card highlight-card">
+                    <div class="feature-icon">🔐</div>
+                    <h3>Built-in Row-Level Security</h3>
+                    <p>
+                        AST-level tenant injection for multi-tenant SaaS.
+                        <code>Qail::with_rls(ctx)</code> auto-scopes every query — no manual WHERE clauses, no data leaks.
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔗</div>
+                    <h3>Compile-Time Join Safety</h3>
+                    <p>
+                        <code>TypedQail&lt;T&gt;</code> + <code>RelatedTo&lt;T&gt;</code> — the compiler rejects invalid table joins. Schema-aware codegen from <code>build.rs</code>.
                     </p>
                 </div>
             </div>

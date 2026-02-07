@@ -37,10 +37,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "coal";
-            window.path_to_searchindex_js = "searchindex-daef3368.js";
+            window.path_to_searchindex_js = "searchindex-2b291636.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-2795dc80.js"></script>
+        <script src="toc-940ee290.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -1917,6 +1917,272 @@ schema.validate()?;
 </li>
 </ol>
 <div style="break-before: page; page-break-before: always;"></div>
+<h1 id="first-class-relations"><a class="header" href="#first-class-relations">First-Class Relations</a></h1>
+<p>QAIL enables <strong>implicit joins</strong> through schema-defined foreign key relationships. Instead of manually specifying join conditions, define relationships once in <code>schema.qail</code> and use <code>join_on()</code> to automatically infer the join.</p>
+<h2 id="the-dream"><a class="header" href="#the-dream">The Dream</a></h2>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ Before: Explicit join conditions
+Qail::get("users")
+    .left_join("posts", "users.id", "posts.user_id")
+
+// ✅ After: Implicit joins via schema
+Qail::get("users")
+    .join_on("posts")
+<span class="boring">}</span></code></pre>
+<h2 id="1-define-relations-in-schema"><a class="header" href="#1-define-relations-in-schema">1. Define Relations in Schema</a></h2>
+<p>Use <code>ref:</code> syntax to declare foreign key relationships:</p>
+<pre><code class="language-qail">table users {
+    id UUID primary_key
+    email TEXT not_null
+}
+
+table posts {
+    id UUID primary_key
+    user_id UUID ref:users.id
+    title TEXT
+}
+</code></pre>
+<p>The <code>ref:users.id</code> annotation tells QAIL that <code>posts.user_id</code> references <code>users.id</code>.</p>
+<h2 id="2-load-relations-at-runtime"><a class="header" href="#2-load-relations-at-runtime">2. Load Relations at Runtime</a></h2>
+<p>Before using <code>join_on()</code>, load the schema relations:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use qail_core::schema;
+
+// Load at application startup
+schema::load_schema_relations("schema.qail")?;
+<span class="boring">}</span></code></pre>
+<h2 id="3-use-implicit-joins"><a class="header" href="#3-use-implicit-joins">3. Use Implicit Joins</a></h2>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use qail_core::Qail;
+
+// Auto-infers: LEFT JOIN posts ON users.id = posts.user_id
+let query = Qail::get("users")
+    .columns(["users.id", "users.email", "posts.title"])
+    .join_on("posts");
+
+// Forward and reverse relations work automatically
+let posts_with_users = Qail::get("posts")
+    .join_on("users");  // Infers: LEFT JOIN users ON posts.user_id = users.id
+<span class="boring">}</span></code></pre>
+<h2 id="api-reference"><a class="header" href="#api-reference">API Reference</a></h2>
+<h3 id="join_ontable"><a class="header" href="#join_ontable"><code>join_on(table)</code></a></h3>
+<p>Joins a related table using the schema-defined foreign key. Panics if no relation exists.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>Qail::get("users").join_on("posts")
+<span class="boring">}</span></code></pre>
+<h3 id="join_on_optionaltable"><a class="header" href="#join_on_optionaltable"><code>join_on_optional(table)</code></a></h3>
+<p>Same as <code>join_on()</code>, but returns <code>self</code> unchanged if no relation exists (no panic).</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>Qail::get("users").join_on_optional("comments")  // No-op if no relation
+<span class="boring">}</span></code></pre>
+<h2 id="how-it-works"><a class="header" href="#how-it-works">How It Works</a></h2>
+<ol>
+<li><strong>Schema Parsing</strong>: <code>build.rs</code> parses <code>ref:</code> annotations and stores them as <code>ForeignKey</code> entries</li>
+<li><strong>Runtime Registry</strong>: <code>schema::load_schema_relations()</code> populates a global <code>RelationRegistry</code></li>
+<li><strong>Lookup</strong>: <code>join_on()</code> calls <code>lookup_relation()</code> to find the join condition</li>
+<li><strong>Bidirectional</strong>: Both forward (<code>posts.user_id → users.id</code>) and reverse directions are checked</li>
+</ol>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="typed-codegen"><a class="header" href="#typed-codegen">Typed Codegen</a></h1>
+<p>QAIL can generate fully typed Rust modules from your <code>schema.qail</code> file, enabling compile-time checked table and column references.</p>
+<h2 id="setup"><a class="header" href="#setup">Setup</a></h2>
+<h3 id="1-add-build-script"><a class="header" href="#1-add-build-script">1. Add build script</a></h3>
+<p>Create or update your <code>build.rs</code>:</p>
+<pre class="playground"><code class="language-rust">fn main() {
+    let out_dir = std::env::var("OUT_DIR").unwrap();
+    qail_core::build::generate_typed_schema(
+        "schema.qail",
+        &amp;format!("{}/schema.rs", out_dir)
+    ).unwrap();
+    
+    println!("cargo:rerun-if-changed=schema.qail");
+}</code></pre>
+<h3 id="2-include-generated-module"><a class="header" href="#2-include-generated-module">2. Include generated module</a></h3>
+<p>In your <code>lib.rs</code> or <code>main.rs</code>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>include!(concat!(env!("OUT_DIR"), "/schema.rs"));
+<span class="boring">}</span></code></pre>
+<h2 id="usage-1"><a class="header" href="#usage-1">Usage</a></h2>
+<h3 id="generated-structure"><a class="header" href="#generated-structure">Generated Structure</a></h3>
+<p>From this schema:</p>
+<pre><code class="language-qail">table users {
+    id UUID primary_key
+    email TEXT not_null
+    age INT
+}
+
+table posts {
+    id UUID primary_key
+    user_id UUID ref:users.id
+    title TEXT
+}
+</code></pre>
+<p>QAIL generates:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub mod users {
+    pub struct Users;
+    impl Table for Users { ... }
+    
+    pub const table: Users = Users;
+    pub const id: TypedColumn&lt;uuid::Uuid&gt; = ...;
+    pub const email: TypedColumn&lt;String&gt; = ...;
+    pub const age: TypedColumn&lt;i32&gt; = ...;
+}
+
+pub mod posts {
+    pub struct Posts;
+    pub const table: Posts = Posts;
+    pub const user_id: TypedColumn&lt;uuid::Uuid&gt; = ...;
+}
+<span class="boring">}</span></code></pre>
+<h3 id="using-typed-references"><a class="header" href="#using-typed-references">Using Typed References</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use schema::{users, posts};
+
+// Tables and columns are type-safe
+Qail::get(users::table)
+    .columns([users::id, users::email])
+    .join_on(posts::table)
+<span class="boring">}</span></code></pre>
+<h2 id="type-mapping"><a class="header" href="#type-mapping">Type Mapping</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>QAIL Type</th><th>Rust Type</th></tr>
+</thead>
+<tbody>
+<tr><td><code>UUID</code></td><td><code>uuid::Uuid</code></td></tr>
+<tr><td><code>TEXT</code>, <code>VARCHAR</code></td><td><code>String</code></td></tr>
+<tr><td><code>INT</code>, <code>INTEGER</code></td><td><code>i32</code></td></tr>
+<tr><td><code>BIGINT</code></td><td><code>i64</code></td></tr>
+<tr><td><code>FLOAT</code>, <code>REAL</code></td><td><code>f32</code></td></tr>
+<tr><td><code>DOUBLE</code></td><td><code>f64</code></td></tr>
+<tr><td><code>BOOL</code></td><td><code>bool</code></td></tr>
+<tr><td><code>TIMESTAMP</code></td><td><code>chrono::DateTime&lt;Utc&gt;</code></td></tr>
+<tr><td><code>JSON</code>, <code>JSONB</code></td><td><code>serde_json::Value</code></td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="logic-safe-relations-scenario-b"><a class="header" href="#logic-safe-relations-scenario-b">Logic-Safe Relations (Scenario B)</a></h2>
+<p>QAIL codegen now generates <strong>compile-time relationship checking</strong> using the <code>RelatedTo&lt;T&gt;</code> trait.</p>
+<h3 id="how-it-works-1"><a class="header" href="#how-it-works-1">How It Works</a></h3>
+<p>When schema.qail contains foreign key references:</p>
+<pre><code class="language-qail">table posts {
+    user_id UUID ref:users.id
+}
+</code></pre>
+<p>The codegen produces:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Forward: child -&gt; parent
+impl RelatedTo&lt;users::Users&gt; for posts::Posts {
+    fn join_columns() -&gt; (&amp;'static str, &amp;'static str) { ("user_id", "id") }
+}
+
+// Reverse: parent -&gt; children
+impl RelatedTo&lt;posts::Posts&gt; for users::Users {
+    fn join_columns() -&gt; (&amp;'static str, &amp;'static str) { ("id", "user_id") }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="compile-time-safety"><a class="header" href="#compile-time-safety">Compile-Time Safety</a></h3>
+<p>This enables “logic-safe” joins that fail at compile time:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ✅ Compiles - tables are related
+Qail::get(users::table).join_related(posts::table)
+
+// ❌ Compile Error: "Users: RelatedTo&lt;Products&gt; is not satisfied"
+Qail::get(users::table).join_related(products::table)
+<span class="boring">}</span></code></pre>
+<h2 id="data-access-policies-phase-4"><a class="header" href="#data-access-policies-phase-4">Data Access Policies (Phase 4)</a></h2>
+<p>QAIL now supports <strong>compile-time data governance</strong> using the <code>protected</code> keyword.</p>
+<h3 id="schema-definition"><a class="header" href="#schema-definition">Schema Definition</a></h3>
+<p>Mark sensitive columns with <code>protected</code>:</p>
+<pre><code class="language-qail">table users {
+    id UUID primary_key
+    email TEXT not_null
+    password_hash TEXT protected
+    two_factor_secret TEXT protected
+}
+</code></pre>
+<h3 id="generated-types"><a class="header" href="#generated-types">Generated Types</a></h3>
+<p>Protected columns get <code>TypedColumn&lt;T, Protected&gt;</code> instead of <code>TypedColumn&lt;T, Public&gt;</code>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Public - accessible by default
+pub const email: TypedColumn&lt;String, Public&gt; = ...;
+
+// Protected - requires capability witness
+pub const password_hash: TypedColumn&lt;String, Protected&gt; = ...;
+<span class="boring">}</span></code></pre>
+<h3 id="policy-hierarchy"><a class="header" href="#policy-hierarchy">Policy Hierarchy</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Policy</th><th>Description</th><th>Use Case</th></tr>
+</thead>
+<tbody>
+<tr><td><code>Public</code></td><td>Default, no restrictions</td><td>Normal data</td></tr>
+<tr><td><code>Protected</code></td><td>Requires <code>AdminCap</code> witness</td><td>Passwords, secrets</td></tr>
+<tr><td><code>Restricted</code></td><td>Requires <code>SystemCap</code> witness</td><td>Audit-critical data</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="capability-witness-api"><a class="header" href="#capability-witness-api">Capability Witness API</a></h3>
+<p>Access protected columns using the <strong>builder pattern</strong>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use qail_core::typed::{CapabilityProvider, WithCap};    
+
+// In your auth middleware (Root of Trust):
+let admin_cap = CapabilityProvider::mint_admin();  // After JWT verification
+
+// Build query with typed table reference (no strings!)
+let query = Qail::get(users::table)                 // ✓ Typed, not string
+    .with_cap(&amp;admin_cap)                           // Prove authorization
+    .column(users::email)                           // Public - always allowed
+    .column_protected(users::password_hash)         // Protected - now allowed!
+    .build();
+<span class="boring">}</span></code></pre>
+<h3 id="root-of-trust"><a class="header" href="#root-of-trust">Root of Trust</a></h3>
+<blockquote class="blockquote-tag blockquote-tag-important">
+<p class="blockquote-tag-title"><svg viewbox="0 0 16 16" width="18" height="18"><path d="M0 1.75C0 .784.784 0 1.75 0h12.5C15.216 0 16 .784 16 1.75v9.5A1.75 1.75 0 0 1 14.25 13H8.06l-2.573 2.573A1.458 1.458 0 0 1 3 14.543V13H1.75A1.75 1.75 0 0 1 0 11.25Zm1.75-.25a.25.25 0 0 0-.25.25v9.5c0 .138.112.25.25.25h2a.75.75 0 0 1 .75.75v2.19l2.72-2.72a.749.749 0 0 1 .53-.22h6.5a.25.25 0 0 0 .25-.25v-9.5a.25.25 0 0 0-.25-.25Zm7 2.25v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 9a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"></path></svg>Important</p>
+<p><code>AdminCap</code> and <code>SystemCap</code> have <strong>sealed constructors</strong> (private fields).
+They can only be minted via <code>CapabilityProvider::mint_*()</code>.
+Place this in a single, auditable auth layer.</p>
+</blockquote>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// In your AuthService (the ONLY place that can mint capabilities):
+impl AuthService {
+    pub fn verify_admin(&amp;self, token: &amp;str) -&gt; Result&lt;AdminCap, AuthError&gt; {
+        let claims = self.verify_jwt(token)?;
+        if claims.role == "admin" {
+            Ok(CapabilityProvider::mint_admin())
+        } else {
+            Err(AuthError::Forbidden)
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="compile-time-enforcement"><a class="header" href="#compile-time-enforcement">Compile-Time Enforcement</a></h3>
+<p>Attempting to access protected columns without capability <strong>fails at compile time</strong>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ Compile Error: Protected: PolicyAllowedBy&lt;NoCap&gt; is not satisfied
+Qail::get(users::table)
+    .with_cap(&amp;NoCap)
+    .column_protected(users::password_hash)
+<span class="boring">}</span></code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
 <h1 id="connection-pooling-2"><a class="header" href="#connection-pooling-2">Connection Pooling</a></h1>
 <p>Efficient connection reuse with <code>PgPool</code>.</p>
 <h2 id="configuration-1"><a class="header" href="#configuration-1">Configuration</a></h2>
@@ -1985,7 +2251,7 @@ tokio::spawn(async move {
 <li><strong>Async Worker:</strong> The <code>qail worker</code> daemon polls the queue and reliably syncs data to Qdrant.</li>
 </ol>
 <p><img src="features/images/hybrid_arch.svg" alt="Architecture Diagram"></p>
-<h2 id="setup"><a class="header" href="#setup">Setup</a></h2>
+<h2 id="setup-1"><a class="header" href="#setup-1">Setup</a></h2>
 <h3 id="1-initialize-hybrid-project"><a class="header" href="#1-initialize-hybrid-project">1. Initialize Hybrid Project</a></h3>
 <pre><code class="language-bash">qail init
 # Select "3. Hybrid (PostgreSQL + Qdrant)" when prompted
@@ -2088,7 +2354,7 @@ Column::new("email", ColumnType::Varchar(Some(255))).unique()
 <li><code>primary_key()</code> validates the type can be a PK (UUID, INT, SERIAL)</li>
 <li><code>unique()</code> validates the type supports indexing (not JSONB, BYTEA)</li>
 </ul>
-<h2 id="usage-1"><a class="header" href="#usage-1">Usage</a></h2>
+<h2 id="usage-2"><a class="header" href="#usage-2">Usage</a></h2>
 <h3 id="reading-values"><a class="header" href="#reading-values">Reading Values</a></h3>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -2491,7 +2757,7 @@ qail exec "get users fields *" --dry-run
 </table>
 </div>
 <div style="break-before: page; page-break-before: always;"></div>
-<h1 id="api-reference"><a class="header" href="#api-reference">API Reference</a></h1>
+<h1 id="api-reference-1"><a class="header" href="#api-reference-1">API Reference</a></h1>
 <p>Full API documentation is generated from source code.</p>
 <h2 id="crates"><a class="header" href="#crates">Crates</a></h2>
 <div class="table-wrapper">

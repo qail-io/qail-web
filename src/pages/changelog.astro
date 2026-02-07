@@ -15,40 +15,115 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
     <main class="page-content">
         <div class="container" style="max-width: 900px;">
-            <!-- Latest Release -->
+            <!-- v0.15.7 -->
             <section class="release-section">
                 <div class="release-header">
+                    <h2>v0.15.7</h2>
+                    <span class="release-date">February 8, 2026</span>
                     <span class="status-badge full">Latest</span>
                 </div>
 
                 <div class="release-highlight">
-                    <span style="font-size: 1.5rem;">🎯</span>
-                    <strong>Type-Safe Seeding</strong> — <code>qail exec</code> for
-                    AST-native database execution
+                    <span style="font-size: 1.5rem;">🔗</span>
+                    <strong>TypedQail&lt;T&gt;</strong> — Compile-time relation safety with <code>join_related()</code>
                 </div>
 
-                <h4>New: qail exec Command</h4>
+                <h4>First-Class Relations (Complete)</h4>
                 <ul class="changelog-list">
                     <li>
-                        <strong>Type-Safe Execution:</strong>
-                        <code>qail exec "get::users" --url postgres://...</code>
+                        <strong>TypedQail&lt;T&gt;:</strong>
+                        Table-typed query wrapper — carries source type through builder chain
                     </li>
                     <li>
-                        <strong>File-Based Seeding:</strong>
-                        <code>qail exec -f seed.qail --url postgres://...</code>
+                        <strong>join_related(target):</strong>
+                        <code>RelatedTo&lt;T&gt;</code> trait bound — compiler rejects invalid joins at build time
                     </li>
                     <li>
-                        <strong>Transaction Support:</strong>
-                        <code>--tx</code> wraps all statements with auto-rollback
-                        on error
+                        <strong>Typed Columns:</strong>
+                        <code>typed_column()</code>, <code>typed_columns()</code> for batch typed column selection
                     </li>
                     <li>
-                        <strong>Dry-Run Mode:</strong>
-                        <code>--dry-run</code> previews generated SQL without executing
+                        <strong>Typed Filters:</strong>
+                        <code>typed_eq()</code>, <code>typed_filter()</code> with <code>ColumnValue&lt;C&gt;</code> bound
                     </li>
                     <li>
-                        <strong>Batch Execution:</strong>
-                        Multiple QAIL statements per file (one per line)
+                        <strong>Full Delegation:</strong>
+                        <code>with_cap()</code>, <code>with_rls()</code>, <code>limit()</code>, <code>offset()</code>, <code>order_by()</code>
+                    </li>
+                </ul>
+
+                <h4>Verified</h4>
+                <ul class="changelog-list">
+                    <li>253 tests pass — zero regressions</li>
+                    <li>Full workspace build clean across 16 crates</li>
+                </ul>
+            </section>
+
+            <!-- v0.15.6 -->
+            <section class="release-section">
+                <div class="release-header">
+                    <h2>v0.15.6</h2>
+                    <span class="release-date">February 7, 2026</span>
+                </div>
+
+                <div class="release-highlight">
+                    <span style="font-size: 1.5rem;">🔐</span>
+                    <strong>RlsContext</strong> — Unified multi-tenant context for all drivers
+                </div>
+
+                <h4>Row-Level Security</h4>
+                <ul class="changelog-list">
+                    <li>
+                        <strong>RlsContext:</strong>
+                        <code>operator()</code>, <code>agent()</code>, <code>operator_and_agent()</code>, <code>super_admin()</code> constructors
+                    </li>
+                    <li>
+                        <strong>Query Methods:</strong>
+                        <code>has_operator()</code>, <code>has_agent()</code>, <code>bypasses_rls()</code>
+                    </li>
+                    <li>
+                        <strong>with_rls(ctx):</strong>
+                        AST-level tenant injection — auto-scopes queries without manual WHERE clauses
+                    </li>
+                    <li>
+                        <strong>Display impl:</strong>
+                        Safe logging/debugging for RLS contexts
+                    </li>
+                </ul>
+
+                <h4>Typed System</h4>
+                <ul class="changelog-list">
+                    <li>
+                        <strong>Protected Columns:</strong>
+                        <code>column_protected()</code> with <code>CapabilityProvider</code> trait for data governance
+                    </li>
+                    <li>
+                        <strong>CapQuery&lt;C&gt;:</strong>
+                        Capability-gated query builder — compile-time access control
+                    </li>
+                </ul>
+            </section>
+
+            <!-- v0.15.5 -->
+            <section class="release-section">
+                <div class="release-header">
+                    <h2>v0.15.5</h2>
+                    <span class="release-date">February 2026</span>
+                </div>
+
+                <h4>Multi-Tenant Features</h4>
+                <ul class="changelog-list">
+                    <li>
+                        <strong>Tenant Injection:</strong>
+                        <code>Qail::get("users").with_rls(ctx)</code> — automatic scope to operator/agent
+                    </li>
+                    <li>
+                        <strong>RLS Policy Codegen:</strong>
+                        <code>schema.qail</code> generates PostgreSQL RLS policies via <code>qail migrate</code>
+                    </li>
+                    <li>
+                        <strong>SSH Tunneling:</strong>
+                        <code>qail exec --ssh host</code> for secure remote database access with auto-cleanup
                     </li>
                 </ul>
             </section>
