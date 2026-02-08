@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "coal";
             const default_dark_theme = "coal";
-            window.path_to_searchindex_js = "../searchindex-9f866f02.js";
+            window.path_to_searchindex_js = "../searchindex-2c746f83.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-33019e04.js"></script>
@@ -265,6 +265,44 @@ qail migrate apply
 </tbody>
 </table>
 </div>
+<hr>
+<h2 id="3-drift-detection-v0158"><a class="header" href="#3-drift-detection-v0158">3. Drift Detection (v0.15.8)</a></h2>
+<p>Compare a live database against a <code>.qail</code> schema file to find unexpected drift:</p>
+<pre><code class="language-bash">qail diff _ schema.qail --live --url postgres://localhost/mydb
+# Drift detection: [live DB] → schema.qail
+#   → Introspecting live database...
+#     80 tables, 287 indexes introspected
+#
+#   ✅ No drift detected — live DB matches schema file.
+</code></pre>
+<p>If drift exists, it shows categorized changes with risk levels:</p>
+<pre><code class="language-bash"># 🔴 HIGH   — missing column (was dropped outside migrations)
+# 🟡 MEDIUM — index mismatch
+# 🟢 LOW    — default value difference
+</code></pre>
+<hr>
+<h2 id="4-migration-reset-v0158"><a class="header" href="#4-migration-reset-v0158">4. Migration Reset (v0.15.8)</a></h2>
+<p>Nuclear option for development — drops everything and recreates from schema:</p>
+<pre><code class="language-bash">qail migrate reset schema.qail postgres://...
+# Phase 1: DROP all tables (FK-ordered)
+# Phase 2: CLEAR migration history
+# Phase 3: CREATE from schema
+# ✓ Reset complete
+</code></pre>
+<blockquote>
+<p>⚠️ <strong>Warning:</strong> This is destructive. Use only in development or staging.</p>
+</blockquote>
+<hr>
+<h2 id="5-migration-status-v0158"><a class="header" href="#5-migration-status-v0158">5. Migration Status (v0.15.8)</a></h2>
+<p>Rich tabular view of migration history:</p>
+<pre><code class="language-bash">qail migrate status postgres://...
+# 📋 Migration Status — mydb
+# ┌──────────┬────────────────────┬─────────────────────┬──────────────┐
+# │ Version  │ Name               │ Applied At          │ Checksum     │
+# ├──────────┼────────────────────┼─────────────────────┼──────────────┤
+# │ 001      │ qail_queue         │ 2026-02-01 10:00:00 │ a3b8d1...    │
+# └──────────┴────────────────────┴─────────────────────┴──────────────┘
+</code></pre>
 
                     </main>
 

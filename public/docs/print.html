@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "coal";
-            window.path_to_searchindex_js = "searchindex-9f866f02.js";
+            window.path_to_searchindex_js = "searchindex-2c746f83.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-33019e04.js"></script>
@@ -1500,6 +1500,44 @@ qail migrate apply
 </tbody>
 </table>
 </div>
+<hr>
+<h2 id="3-drift-detection-v0158"><a class="header" href="#3-drift-detection-v0158">3. Drift Detection (v0.15.8)</a></h2>
+<p>Compare a live database against a <code>.qail</code> schema file to find unexpected drift:</p>
+<pre><code class="language-bash">qail diff _ schema.qail --live --url postgres://localhost/mydb
+# Drift detection: [live DB] → schema.qail
+#   → Introspecting live database...
+#     80 tables, 287 indexes introspected
+#
+#   ✅ No drift detected — live DB matches schema file.
+</code></pre>
+<p>If drift exists, it shows categorized changes with risk levels:</p>
+<pre><code class="language-bash"># 🔴 HIGH   — missing column (was dropped outside migrations)
+# 🟡 MEDIUM — index mismatch
+# 🟢 LOW    — default value difference
+</code></pre>
+<hr>
+<h2 id="4-migration-reset-v0158"><a class="header" href="#4-migration-reset-v0158">4. Migration Reset (v0.15.8)</a></h2>
+<p>Nuclear option for development — drops everything and recreates from schema:</p>
+<pre><code class="language-bash">qail migrate reset schema.qail postgres://...
+# Phase 1: DROP all tables (FK-ordered)
+# Phase 2: CLEAR migration history
+# Phase 3: CREATE from schema
+# ✓ Reset complete
+</code></pre>
+<blockquote>
+<p>⚠️ <strong>Warning:</strong> This is destructive. Use only in development or staging.</p>
+</blockquote>
+<hr>
+<h2 id="5-migration-status-v0158"><a class="header" href="#5-migration-status-v0158">5. Migration Status (v0.15.8)</a></h2>
+<p>Rich tabular view of migration history:</p>
+<pre><code class="language-bash">qail migrate status postgres://...
+# 📋 Migration Status — mydb
+# ┌──────────┬────────────────────┬─────────────────────┬──────────────┐
+# │ Version  │ Name               │ Applied At          │ Checksum     │
+# ├──────────┼────────────────────┼─────────────────────┼──────────────┤
+# │ 001      │ qail_queue         │ 2026-02-01 10:00:00 │ a3b8d1...    │
+# └──────────┴────────────────────┴─────────────────────┴──────────────┘
+</code></pre>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="named-migrations"><a class="header" href="#named-migrations">Named Migrations</a></h1>
 <p>Named migrations provide version-controlled migration files with metadata for better tracking.</p>
@@ -2671,44 +2709,129 @@ let query = Qail::typed(bookings::table)
 </blockquote>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="cli-commands"><a class="header" href="#cli-commands">CLI Commands</a></h1>
-<p>The <code>qail</code> command-line tool.</p>
+<p>The <code>qail</code> command-line tool — v0.15.8.</p>
 <h2 id="installation-2"><a class="header" href="#installation-2">Installation</a></h2>
 <pre><code class="language-bash">cargo install qail
 </code></pre>
 <h2 id="commands"><a class="header" href="#commands">Commands</a></h2>
 <h3 id="qail-init"><a class="header" href="#qail-init"><code>qail init</code></a></h3>
-<p>Initialize a new QAIL project with interactive setup:</p>
-<pre><code class="language-bash">qail init
+<p>Initialize a new QAIL project. Auto-detects running PostgreSQL instances on the host, Docker, and Podman.</p>
+<pre><code class="language-bash"># Interactive mode — scans for running databases
+qail init
 # 🪝 QAIL Project Initialization
-# Project name: my_app
-# Select database mode:
-#   1. PostgreSQL only
-#   2. Qdrant only
-#   3. Hybrid (PostgreSQL + Qdrant)
-# ...
+# Scanning for PostgreSQL instances...
+#   ✓ Found 2 instance(s):
+#     1.  🖥  host localhost:5432 (host)
+#     2.  🐳 docker localhost:5433 (docker) — my-pg
+#     3.  Enter URL manually
+# Select [1-3]:
+
+# Non-interactive mode (CI/scripting)
+qail init --name myapp --mode postgres --url postgres://localhost/mydb
+qail init --name myapp --mode hybrid --url postgres://localhost/mydb --deployment docker
 </code></pre>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>--name &lt;NAME&gt;</code>: Project name</li>
+<li><code>--mode &lt;MODE&gt;</code>: Database mode (<code>postgres</code>, <code>qdrant</code>, <code>hybrid</code>)</li>
+<li><code>--url &lt;URL&gt;</code>: Database URL (skips interactive prompt)</li>
+<li><code>--deployment &lt;TYPE&gt;</code>: Deployment type (<code>host</code>, <code>docker</code>, <code>podman</code>)</li>
+</ul>
 <p>Generates <code>qail.toml</code> and necessary migration files.</p>
-<h3 id="qail-parse"><a class="header" href="#qail-parse"><code>qail parse</code></a></h3>
-<p>Parse QAIL text syntax to SQL:</p>
-<pre><code class="language-bash">qail parse "get users fields * where active = true"
-# SELECT * FROM users WHERE active = true
+<hr>
+<h3 id="qail-exec"><a class="header" href="#qail-exec"><code>qail exec</code></a></h3>
+<p>Execute QAIL statements against a database:</p>
+<pre><code class="language-bash"># Inline queries
+qail exec "get users'id'email[active = true]" --url postgres://...
+qail exec "add users fields name, email values 'Alice', 'a@test.com'" --url postgres://... --tx
+qail exec "set users[id = 1] fields name = 'Bob'" --url postgres://...
+
+# Count rows
+qail exec "cnt orders[status = 'paid']" --url postgres://...
+# → SELECT COUNT(*) FROM orders WHERE status = 'paid'
+
+# JSON output (pipe-friendly)
+qail exec "get users" --url postgres://... --json
+qail exec "get users" --url postgres://... --json | jq '.[].email'
+
+# From file
+qail exec -f seed.qail --url postgres://...
+
+# Dry-run (preview generated SQL)
+qail exec "get users'*'" --dry-run
+# 📋 Parsed 1 QAIL statement(s)
+# 🔍 DRY-RUN MODE — Generated SQL:
+#   SELECT * FROM users
+
+# With SSH tunnel
+qail exec "get users" --url postgres://remote/db --ssh user@bastion
 </code></pre>
+<p><strong>Syntax:</strong></p>
+<pre><code>add &lt;table&gt; fields &lt;col1&gt;, &lt;col2&gt; values &lt;val1&gt;, &lt;val2&gt;
+set &lt;table&gt;[id = $1] fields name = 'new', updated_at = now
+del &lt;table&gt;[id = $1]
+get &lt;table&gt;'id'name[active = true]
+cnt &lt;table&gt;[active = true]
+</code></pre>
+<p><strong>Value Types:</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Type</th><th>Examples</th></tr>
+</thead>
+<tbody>
+<tr><td>Strings</td><td><code>'hello'</code>, <code>"world"</code></td></tr>
+<tr><td>Numbers</td><td><code>42</code>, <code>3.14</code>, <code>-1</code></td></tr>
+<tr><td>Booleans</td><td><code>true</code>, <code>false</code></td></tr>
+<tr><td>Null</td><td><code>null</code></td></tr>
+<tr><td>Parameters</td><td><code>$1</code>, <code>$2</code>, <code>:name</code></td></tr>
+<tr><td>Intervals</td><td><code>24h</code>, <code>7d</code>, <code>30m</code></td></tr>
+<tr><td>JSON</td><td><code>["a", "b"]</code>, <code>{"key": "val"}</code></td></tr>
+<tr><td>Timestamp</td><td><code>now</code></td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>-f, --file &lt;FILE&gt;</code>: Path to <code>.qail</code> file with statements</li>
+<li><code>-u, --url &lt;URL&gt;</code>: Database connection URL</li>
+<li><code>--json</code>: Output SELECT results as JSON array</li>
+<li><code>--tx</code>: Wrap all statements in a transaction</li>
+<li><code>--dry-run</code>: Preview generated SQL without executing</li>
+<li><code>--ssh &lt;USER@HOST&gt;</code>: SSH tunnel via bastion host</li>
+</ul>
+<hr>
 <h3 id="qail-pull"><a class="header" href="#qail-pull"><code>qail pull</code></a></h3>
-<p>Extract schema from database:</p>
+<p>Extract schema from a live database:</p>
 <pre><code class="language-bash">qail pull postgres://user:pass@localhost/db &gt; schema.qail
 </code></pre>
+<hr>
 <h3 id="qail-diff"><a class="header" href="#qail-diff"><code>qail diff</code></a></h3>
-<p>Compare two schemas and show migration commands:</p>
-<pre><code class="language-bash">qail diff old.qail new.qail
+<p>Compare two schemas or detect drift against a live database:</p>
+<pre><code class="language-bash"># Compare two schema files
+qail diff old.qail new.qail
+qail diff old.qail new.qail --format json
+
+# Live drift detection (introspects running database)
+qail diff _ schema.qail --live --url postgres://localhost/mydb
+# Drift detection: [live DB] → schema.qail
+#   → Introspecting live database...
+#     80 tables, 287 indexes introspected
+#   ✅ No drift detected — live DB matches schema file.
 </code></pre>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>--format &lt;FMT&gt;</code>: Output format (<code>sql</code>, <code>json</code>, <code>pretty</code>)</li>
+<li><code>--live</code>: Use live database introspection as “old” schema</li>
+<li><code>--url &lt;URL&gt;</code>: Database URL (required with <code>--live</code>)</li>
+</ul>
+<hr>
 <h3 id="qail-check"><a class="header" href="#qail-check"><code>qail check</code></a></h3>
 <p>Validate a schema file or preview migration safety:</p>
 <pre><code class="language-bash"># Validate schema
 qail check schema.qail
 # ✓ Schema is valid
-#   Tables: 80
-#   Columns: 1110
-#   Indexes: 287
+#   Tables: 80 | Columns: 1110 | Indexes: 287
 #   ✓ 82 primary key(s)
 
 # Check migration safety
@@ -2718,23 +2841,30 @@ qail check old.qail:new.qail
 #   ✓ 3 safe operation(s)
 #   ⚠️  1 reversible operation(s)
 </code></pre>
+<hr>
+<h2 id="migrate-commands"><a class="header" href="#migrate-commands">Migrate Commands</a></h2>
+<h3 id="qail-migrate-status"><a class="header" href="#qail-migrate-status"><code>qail migrate status</code></a></h3>
+<p>View migration history with rich tabular output:</p>
+<pre><code class="language-bash">qail migrate status postgres://...
+# 📋 Migration Status — mydb
+# ┌──────────┬────────────────────┬─────────────────────┬──────────────┐
+# │ Version  │ Name               │ Applied At          │ Checksum     │
+# ├──────────┼────────────────────┼─────────────────────┼──────────────┤
+# │ 001      │ qail_queue         │ 2026-02-01 10:00:00 │ a3b8d1...    │
+# │ 002      │ add_users          │ 2026-02-05 14:32:00 │ f81d4f...    │
+# └──────────┴────────────────────┴─────────────────────┴──────────────┘
+</code></pre>
 <h3 id="qail-migrate-up"><a class="header" href="#qail-migrate-up"><code>qail migrate up</code></a></h3>
 <p>Apply migrations:</p>
-<pre><code class="language-bash">qail migrate up old.qail:new.qail postgres://...
+<pre><code class="language-bash">qail migrate up v1.qail:v2.qail postgres://...
+
+# With codebase check (warns about breaking references)
+qail migrate up v1.qail:v2.qail postgres://... -c ./src
 </code></pre>
 <h3 id="qail-migrate-down"><a class="header" href="#qail-migrate-down"><code>qail migrate down</code></a></h3>
 <p>Rollback migrations:</p>
-<pre><code class="language-bash">qail migrate down old.qail:new.qail postgres://...
+<pre><code class="language-bash">qail migrate down v1.qail:v2.qail postgres://...
 </code></pre>
-<h3 id="qail-migrate-apply"><a class="header" href="#qail-migrate-apply"><code>qail migrate apply</code></a></h3>
-<p>Apply file-based migrations from <code>migrations/</code> directory:</p>
-<pre><code class="language-bash">qail migrate apply
-# → Found 1 migrations to apply
-# ✓ Connected to qail_test
-#   → 001_qail_queue.up.qail... ✓
-# ✓ All migrations applied successfully!
-</code></pre>
-<p>Reads <code>qail.toml</code> for database connection if not provided via <code>--url</code>.</p>
 <h3 id="qail-migrate-plan"><a class="header" href="#qail-migrate-plan"><code>qail migrate plan</code></a></h3>
 <p>Preview migration SQL without executing (dry-run):</p>
 <pre><code class="language-bash">qail migrate plan old.qail:new.qail
@@ -2742,10 +2872,6 @@ qail check old.qail:new.qail
 # ┌─ UP (2 operations) ─────────────────────────────────┐
 # │ 1. ALTER TABLE users ADD COLUMN verified BOOLEAN
 # │ 2. CREATE INDEX idx_users_email ON users (email)
-# └─────────────────────────────────────────────────────┘
-# ┌─ DOWN (2 operations) ───────────────────────────────┐
-# │ 1. ALTER TABLE users DROP COLUMN verified
-# │ 2. DROP INDEX IF EXISTS idx_users_email
 # └─────────────────────────────────────────────────────┘
 
 # Save to file
@@ -2755,8 +2881,7 @@ qail migrate plan old.qail:new.qail --output migration.sql
 <p>Analyze codebase for breaking changes before migrating:</p>
 <pre><code class="language-bash">qail migrate analyze old.qail:new.qail --codebase ./src
 # 🔍 Migration Impact Analyzer
-# Scanning codebase...
-#   Found 395 query references
+# Scanning codebase... Found 395 query references
 #
 # ⚠️  BREAKING CHANGES DETECTED
 # ┌─ DROP TABLE promotions (6 references) ─────────────┐
@@ -2764,35 +2889,57 @@ qail migrate plan old.qail:new.qail --output migration.sql
 # │ ❌ src/repository/promotion.rs:264 → SELECT...
 # └────────────────────────────────────────────────────┘
 </code></pre>
+<h3 id="qail-migrate-apply"><a class="header" href="#qail-migrate-apply"><code>qail migrate apply</code></a></h3>
+<p>Apply file-based migrations from <code>migrations/</code> directory:</p>
+<pre><code class="language-bash">qail migrate apply
+# → Found 1 migrations to apply
+# ✓ Connected to mydb
+#   → 001_qail_queue.up.qail... ✓
+# ✓ All migrations applied successfully!
+</code></pre>
+<h3 id="qail-migrate-reset"><a class="header" href="#qail-migrate-reset"><code>qail migrate reset</code></a></h3>
+<p>Nuclear option — drop all objects, clear history, re-apply target schema:</p>
+<pre><code class="language-bash">qail migrate reset schema.qail postgres://...
+# ⚠️  This will DROP all tables, clear migration history, and recreate from schema.
+# Phase 1: DROP all tables...
+# Phase 2: CLEAR migration history...
+# Phase 3: CREATE from schema...
+# ✓ Reset complete
+</code></pre>
+<h3 id="qail-migrate-shadow"><a class="header" href="#qail-migrate-shadow"><code>qail migrate shadow</code></a></h3>
+<p>Test migrations against a shadow database:</p>
+<pre><code class="language-bash">qail migrate shadow v1.qail:v2.qail postgres://shadow-db/...
+</code></pre>
+<hr>
+<h2 id="other-commands-1"><a class="header" href="#other-commands-1">Other Commands</a></h2>
+<h3 id="qail-explain"><a class="header" href="#qail-explain"><code>qail explain</code></a></h3>
+<p>Parse and explain a QAIL query:</p>
+<pre><code class="language-bash">qail "get users'id'email[active = true]"
+# SELECT id, email FROM users WHERE active = true
+</code></pre>
+<h3 id="qail-repl"><a class="header" href="#qail-repl"><code>qail repl</code></a></h3>
+<p>Interactive QAIL REPL — type queries, see SQL in real-time:</p>
+<pre><code class="language-bash">qail repl
+# 🪝 QAIL REPL v0.15.8
+# Type QAIL queries, see SQL output.
+# qail&gt; get users[active = true]
+# → SELECT * FROM users WHERE active = true
+</code></pre>
+<h3 id="qail-types"><a class="header" href="#qail-types"><code>qail types</code></a></h3>
+<p>Generate typed Rust schema from <code>.qail</code> file:</p>
+<pre><code class="language-bash">qail types schema.qail &gt; src/generated/schema.rs
+</code></pre>
 <h3 id="qail-watch"><a class="header" href="#qail-watch"><code>qail watch</code></a></h3>
 <p>Watch schema file for changes and auto-generate migrations:</p>
-<pre><code class="language-bash">qail watch schema.qail
-# 👀 QAIL Schema Watch Mode
-#    Watching: schema.qail
-#    Press Ctrl+C to stop
-# [14:32:15] ✓ Detected 2 change(s):
-#        ALTER TABLE users ADD COLUMN avatar_url TEXT
-
-# With database connection
-qail watch schema.qail --url postgres://... --auto-apply
+<pre><code class="language-bash">qail watch schema.qail --url postgres://... --auto-apply
 </code></pre>
 <h3 id="qail-lint"><a class="header" href="#qail-lint"><code>qail lint</code></a></h3>
-<p>Check schema for best practices and potential issues:</p>
+<p>Check schema for best practices:</p>
 <pre><code class="language-bash">qail lint schema.qail
 # 🔍 Schema Linter
 # ⚠ 144 warning(s)
 # ℹ 266 info(s)
-#
-# ⚠ users.customer_id Possible FK column without references()
-#   → Consider adding '.references("table", "id")' for referential integrity
-#
-# ⚠ orders Missing updated_at column
-#   → Add 'updated_at TIMESTAMPTZ not_null' for audit trail
-
-# Strict mode (errors only, for CI)
-qail lint schema.qail --strict
 </code></pre>
-<p><strong>Lint Checks:</strong></p>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -2803,84 +2950,28 @@ qail lint schema.qail --strict
 <tr><td>Missing created_at/updated_at</td><td>⚠️ WARNING</td><td>Audit trail columns</td></tr>
 <tr><td><code>_id</code> column without <code>references()</code></td><td>⚠️ WARNING</td><td>FK integrity</td></tr>
 <tr><td>Uppercase table names</td><td>⚠️ WARNING</td><td>Use snake_case</td></tr>
-<tr><td>SERIAL vs UUID</td><td>ℹ️ INFO</td><td>Consider UUID for distributed</td></tr>
-<tr><td>Nullable without default</td><td>ℹ️ INFO</td><td>Consider default value</td></tr>
 </tbody>
 </table>
 </div>
 <h3 id="qail-sync-generate"><a class="header" href="#qail-sync-generate"><code>qail sync generate</code></a></h3>
-<p>Generate trigger migrations from <code>[[sync]]</code> rules in <code>qail.toml</code>:</p>
+<p>Generate trigger migrations from <code>[[sync]]</code> rules in <code>qail.toml</code> (Hybrid mode):</p>
 <pre><code class="language-bash">qail sync generate
-# → Generating sync triggers...
 # ✓ Created migrations/002_qail_sync_triggers.up.qail
 </code></pre>
-<p>Used in Hybrid mode to automatically create PostgreSQL triggers that push changes to the <code>_qail_queue</code> table.</p>
 <h3 id="qail-worker"><a class="header" href="#qail-worker"><code>qail worker</code></a></h3>
-<p>Start the background worker to sync data from PostgreSQL to Qdrant:</p>
+<p>Start the background worker to sync PostgreSQL → Qdrant (Hybrid mode):</p>
 <pre><code class="language-bash">qail worker --interval 1000 --batch 100
-# 👷 QAIL Hybrid Worker v0.14.12
-# 🔌 Qdrant: Connected (localhost:6334)
-# 🐘 Postgres: Connected (5 connections)
-# 
-# [2026-01-02 10:00:00] 🔄 Syncing... (pending: 0)
 </code></pre>
-<p><strong>Options:</strong></p>
-<ul>
-<li><code>--interval &lt;ms&gt;</code>: Polling interval (default: 1000ms)</li>
-<li><code>--batch &lt;size&gt;</code>: Batch size for sync (default: 100)</li>
-</ul>
-<h3 id="qail-migrate-status"><a class="header" href="#qail-migrate-status"><code>qail migrate status</code></a></h3>
-<p>View migration history for a database:</p>
-<pre><code class="language-bash">qail migrate status postgres://...
-# 📋 Migration Status
-#   Database: mydb
-#   Migration table: _qail_migrations
-#   ✓ Migration history table is ready
-</code></pre>
-<h3 id="qail-exec"><a class="header" href="#qail-exec"><code>qail exec</code></a></h3>
-<p>Execute type-safe QAIL statements against a database:</p>
-<pre><code class="language-bash"># Inline QAIL execution
-qail exec "get users fields id, email where active = true" --url postgres://...
-qail exec "add users fields name, email values 'Alice', 'a@test.com'" --url postgres://... --tx
-
-# From file
-qail exec -f seed.qail --url postgres://...
-
-# Dry-run (preview generated SQL)
-qail exec "get users fields *" --dry-run
-# 📋 Parsed 1 QAIL statement(s)
-# 🔍 DRY-RUN MODE - Generated SQL:
-# Statement 1:
-#   SELECT * FROM users
-# No changes made.
-</code></pre>
-<p><strong>Options:</strong></p>
-<ul>
-<li><code>-f, --file &lt;FILE&gt;</code>: Path to <code>.qail</code> file with statements (one per line)</li>
-<li><code>-u, --url &lt;URL&gt;</code>: Database connection URL</li>
-<li><code>--tx</code>: Wrap all statements in a transaction</li>
-<li><code>--dry-run</code>: Preview generated SQL without executing</li>
-</ul>
-<p><strong>Features:</strong></p>
-<ul>
-<li>Type-safe execution via QAIL AST (<code>driver.execute(ast)</code>)</li>
-<li>Batch execution (multiple statements per file)</li>
-<li>Transaction support with automatic rollback on error</li>
-<li>Comments supported (<code>#</code> and <code>--</code>)</li>
-</ul>
-<h3 id="qail-fmt"><a class="header" href="#qail-fmt"><code>qail fmt</code></a></h3>
-<p>Format QAIL text:</p>
-<pre><code class="language-bash">qail fmt "get users fields *" --indent
-</code></pre>
-<h2 id="options"><a class="header" href="#options">Options</a></h2>
+<hr>
+<h2 id="global-options"><a class="header" href="#global-options">Global Options</a></h2>
 <div class="table-wrapper">
 <table>
 <thead>
 <tr><th>Flag</th><th>Description</th></tr>
 </thead>
 <tbody>
-<tr><td><code>-d, --dialect</code></td><td>Target SQL dialect (pg, mysql)</td></tr>
-<tr><td><code>-f, --format</code></td><td>Output format (sql, ast, json)</td></tr>
+<tr><td><code>-d, --dialect</code></td><td>Target SQL dialect (<code>pg</code>, <code>mysql</code>)</td></tr>
+<tr><td><code>-f, --format</code></td><td>Output format (<code>sql</code>, <code>ast</code>, <code>json</code>)</td></tr>
 <tr><td><code>-v, --verbose</code></td><td>Verbose output</td></tr>
 <tr><td><code>--version</code></td><td>Show version</td></tr>
 <tr><td><code>--help</code></td><td>Show help</td></tr>
