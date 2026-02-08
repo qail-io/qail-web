@@ -25,7 +25,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
                 <div class="release-highlight">
                     <span style="font-size: 1.5rem;">⚙️</span>
-                    <strong>Centralized Configuration</strong> — single <code>qail.toml</code> with <code>${VAR}</code> env expansion
+                    <strong>Centralized Configuration</strong> — single <code>qail.toml</code> with <code>{'${VAR}'}</code> env expansion
                 </div>
 
                 <h4>QailConfig Loader (qail-core)</h4>
@@ -35,8 +35,8 @@ import BaseLayout from "../layouts/BaseLayout.astro";
                         Single config file for all drivers — postgres, redis, qdrant, gateway
                     </li>
                     <li>
-                        <strong>${VAR} Expansion:</strong>
-                        Environment variable interpolation with <code>${VAR:-default}</code> fallback syntax
+                        <strong>{'${VAR}'} Expansion:</strong>
+                        Environment variable interpolation with <code>{'${VAR:-default}'}</code> fallback syntax
                     </li>
                     <li>
                         <strong>Layered Priority:</strong>
