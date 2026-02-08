@@ -15,12 +15,68 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
     <main class="page-content">
         <div class="container" style="max-width: 900px;">
+            <!-- v0.16.0 -->
+            <section class="release-section">
+                <div class="release-header">
+                    <h2>v0.16.0</h2>
+                    <span class="release-date">February 8, 2026</span>
+                    <span class="status-badge full">Latest</span>
+                </div>
+
+                <div class="release-highlight">
+                    <span style="font-size: 1.5rem;">⚙️</span>
+                    <strong>Centralized Configuration</strong> — single <code>qail.toml</code> with <code>${VAR}</code> env expansion
+                </div>
+
+                <h4>QailConfig Loader (qail-core)</h4>
+                <ul class="changelog-list">
+                    <li>
+                        <strong>qail.toml:</strong>
+                        Single config file for all drivers — postgres, redis, qdrant, gateway
+                    </li>
+                    <li>
+                        <strong>${VAR} Expansion:</strong>
+                        Environment variable interpolation with <code>${VAR:-default}</code> fallback syntax
+                    </li>
+                    <li>
+                        <strong>Layered Priority:</strong>
+                        Environment variables &gt; qail.toml &gt; hardcoded defaults
+                    </li>
+                    <li>
+                        <strong>Env Overrides:</strong>
+                        <code>DATABASE_URL</code>, <code>REDIS_URL</code>, <code>QDRANT_URL</code>, <code>QAIL_BIND</code>
+                    </li>
+                </ul>
+
+                <h4>Driver Integrations</h4>
+                <ul class="changelog-list">
+                    <li>
+                        <strong>PgPool::from_config():</strong>
+                        One-liner pool creation from <code>qail.toml</code> with full pool tuning
+                    </li>
+                    <li>
+                        <strong>PoolConfig::from_qail_config():</strong>
+                        Available on <code>qail-pg</code>, <code>qail-redis</code>, <code>qail-qdrant</code>
+                    </li>
+                    <li>
+                        <strong>GatewayConfig::from_qail_config():</strong>
+                        Maps postgres, gateway, project sections to gateway config
+                    </li>
+                </ul>
+
+                <h4>Code Quality</h4>
+                <ul class="changelog-list">
+                    <li>18 clippy warnings fixed across workspace — zero remaining</li>
+                    <li><code>qail init</code> now generates <code>.env.example</code> alongside <code>qail.toml</code></li>
+                    <li>Configuration docs added to mdBook</li>
+                </ul>
+            </section>
+
             <!-- v0.15.7 -->
             <section class="release-section">
                 <div class="release-header">
                     <h2>v0.15.7</h2>
                     <span class="release-date">February 8, 2026</span>
-                    <span class="status-badge full">Latest</span>
                 </div>
 
                 <div class="release-highlight">

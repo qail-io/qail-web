@@ -325,10 +325,34 @@ import BaseLayout from "../layouts/BaseLayout.astro";
             </section>
 
             <section>
-                <h2>🚀 In Progress: v0.15.0</h2>
+                <h2>🚀 Completed: v0.16.0</h2>
                 <p>
                     <strong>Theme:</strong> "Performance & Polish"
                 </p>
+
+                <div class="roadmap-section">
+                    <h3>
+                        <span class="badge badge-done">Done</span> Centralized Configuration (v0.16.0)
+                    </h3>
+                    <ul class="task-list">
+                        <li>
+                            <span class="check check-done">✓</span> QailConfig loader
+                            with ${VAR} env expansion
+                        </li>
+                        <li>
+                            <span class="check check-done">✓</span> Layered priority:
+                            env vars > qail.toml > defaults
+                        </li>
+                        <li>
+                            <span class="check check-done">✓</span> Driver integrations:
+                            pg, redis, qdrant, gateway
+                        </li>
+                        <li>
+                            <span class="check check-done">✓</span> PgPool::from_config()
+                            one-liner creation
+                        </li>
+                    </ul>
+                </div>
 
                 <div class="roadmap-section">
                     <h3>
