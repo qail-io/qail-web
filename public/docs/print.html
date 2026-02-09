@@ -37,10 +37,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "coal";
-            window.path_to_searchindex_js = "searchindex-2c746f83.js";
+            window.path_to_searchindex_js = "searchindex-c0409787.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-33019e04.js"></script>
+        <script src="toc-a5b90d9c.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -2707,6 +2707,160 @@ let query = Qail::typed(bookings::table)
 <blockquote>
 <p><strong>QAIL is the only Rust PostgreSQL driver with built-in Row-Level Security support.</strong></p>
 </blockquote>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="centralized-configuration"><a class="header" href="#centralized-configuration">Centralized Configuration</a></h1>
+<p>Qail uses a single <code>qail.toml</code> file as the source of truth for all components. Configuration follows a layered priority:</p>
+<p><strong>Environment Variables &gt; <code>qail.toml</code> &gt; Hardcoded Defaults</strong></p>
+<h2 id="quick-start-3"><a class="header" href="#quick-start-3">Quick Start</a></h2>
+<p>Generate a config with <code>qail init</code>, or create <code>qail.toml</code> manually:</p>
+<pre><code class="language-toml">[project]
+name = "my-app"
+mode = "postgres"
+
+[postgres]
+url = "postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST:-localhost}:5432/mydb"
+max_connections = 20
+min_connections = 2
+idle_timeout_secs = 600
+acquire_timeout_secs = 30
+connect_timeout_secs = 10
+test_on_acquire = false
+
+[postgres.rls]
+default_role = "app_user"
+super_admin_role = "super_admin"
+
+[redis]
+host = "127.0.0.1"
+port = 6379
+max_connections = 10
+password = "${REDIS_PASSWORD:-}"
+
+[qdrant]
+url = "http://localhost:6333"
+grpc = "localhost:6334"
+max_connections = 10
+
+[gateway]
+bind = "0.0.0.0:8080"
+cors = true
+policy = "policies.yaml"
+
+[gateway.cache]
+enabled = true
+max_entries = 1000
+ttl_secs = 60
+
+[[sync]]
+source_table = "products"
+trigger_column = "description"
+target_collection = "products_search"
+embedding_model = "candle:bert-base"
+</code></pre>
+<h2 id="environment-variable-expansion"><a class="header" href="#environment-variable-expansion">Environment Variable Expansion</a></h2>
+<p>Use <code>${VAR}</code> syntax inside TOML values to reference environment variables:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Syntax</th><th>Behavior</th></tr>
+</thead>
+<tbody>
+<tr><td><code>${VAR}</code></td><td><strong>Required</strong> — errors if <code>VAR</code> is not set</td></tr>
+<tr><td><code>${VAR:-default}</code></td><td><strong>Optional</strong> — uses <code>default</code> if <code>VAR</code> is not set</td></tr>
+<tr><td><code>$$</code></td><td>Literal <code>$</code> character</td></tr>
+</tbody>
+</table>
+</div>
+<p>Example:</p>
+<pre><code class="language-toml">[postgres]
+url = "postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST:-localhost}:5432/mydb"
+</code></pre>
+<p>Set <code>DB_USER</code> and <code>DB_PASSWORD</code> in your <code>.env</code> or shell. <code>DB_HOST</code> falls back to <code>localhost</code> if unset.</p>
+<h2 id="environment-variable-overrides"><a class="header" href="#environment-variable-overrides">Environment Variable Overrides</a></h2>
+<p>These env vars always override their TOML counterparts, regardless of <code>${VAR}</code> expansion:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Env Var</th><th>Overrides</th></tr>
+</thead>
+<tbody>
+<tr><td><code>DATABASE_URL</code></td><td><code>[postgres].url</code></td></tr>
+<tr><td><code>REDIS_URL</code></td><td><code>[redis].host</code> + <code>port</code></td></tr>
+<tr><td><code>QDRANT_URL</code></td><td><code>[qdrant].url</code></td></tr>
+<tr><td><code>QAIL_BIND</code></td><td><code>[gateway].bind</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>This lets you keep one <code>qail.toml</code> across dev/staging/prod and switch databases purely via env vars.</p>
+<h2 id="usage-in-rust"><a class="header" href="#usage-in-rust">Usage in Rust</a></h2>
+<h3 id="postgresql-pool-one-liner"><a class="header" href="#postgresql-pool-one-liner">PostgreSQL Pool (one-liner)</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use qail_pg::driver::pool::PgPool;
+
+let pool = PgPool::from_config().await?;
+<span class="boring">}</span></code></pre>
+<h3 id="manual-config-loading"><a class="header" href="#manual-config-loading">Manual Config Loading</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use qail_core::config::QailConfig;
+use qail_pg::driver::pool::PoolConfig;
+
+let qail = QailConfig::load()?;                       // reads ./qail.toml
+let pg_config = PoolConfig::from_qail_config(&amp;qail)?;  // parse postgres section
+let pool = PgPool::connect(pg_config).await?;
+<span class="boring">}</span></code></pre>
+<h3 id="redis"><a class="header" href="#redis">Redis</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use qail_redis::pool::PoolConfig as RedisPoolConfig;
+
+let qail = QailConfig::load()?;
+if let Some(config) = RedisPoolConfig::from_qail_config(&amp;qail) {
+    let pool = RedisPool::new(config).await?;
+}
+<span class="boring">}</span></code></pre>
+<h3 id="qdrant"><a class="header" href="#qdrant">Qdrant</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use qail_qdrant::pool::PoolConfig as QdrantPoolConfig;
+
+let qail = QailConfig::load()?;
+if let Some(config) = QdrantPoolConfig::from_qail_config(&amp;qail) {
+    let pool = QdrantPool::new(config).await?;
+}
+<span class="boring">}</span></code></pre>
+<h3 id="gateway"><a class="header" href="#gateway">Gateway</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use qail_gateway::config::GatewayConfig;
+
+let qail = QailConfig::load()?;
+let gw = GatewayConfig::from_qail_config(&amp;qail);
+<span class="boring">}</span></code></pre>
+<h2 id="section-reference"><a class="header" href="#section-reference">Section Reference</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Section</th><th>Required</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>[project]</code></td><td>Yes</td><td>Project name, mode (<code>postgres</code>/<code>qdrant</code>/<code>hybrid</code>), schema path</td></tr>
+<tr><td><code>[postgres]</code></td><td>Yes</td><td>Database URL and pool tuning</td></tr>
+<tr><td><code>[postgres.rls]</code></td><td>No</td><td>RLS role names</td></tr>
+<tr><td><code>[redis]</code></td><td>No</td><td>Redis connection settings</td></tr>
+<tr><td><code>[qdrant]</code></td><td>No</td><td>Qdrant REST + gRPC endpoints</td></tr>
+<tr><td><code>[gateway]</code></td><td>No</td><td>HTTP server bind, CORS, cache</td></tr>
+<tr><td><code>[[sync]]</code></td><td>No</td><td>Vector sync rules (hybrid mode)</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="generated-files"><a class="header" href="#generated-files">Generated Files</a></h2>
+<p><code>qail init</code> creates:</p>
+<ul>
+<li><strong><code>qail.toml</code></strong> — project config with commented-out optional sections</li>
+<li><strong><code>.env.example</code></strong> — documents all supported env var overrides</li>
+</ul>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="cli-commands"><a class="header" href="#cli-commands">CLI Commands</a></h1>
 <p>The <code>qail</code> command-line tool — v0.15.8.</p>
