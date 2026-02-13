@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "coal";
             const default_dark_theme = "coal";
-            window.path_to_searchindex_js = "../searchindex-c0409787.js";
+            window.path_to_searchindex_js = "../searchindex-4a5273a6.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-a5b90d9c.js"></script>
+        <script src="../toc-77e67636.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -401,6 +401,16 @@ let mode = GroupByMode::GroupingSets(vec![
 <tr><td><code>Action::Index</code></td><td><code>CREATE INDEX</code></td><td>✓</td></tr>
 <tr><td><code>Action::CreateView</code></td><td><code>CREATE VIEW AS</code></td><td>✓ v0.14.2</td></tr>
 <tr><td><code>Action::DropView</code></td><td><code>DROP VIEW</code></td><td>✓ v0.14.2</td></tr>
+<tr><td><code>Action::CreateMaterializedView</code></td><td><code>CREATE MATERIALIZED VIEW</code></td><td>✓</td></tr>
+<tr><td><code>Action::RefreshMaterializedView</code></td><td><code>REFRESH MATERIALIZED VIEW</code></td><td>✓</td></tr>
+<tr><td><code>Action::DropMaterializedView</code></td><td><code>DROP MATERIALIZED VIEW</code></td><td>✓</td></tr>
+<tr><td><code>Action::Truncate</code></td><td><code>TRUNCATE</code></td><td>✓</td></tr>
+<tr><td><code>Action::Explain</code></td><td><code>EXPLAIN</code></td><td>✓</td></tr>
+<tr><td><code>Action::ExplainAnalyze</code></td><td><code>EXPLAIN ANALYZE</code></td><td>✓</td></tr>
+<tr><td><code>Action::Lock</code></td><td><code>LOCK TABLE</code></td><td>✓</td></tr>
+<tr><td><code>Action::Listen</code></td><td><code>LISTEN channel</code></td><td>✓</td></tr>
+<tr><td><code>Action::Notify</code></td><td><code>NOTIFY channel, 'payload'</code></td><td>✓</td></tr>
+<tr><td><code>Action::Unlisten</code></td><td><code>UNLISTEN channel</code></td><td>✓</td></tr>
 </tbody>
 </table>
 </div>

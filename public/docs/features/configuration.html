@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "coal";
             const default_dark_theme = "coal";
-            window.path_to_searchindex_js = "../searchindex-c0409787.js";
+            window.path_to_searchindex_js = "../searchindex-4a5273a6.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-a5b90d9c.js"></script>
+        <script src="../toc-77e67636.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -218,6 +218,22 @@ max_connections = 10
 bind = "0.0.0.0:8080"
 cors = true
 policy = "policies.yaml"
+max_result_rows = 10000
+statement_timeout_ms = 30000
+explain_max_cost = 100000.0
+explain_max_rows = 1000000
+max_expand_depth = 3
+tenant_max_concurrent = 10
+
+# Per-role guard overrides — override global defaults for specific roles.
+# Any field not specified here falls back to the global [gateway] default.
+[gateway.role_overrides.reporting]
+max_result_rows = 100000
+statement_timeout_ms = 120000
+explain_max_cost = 500000.0
+
+[gateway.role_overrides.admin]
+max_expand_depth = 5
 
 [gateway.cache]
 enabled = true

@@ -32,7 +32,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
                 <ul class="changelog-list">
                     <li>
                         <strong>qail.toml:</strong>
-                        Single config file for all drivers — postgres, redis, qdrant, gateway
+                        Single config file for all drivers — postgres, qdrant, gateway
                     </li>
                     <li>
                         <strong>{'${VAR}'} Expansion:</strong>
@@ -44,7 +44,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
                     </li>
                     <li>
                         <strong>Env Overrides:</strong>
-                        <code>DATABASE_URL</code>, <code>REDIS_URL</code>, <code>QDRANT_URL</code>, <code>QAIL_BIND</code>
+                        <code>DATABASE_URL</code>, <code>QDRANT_URL</code>, <code>QAIL_BIND</code>
                     </li>
                 </ul>
 
@@ -56,7 +56,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
                     </li>
                     <li>
                         <strong>PoolConfig::from_qail_config():</strong>
-                        Available on <code>qail-pg</code>, <code>qail-redis</code>, <code>qail-qdrant</code>
+                        Available on <code>qail-pg</code>, <code>qail-qdrant</code>
                     </li>
                     <li>
                         <strong>GatewayConfig::from_qail_config():</strong>
@@ -235,29 +235,26 @@ import BaseLayout from "../layouts/BaseLayout.astro";
                 <div class="release-highlight">
                     <span style="font-size: 1.5rem;">🎯</span>
                     <strong>Unified Qail AST</strong> — Same API across PostgreSQL,
-                    Qdrant, Redis
+                    Qdrant + Native Cache
                 </div>
 
-                <h4>qail-redis: Unified API</h4>
+                <h4>Native Cache: Gateway Query Cache</h4>
                 <ul class="changelog-list">
                     <li>
-                        <strong>Qail Constructors:</strong>
-                        <code>Qail::redis_get()</code>, <code
-                            >Qail::redis_set()</code
-                        >, <code>Qail::redis_incr()</code>
+                        <strong>QueryCache:</strong>
+                        DashMap-based LRU with configurable TTL (default: 60s, 1000 entries)
                     </li>
                     <li>
-                        <strong>RedisExt Trait:</strong>
-                        <code>.redis_ex(seconds)</code>, <code>.redis_nx()</code
-                        >, <code>.redis_xx()</code>
+                        <strong>Auto-Invalidation:</strong>
+                        Mutations automatically invalidate by table name
                     </li>
                     <li>
-                        <strong>Core Integration:</strong>
-                        Redis actions added to <code>Action</code> enum
+                        <strong>Prepared Statement Cache:</strong>
+                        LRU cache for PG server-side prepared statements (max 100)
                     </li>
                     <li>
-                        <strong>Native RESP3:</strong>
-                        Direct wire encoding, connection pooling
+                        <strong>EXPLAIN Cache:</strong>
+                        TTL-based query plan caching (300s default)
                     </li>
                 </ul>
 
@@ -268,9 +265,6 @@ import BaseLayout from "../layouts/BaseLayout.astro";
                     </li>
                     <li>
                         <code>Qail::search("products")</code> — Qdrant (meaning)
-                    </li>
-                    <li>
-                        <code>Qail::redis_get("session")</code> — Redis (time)
                     </li>
                 </ul>
             </section>

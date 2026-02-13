@@ -1,0 +1,112 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="License — QAIL" description="QAIL is Apache 2.0 licensed. Free to use with patent protection built in.">
+    <section class="page-header">
+        <div class="container">
+            <h1 class="section-title">License</h1>
+            <p class="section-subtitle">Apache 2.0 — open protocol with patent protection</p>
+        </div>
+    </section>
+
+    <section style="padding: 80px 0;">
+        <div class="container" style="max-width: 800px;">
+
+            <div style="margin-bottom: 48px;">
+                <h2 style="font-size: 1.5rem; margin-bottom: 16px; display: flex; align-items: center; gap: 10px;">
+                    <span style="color: var(--accent-green);">●</span> Apache License 2.0
+                </h2>
+                <p style="color: var(--text-secondary); margin-bottom: 16px; line-height: 1.7;">
+                    All public QAIL crates are released under the
+                    <strong>Apache License, Version 2.0</strong>. You are free to use, copy, modify,
+                    and distribute QAIL in any project — commercial or otherwise — with full patent
+                    protection for all contributors and users.
+                </p>
+                <p style="color: var(--text-secondary); margin-bottom: 24px; line-height: 1.7;">
+                    Apache 2.0 is the license of choice for protocol standards. It's used by
+                    gRPC, Kubernetes, TensorFlow, and hundreds of other foundational projects.
+                </p>
+                <a href="https://github.com/qail-io/qail/blob/main/LICENSE" target="_blank" rel="noopener" class="btn btn-secondary" style="margin-top: 8px;">
+                    View LICENSE on GitHub →
+                </a>
+            </div>
+
+            <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.05); margin: 48px 0;" />
+
+            <div style="margin-bottom: 48px;">
+                <h2 style="font-size: 1.5rem; margin-bottom: 16px;">Why Apache 2.0?</h2>
+                <div style="display: grid; gap: 16px; margin-bottom: 16px;">
+                    <div style="background: var(--bg-code); border-radius: 12px; padding: 20px; border: 1px solid rgba(255,255,255,0.05);">
+                        <strong style="color: var(--accent-cyan);">Patent Grant</strong>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 6px;">Every contributor automatically grants a patent license. Users are protected from patent claims on contributed code.</p>
+                    </div>
+                    <div style="background: var(--bg-code); border-radius: 12px; padding: 20px; border: 1px solid rgba(255,255,255,0.05);">
+                        <strong style="color: var(--accent-cyan);">Protocol Standard</strong>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 6px;">QAIL aims to be a standard for AST-native database access. Standards need the trust of Apache 2.0's legal framework.</p>
+                    </div>
+                    <div style="background: var(--bg-code); border-radius: 12px; padding: 20px; border: 1px solid rgba(255,255,255,0.05);">
+                        <strong style="color: var(--accent-cyan);">Foundation Ready</strong>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 6px;">Apache 2.0 is the expected license for CNCF, Apache Foundation, and Linux Foundation projects.</p>
+                    </div>
+                </div>
+            </div>
+
+            <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.05); margin: 48px 0;" />
+
+            <div style="margin-bottom: 48px;">
+                <h2 style="font-size: 1.5rem; margin-bottom: 16px;">Covered Crates</h2>
+                <div style="background: var(--bg-code); border-radius: 12px; padding: 24px; border: 1px solid rgba(255,255,255,0.05);">
+                    <table style="width: 100%; font-size: 0.9rem;">
+                        <tr>
+                            <td style="color: var(--accent-cyan); padding: 8px 0; font-family: var(--font-mono);">qail-core</td>
+                            <td style="color: var(--text-secondary); padding: 8px 0;">AST builder, transpiler, migration engine</td>
+                            <td style="color: var(--accent-green); padding: 8px 0;">Apache-2.0</td>
+                        </tr>
+                        <tr>
+                            <td style="color: var(--accent-cyan); padding: 8px 0; font-family: var(--font-mono);">qail-pg</td>
+                            <td style="color: var(--text-secondary); padding: 8px 0;">PostgreSQL driver with binary protocol</td>
+                            <td style="color: var(--accent-green); padding: 8px 0;">Apache-2.0</td>
+                        </tr>
+                        <tr>
+                            <td style="color: var(--accent-cyan); padding: 8px 0; font-family: var(--font-mono);">qail-gateway</td>
+                            <td style="color: var(--text-secondary); padding: 8px 0;">HTTP/WS API gateway with auto-REST</td>
+                            <td style="color: var(--accent-green); padding: 8px 0;">Apache-2.0</td>
+                        </tr>
+                        <tr>
+                            <td style="color: var(--accent-cyan); padding: 8px 0; font-family: var(--font-mono);">qail-cli</td>
+                            <td style="color: var(--text-secondary); padding: 8px 0;">CLI for migrations and codegen</td>
+                            <td style="color: var(--accent-green); padding: 8px 0;">Apache-2.0</td>
+                        </tr>
+                        
+                        <tr>
+                            <td style="color: var(--accent-cyan); padding: 8px 0; font-family: var(--font-mono);">qail-qdrant</td>
+                            <td style="color: var(--text-secondary); padding: 8px 0;">Qdrant vector database driver</td>
+                            <td style="color: var(--accent-green); padding: 8px 0;">Apache-2.0</td>
+                        </tr>
+                        <tr>
+                            <td style="color: var(--accent-cyan); padding: 8px 0; font-family: var(--font-mono);">qail-encoder</td>
+                            <td style="color: var(--text-secondary); padding: 8px 0;">Wire protocol encoder</td>
+                            <td style="color: var(--accent-green); padding: 8px 0;">Apache-2.0</td>
+                        </tr>
+                        <tr>
+                            <td style="color: var(--accent-cyan); padding: 8px 0; font-family: var(--font-mono);">qail-lsp</td>
+                            <td style="color: var(--text-secondary); padding: 8px 0;">Language server for .qail files</td>
+                            <td style="color: var(--accent-green); padding: 8px 0;">Apache-2.0</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div style="background: rgba(96, 165, 250, 0.06); border: 1px solid rgba(96, 165, 250, 0.15); border-radius: 12px; padding: 24px;">
+                <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.7;">
+                    <strong style="color: var(--text-primary);">Looking for managed QAIL?</strong>
+                    <a href="https://qail.io" style="color: var(--accent-cyan);">qail.io</a> offers
+                    managed hosting, operator dashboards, settlement, and white-label booking —
+                    built on top of the open-source QAIL protocol.
+                </p>
+            </div>
+
+        </div>
+    </section>
+</BaseLayout>

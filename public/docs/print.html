@@ -37,10 +37,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "coal";
-            window.path_to_searchindex_js = "searchindex-c0409787.js";
+            window.path_to_searchindex_js = "searchindex-4a5273a6.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-a5b90d9c.js"></script>
+        <script src="toc-77e67636.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -193,18 +193,18 @@
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Tier</th><th>Category</th><th>Supported</th><th>Why?</th></tr>
+<tr><th>Tier</th><th>Category</th><th>Supported</th><th>Driver</th></tr>
 </thead>
 <tbody>
-<tr><td><strong>1</strong></td><td><strong>SQL-AST</strong></td><td><strong>PostgreSQL</strong>, <strong>SQLite</strong></td><td>Open wire protocols allow full AST encoding.</td></tr>
-<tr><td><strong>2</strong></td><td><strong>Document-AST</strong></td><td><strong>MongoDB</strong>, <strong>DynamoDB</strong>, <strong>Qdrant</strong></td><td>Native AST query structure (BSON/JSON).</td></tr>
+<tr><td><strong>1</strong></td><td><strong>SQL-AST</strong></td><td><strong>PostgreSQL</strong></td><td><code>qail-pg</code> — Native wire protocol, AST-to-bytes</td></tr>
+<tr><td><strong>2</strong></td><td><strong>Vector-AST</strong></td><td><strong>Qdrant</strong></td><td><code>qail-qdrant</code> — gRPC + REST, vector search</td></tr>
+<tr><td><strong>3</strong></td><td><strong>KV-Command</strong></td><td><strong>Redis</strong></td><td><code>qail-redis</code> — Native RESP3 protocol</td></tr>
 </tbody>
 </table>
 </div>
 <h3 id="-not-supported"><a class="header" href="#-not-supported">❌ Not Supported</a></h3>
 <ul>
 <li><strong>Oracle, SQL Server, MySQL:</strong> Proprietary/Closed protocols.</li>
-<li><strong>Redis:</strong> Imperative command model (not a query language).</li>
 </ul>
 <h2 id="quick-example"><a class="header" href="#quick-example">Quick Example</a></h2>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -263,6 +263,7 @@ let rows = driver.query(&amp;cmd).await?;
 <tr><td>Multi-Tenant Isolation</td><td>✅</td></tr>
 <tr><td>TypedQail<t> Relations</t></td><td>✅</td></tr>
 <tr><td>Protected Columns</td><td>✅</td></tr>
+<tr><td>LISTEN/NOTIFY/UNLISTEN</td><td>✅</td></tr>
 </tbody>
 </table>
 </div>
@@ -281,7 +282,6 @@ let rows = driver.query(&amp;cmd).await?;
 <tr><td><strong>Prepared Statements</strong> (for security)</td><td>Separate SQL from data</td><td>Not needed — AST has no SQL text to inject into</td></tr>
 <tr><td><strong>Query Escaping</strong></td><td>Sanitize user input</td><td>Not needed — values are typed (<code>Value::Text</code>, <code>Value::Int</code>), never interpolated</td></tr>
 <tr><td><strong>SQL Validators</strong></td><td>Detect malformed queries</td><td>Not needed — invalid AST won’t compile</td></tr>
-<tr><td><strong>LISTEN/NOTIFY</strong></td><td>Pub/sub channels</td><td>Not planned — string-based protocol, outside AST scope</td></tr>
 </tbody>
 </table>
 </div>
@@ -305,7 +305,7 @@ Qail::get("users").filter("id", Operator::Eq, user_input)
 <p>We welcome issue reports on GitHub! Please provide detailed descriptions to help us reproduce and fix the problem. We aim to address critical issues within 1-5 business days.</p>
 <blockquote class="blockquote-tag blockquote-tag-caution">
 <p class="blockquote-tag-title"><svg viewbox="0 0 16 16" width="18" height="18"><path d="M4.47.22A.749.749 0 0 1 5 0h6c.199 0 .389.079.53.22l4.25 4.25c.141.14.22.331.22.53v6a.749.749 0 0 1-.22.53l-4.25 4.25A.749.749 0 0 1 11 16H5a.749.749 0 0 1-.53-.22L.22 11.53A.749.749 0 0 1 0 11V5c0-.199.079-.389.22-.53Zm.84 1.28L1.5 5.31v5.38l3.81 3.81h5.38l3.81-3.81V5.31L10.69 1.5ZM8 4a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 8 4Zm0 8a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path></svg>Caution</p>
-<p><strong>Alpha Software</strong>: QAIL is currently in <strong>alpha</strong>. While we strive for stability, the API is evolving to ensure it remains ergonomic and truly AST-native. <strong>Do not use in production environments yet.</strong></p>
+<p><strong>Beta Software</strong>: QAIL is currently in <strong>beta</strong>. The API is stabilizing and is battle-tested in production. Breaking changes may still occur between minor versions.</p>
 </blockquote>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="installation"><a class="header" href="#installation">Installation</a></h1>
@@ -393,6 +393,1293 @@ qail diff old.qail new.qail
 qail migrate up old.qail:new.qail postgres://...
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div>
+<h1 id="qail-gateway"><a class="header" href="#qail-gateway">Qail Gateway</a></h1>
+<p>Qail Gateway is an <strong>auto-REST API server</strong> that turns your PostgreSQL database into a full-featured API — with zero backend code. Point it at a database, get instant CRUD, real-time subscriptions, and enterprise security.</p>
+<p><strong>Full-featured data API</strong> — without GraphQL complexity. Binary AST protocol instead of string-based queries.</p>
+<h2 id="quick-start-1"><a class="header" href="#quick-start-1">Quick Start</a></h2>
+<pre><code class="language-bash"># Set your database URL and run
+DATABASE_URL=postgres://user:pass@localhost:5432/mydb cargo run --release
+</code></pre>
+<p>The gateway auto-discovers all tables and exposes them as REST endpoints:</p>
+<pre><code>GET    /api/{table}              # List (with filters, sort, pagination)
+GET    /api/{table}/:id          # Get by ID
+POST   /api/{table}              # Create
+PATCH  /api/{table}/:id          # Update
+DELETE /api/{table}/:id          # Delete
+GET    /api/{table}/_explain     # EXPLAIN ANALYZE
+GET    /api/{table}/_aggregate   # Aggregations
+GET    /api/{table}/:id/{child}  # Nested resources (FK-based)
+</code></pre>
+<h2 id="query-api"><a class="header" href="#query-api">Query API</a></h2>
+<h3 id="filtering"><a class="header" href="#filtering">Filtering</a></h3>
+<p>All filter operators are supported as query parameters:</p>
+<pre><code>GET /api/orders?status=paid                              # Exact match
+GET /api/orders?total=gt.100                             # Greater than
+GET /api/orders?total=gte.50&amp;total=lte.200               # Range
+GET /api/orders?status=in.(paid,shipped)                 # IN list
+GET /api/orders?name=like.*ferry*                        # Pattern match
+GET /api/orders?name=ilike.*FERRY*                       # Case-insensitive
+GET /api/orders?notes=is_null                            # NULL check
+GET /api/orders?status=ne.cancelled                      # Not equal
+GET /api/orders?tags=contains.premium                    # Array contains
+</code></pre>
+<h3 id="full-text-search"><a class="header" href="#full-text-search">Full-Text Search</a></h3>
+<pre><code>GET /api/products?search=ferry+bali                      # Search all text columns
+GET /api/products?search=ferry&amp;search_columns=name,desc  # Search specific columns
+</code></pre>
+<p>Uses PostgreSQL’s <code>to_tsvector</code> / <code>websearch_to_tsquery</code> — supports natural language queries.</p>
+<h3 id="sorting"><a class="header" href="#sorting">Sorting</a></h3>
+<pre><code>GET /api/orders?sort=created_at                          # Ascending (default)
+GET /api/orders?sort=-total                              # Descending (prefix -)
+GET /api/orders?sort=-status,created_at                  # Multi-column
+</code></pre>
+<h3 id="pagination"><a class="header" href="#pagination">Pagination</a></h3>
+<pre><code>GET /api/orders?limit=25&amp;offset=50                       # Offset-based
+GET /api/orders?limit=25&amp;cursor=eyJpZCI6...              # Cursor-based
+</code></pre>
+<h3 id="distinct"><a class="header" href="#distinct">Distinct</a></h3>
+<pre><code>GET /api/orders?distinct=status                          # Distinct values
+</code></pre>
+<h2 id="relationships--expansion"><a class="header" href="#relationships--expansion">Relationships &amp; Expansion</a></h2>
+<h3 id="fk-based-join-expansion"><a class="header" href="#fk-based-join-expansion">FK-Based JOIN Expansion</a></h3>
+<p>Automatically resolves foreign key relationships with <code>?expand=</code>:</p>
+<pre><code>GET /api/orders?expand=users                              # Inline user object
+GET /api/orders?expand=users,operators                    # Multiple relations
+GET /api/orders?expand=nested:users                       # Nested FK expansion
+</code></pre>
+<p>Response includes the full related object inline — <strong>no N+1 queries</strong>. The gateway performs a server-side JOIN.</p>
+<h3 id="nested-resource-routes"><a class="header" href="#nested-resource-routes">Nested Resource Routes</a></h3>
+<p>Access child resources through parent:</p>
+<pre><code>GET /api/operators/:id/orders                             # All orders for operator
+GET /api/users/:id/bookings?status=confirmed              # Filtered child resources
+</code></pre>
+<h2 id="mutations"><a class="header" href="#mutations">Mutations</a></h2>
+<h3 id="create"><a class="header" href="#create">Create</a></h3>
+<pre><code class="language-bash"># Single insert
+curl -X POST /api/orders -d '{"user_id": "...", "total": 100}'
+
+# Batch insert
+curl -X POST /api/orders -d '[{"total": 100}, {"total": 200}]'
+</code></pre>
+<h3 id="update"><a class="header" href="#update">Update</a></h3>
+<pre><code class="language-bash">curl -X PATCH /api/orders/:id -d '{"status": "shipped"}'
+</code></pre>
+<h3 id="upsert"><a class="header" href="#upsert">Upsert</a></h3>
+<pre><code class="language-bash">curl -X POST /api/orders -H "X-Upsert: true" \
+  -H "X-On-Conflict: order_number" \
+  -d '{"order_number": "ORD-001", "total": 150}'
+</code></pre>
+<h3 id="delete"><a class="header" href="#delete">Delete</a></h3>
+<pre><code class="language-bash">curl -X DELETE /api/orders/:id
+</code></pre>
+<h3 id="returning-clause"><a class="header" href="#returning-clause">Returning Clause</a></h3>
+<p>All mutations support <code>?returning=id,status</code> to get back specific columns after the operation.</p>
+<h2 id="aggregations"><a class="header" href="#aggregations">Aggregations</a></h2>
+<pre><code>GET /api/orders/_aggregate?fn=count                       # COUNT(*)
+GET /api/orders/_aggregate?fn=sum&amp;column=total            # SUM(total)
+GET /api/orders/_aggregate?fn=avg&amp;column=total            # AVG
+GET /api/orders/_aggregate?fn=min&amp;column=created_at       # MIN
+GET /api/orders/_aggregate?fn=max&amp;column=total            # MAX
+GET /api/orders/_aggregate?fn=count&amp;status=paid           # Filtered aggregation
+</code></pre>
+<h2 id="authentication--security"><a class="header" href="#authentication--security">Authentication &amp; Security</a></h2>
+<h3 id="jwt-authentication"><a class="header" href="#jwt-authentication">JWT Authentication</a></h3>
+<p>The gateway validates JWT tokens and extracts tenant context for RLS:</p>
+<pre><code class="language-yaml"># gateway.yaml
+auth:
+  jwt:
+    secret: "your-hs256-secret"        # HS256
+    # OR
+    jwks_url: "https://..."            # RS256 via JWKS
+  claims:
+    operator_id: "operator_id"
+    user_id: "sub"
+    role: "role"
+</code></pre>
+<h3 id="header-based-dev-auth"><a class="header" href="#header-based-dev-auth">Header-Based Dev Auth</a></h3>
+<p>For development, pass claims directly as headers:</p>
+<pre><code class="language-bash">curl -H "x-operator-id: uuid" -H "x-user-id: uuid" /api/orders
+</code></pre>
+<h3 id="webhook-auth"><a class="header" href="#webhook-auth">Webhook Auth</a></h3>
+<p>Delegate authentication to an external service:</p>
+<pre><code class="language-yaml">auth:
+  webhook:
+    url: "https://auth.example.com/verify"
+    headers_forward: ["Authorization", "Cookie"]
+</code></pre>
+<h3 id="row-level-security-rls"><a class="header" href="#row-level-security-rls">Row-Level Security (RLS)</a></h3>
+<p>Every query is automatically scoped to the authenticated tenant via PostgreSQL’s native RLS. The gateway sets session variables (<code>app.operator_id</code>, <code>app.user_id</code>) before each query — <strong>no manual WHERE clauses needed</strong>.</p>
+<h3 id="yaml-policy-engine"><a class="header" href="#yaml-policy-engine">YAML Policy Engine</a></h3>
+<p>Fine-grained access control per table, per role:</p>
+<pre><code class="language-yaml">policies:
+  orders:
+    roles:
+      agent:
+        select: true
+        insert: true
+        update: true
+        delete: false
+        columns: ["id", "status", "total", "created_at"]  # Column-level
+        filter:                                             # Row-level
+          operator_id: "x-operator-id"
+      viewer:
+        select: true
+        columns: ["id", "status"]
+</code></pre>
+<h3 id="query-allow-listing"><a class="header" href="#query-allow-listing">Query Allow-Listing</a></h3>
+<p>Lock down which queries can run in production:</p>
+<pre><code class="language-yaml">security:
+  allow_list:
+    enabled: true
+    queries:
+      - "GET /api/orders"
+      - "GET /api/orders/:id"
+  complexity_limit: 10        # Max query depth
+  rate_limit: 100             # Requests per minute
+</code></pre>
+<h2 id="real-time"><a class="header" href="#real-time">Real-Time</a></h2>
+<h3 id="websocket-subscriptions"><a class="header" href="#websocket-subscriptions">WebSocket Subscriptions</a></h3>
+<p>Subscribe to table changes via WebSocket (PostgreSQL LISTEN/NOTIFY):</p>
+<pre><code class="language-javascript">const ws = new WebSocket('ws://localhost:8080/ws');
+ws.send(JSON.stringify({
+  type: 'subscribe',
+  table: 'orders',
+  filter: { status: 'paid' }
+}));
+
+ws.onmessage = (event) =&gt; {
+  const { type, data } = JSON.parse(event.data);
+  // type: "INSERT" | "UPDATE" | "DELETE"
+  console.log('Change:', type, data);
+};
+</code></pre>
+<h3 id="live-queries"><a class="header" href="#live-queries">Live Queries</a></h3>
+<p>Auto-refresh query results when underlying data changes:</p>
+<pre><code class="language-javascript">ws.send(JSON.stringify({
+  type: 'live_query',
+  query: '/api/orders?status=paid&amp;sort=-created_at&amp;limit=10',
+  interval: 2000  // Poll interval in ms
+}));
+</code></pre>
+<h3 id="event-triggers"><a class="header" href="#event-triggers">Event Triggers</a></h3>
+<p>Fire webhooks on database mutations:</p>
+<pre><code class="language-yaml">events:
+  - name: order_created
+    table: orders
+    operations: [INSERT]
+    webhook: "https://api.example.com/hooks/order-created"
+    retry:
+      count: 3
+      interval: 5000
+  - name: order_updated
+    table: orders
+    operations: [UPDATE]
+    webhook: "https://api.example.com/hooks/order-updated"
+</code></pre>
+<h2 id="performance"><a class="header" href="#performance">Performance</a></h2>
+<h3 id="response-streaming"><a class="header" href="#response-streaming">Response Streaming</a></h3>
+<p>For large datasets, stream results as NDJSON:</p>
+<pre><code>GET /api/large_table?stream=true
+</code></pre>
+<p>Each row is sent as a newline-delimited JSON object — no buffering the entire result set.</p>
+<h3 id="explain-endpoint"><a class="header" href="#explain-endpoint">EXPLAIN Endpoint</a></h3>
+<p>Inspect query plans without touching production:</p>
+<pre><code>GET /api/orders/_explain?status=paid&amp;expand=users
+</code></pre>
+<p>Returns the PostgreSQL <code>EXPLAIN ANALYZE</code> output for the generated query.</p>
+<h3 id="prepared-statement-caching"><a class="header" href="#prepared-statement-caching">Prepared Statement Caching</a></h3>
+<p>The gateway caches prepared statements per query shape, eliminating repeated parse overhead.</p>
+<h3 id="query-cache"><a class="header" href="#query-cache">Query Cache</a></h3>
+<p>LRU cache with TTL and table-level invalidation. Identical queries hit cache instead of the database.</p>
+<h2 id="observability"><a class="header" href="#observability">Observability</a></h2>
+<h3 id="prometheus-metrics"><a class="header" href="#prometheus-metrics">Prometheus Metrics</a></h3>
+<pre><code>GET /metrics
+</code></pre>
+<p>Exposes request counts, latencies, error rates, and connection pool stats.</p>
+<h3 id="request-tracing"><a class="header" href="#request-tracing">Request Tracing</a></h3>
+<p>Every response includes:</p>
+<ul>
+<li><code>x-request-id</code> — unique request identifier</li>
+<li><code>x-response-time</code> — duration in milliseconds</li>
+</ul>
+<h3 id="health-check"><a class="header" href="#health-check">Health Check</a></h3>
+<pre><code>GET /health
+</code></pre>
+<h3 id="schema-introspection"><a class="header" href="#schema-introspection">Schema Introspection</a></h3>
+<pre><code>GET /api/_schema         # Full schema with tables, columns, types, FKs
+GET /api/_openapi        # Auto-generated OpenAPI 3.0 spec
+</code></pre>
+<h2 id="benchmark-why-gateway--graphql"><a class="header" href="#benchmark-why-gateway--graphql">Benchmark: Why Gateway &gt; GraphQL</a></h2>
+<p>The gateway’s <code>?expand=</code> does server-side JOINs — the same approach as Qail AST but over HTTP:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Approach</th><th>Avg Latency</th><th>DB Queries</th><th>vs Qail</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Qail AST</strong> (binary)</td><td><strong>449µs</strong></td><td>1</td><td>baseline</td></tr>
+<tr><td><strong>Gateway</strong> (<code>?expand=</code>)</td><td>635µs</td><td>1</td><td>1.4×</td></tr>
+<tr><td>GraphQL + DataLoader</td><td>1.52ms</td><td>3</td><td>3.4×</td></tr>
+<tr><td>GraphQL naive (N+1)</td><td>18.2ms</td><td>151</td><td><strong>40×</strong></td></tr>
+</tbody>
+</table>
+</div>
+<p>The 1.4× gap is pure JSON serialization overhead. On the wire, the gateway executes the exact same single-query JOIN as the Qail driver.</p>
+<blockquote>
+<p><strong>Unlike GraphQL</strong>, the gateway makes N+1 structurally impossible. <code>?expand=</code> always resolves to a server-side JOIN — there’s no resolver pattern to misconfigure.</p>
+</blockquote>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="architecture--invariants"><a class="header" href="#architecture--invariants">Architecture &amp; Invariants</a></h1>
+<p>This page describes the gateway’s internal architecture — the request lifecycle, security boundaries, and the invariants that make multi-tenant isolation structural rather than behavioral.</p>
+<p><strong>Read time: ~10 minutes.</strong></p>
+<hr>
+<h2 id="request-lifecycle"><a class="header" href="#request-lifecycle">Request Lifecycle</a></h2>
+<p>Every HTTP request flows through a fixed, ordered pipeline:</p>
+<pre><code> Client Request
+       │
+ ┌─────▼─────────────────────────────────────────────────────┐
+ │  1. CORS + Security Headers                               │
+ │     X-Content-Type-Options: nosniff                       │
+ │     X-Frame-Options: DENY                                 │
+ │     Body size limit: 2 MiB                                │
+ ├───────────────────────────────────────────────────────────┤
+ │  2. Rate Limiter                                          │
+ │     Token bucket per IP (configurable burst + rate)       │
+ │     → 429 Too Many Requests on exhaustion                 │
+ ├───────────────────────────────────────────────────────────┤
+ │  3. Authentication                                        │
+ │     JWT validation (HS256) → extract operator_id,         │
+ │     user_id, role from claims                             │
+ │     Fallback: header-based (dev only, no JWT_SECRET)      │
+ ├───────────────────────────────────────────────────────────┤
+ │  4. Policy Engine                                         │
+ │     YAML-defined per-table, per-role access control       │
+ │     Column filtering at AST level                         │
+ │     → 403 Forbidden on policy violation                   │
+ ├───────────────────────────────────────────────────────────┤
+ │  5. Tenant Concurrency Gate                               │
+ │     Per-tenant semaphore (configurable permits)           │
+ │     Prevents one tenant from consuming all connections    │
+ │     → 429 on tenant saturation                            │
+ ├───────────────────────────────────────────────────────────┤
+ │  6. Connection Acquisition                                │
+ │     pool.acquire_with_rls(RlsContext) or                  │
+ │     pool.acquire_with_rls_timeout(RlsContext, timeout)    │
+ │     Sets PostgreSQL GUCs:                                 │
+ │       set_config('app.current_operator_id', '...', false) │
+ │       set_config('app.is_super_admin', '...', false)      │
+ ├───────────────────────────────────────────────────────────┤
+ │  7. EXPLAIN Pre-Check (reads only)                        │
+ │     EXPLAIN on generated SQL before execution             │
+ │     Rejects if cost &gt; explain_max_cost                    │
+ │              or rows &gt; explain_max_rows                   │
+ │     → QUERY_TOO_EXPENSIVE with structured JSON detail     │
+ ├───────────────────────────────────────────────────────────┤
+ │  8. Query Execution                                       │
+ │     AST → SQL transpilation → prepared statement cache    │
+ │     PostgreSQL RLS policies filter rows invisibly         │
+ │     Result row cap: max_result_rows (configurable)        │
+ ├───────────────────────────────────────────────────────────┤
+ │  9. Connection Release                                    │
+ │     DISCARD ALL → clears server-side state                │
+ │     Client caches cleared (prepared stmts, column info)   │
+ │     Connection returned to pool in clean state            │
+ └───────────────────────────────────────────────────────────┘
+       │
+ JSON Response + X-Request-Id + X-Response-Time
+</code></pre>
+<hr>
+<h2 id="connection-safety-model"><a class="header" href="#connection-safety-model">Connection Safety Model</a></h2>
+<p>The connection pool enforces a strict lifecycle:</p>
+<h3 id="acquisition"><a class="header" href="#acquisition">Acquisition</a></h3>
+<p>Three public methods — <code>acquire_raw()</code> is <strong>crate-internal only</strong>:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Method</th><th>RLS</th><th>Timeout</th><th>Use Case</th></tr>
+</thead>
+<tbody>
+<tr><td><code>acquire_with_rls(ctx)</code></td><td>✅ Set</td><td>Default</td><td>Normal tenant queries</td></tr>
+<tr><td><code>acquire_with_rls_timeout(ctx, ms)</code></td><td>✅ Set</td><td>Custom</td><td>Gateway with <code>statement_timeout_ms</code></td></tr>
+<tr><td><code>acquire_system()</code></td><td>✅ Empty</td><td>Default</td><td>Schema introspection, migrations</td></tr>
+<tr><td><code>acquire_raw()</code> ⚠️</td><td>❌ None</td><td>Default</td><td><strong>Internal only</strong> — requires <code>// SAFETY:</code> comment</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="release"><a class="header" href="#release">Release</a></h3>
+<p>Every connection release executes:</p>
+<pre><code class="language-sql">DISCARD ALL;   -- Clears prepared statements, temp tables, GUCs, session state
+</code></pre>
+<p>Followed by client-side cleanup:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>conn.prepared_statements.clear();
+conn.stmt_cache.clear();
+conn.column_info_cache.clear();
+
+debug_assert!(conn.prepared_statements.is_empty(),
+    "INVARIANT VIOLATED: prepared statements survived DISCARD ALL");
+<span class="boring">}</span></code></pre>
+<p>This guarantees <strong>zero state leakage</strong> between tenants sharing the same physical connection.</p>
+<h3 id="why-acquire_raw-is-restricted"><a class="header" href="#why-acquire_raw-is-restricted">Why <code>acquire_raw()</code> Is Restricted</a></h3>
+<p><code>acquire_raw()</code> returns a connection with <strong>no RLS context</strong>. If used for tenant queries, it would bypass row-level security entirely.</p>
+<p>Every internal call site must include a <code>// SAFETY:</code> comment explaining why raw acquisition is justified (typically: “RLS context is set immediately on the next line”). This convention is enforced via CI:</p>
+<pre><code class="language-bash"># Must return empty — every acquire_raw() must have a SAFETY comment
+grep -rn "acquire_raw" pg/src/ | grep -v "// SAFETY:"
+</code></pre>
+<hr>
+<h2 id="core-invariants"><a class="header" href="#core-invariants">Core Invariants</a></h2>
+<p>These are the properties the system guarantees. If any are violated, it’s a bug.</p>
+<h3 id="1-fail-closed-rls"><a class="header" href="#1-fail-closed-rls">1. Fail-Closed RLS</a></h3>
+<p>Every tenant query runs on a connection where RLS GUCs are set <strong>before</strong> any SQL executes. If GUC setup fails, the connection is not used — the error propagates to the caller.</p>
+<p>There is no code path where a tenant query runs on a connection with another tenant’s context.</p>
+<h3 id="2-cost-bounded-execution"><a class="header" href="#2-cost-bounded-execution">2. Cost-Bounded Execution</a></h3>
+<p>Read queries are gated by EXPLAIN analysis before execution. If the estimated cost or row count exceeds configured limits, the query is rejected <strong>before</strong> touching the database.</p>
+<p>Limits are configurable per role via <code>[gateway.role_overrides.&lt;role&gt;]</code> in <code>qail.toml</code>, allowing analytics roles to run heavier queries without weakening default safety.</p>
+<h3 id="3-tenant-isolation-on-connection-reuse"><a class="header" href="#3-tenant-isolation-on-connection-reuse">3. Tenant Isolation on Connection Reuse</a></h3>
+<p>When a connection is released and re-acquired by a different tenant:</p>
+<ol>
+<li><code>DISCARD ALL</code> destroys all server-side state</li>
+<li>Client-side caches are cleared</li>
+<li>New RLS context is set for the new tenant</li>
+</ol>
+<p>The integration test <code>test_pool_connection_recycling_isolation</code> verifies this with a pool of size 1, forcing the same physical connection to serve two different tenants sequentially.</p>
+<h3 id="4-bounded-resource-consumption"><a class="header" href="#4-bounded-resource-consumption">4. Bounded Resource Consumption</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Resource</th><th>Bound</th><th>Mechanism</th></tr>
+</thead>
+<tbody>
+<tr><td>Connections</td><td><code>max_connections</code></td><td>Pool size cap</td></tr>
+<tr><td>Per-tenant connections</td><td><code>tenant_max_concurrent</code></td><td>Semaphore per operator</td></tr>
+<tr><td>Result rows</td><td><code>max_result_rows</code></td><td>Row cap per query</td></tr>
+<tr><td>Query duration</td><td><code>statement_timeout_ms</code></td><td>PostgreSQL <code>SET LOCAL</code></td></tr>
+<tr><td>Query cost</td><td><code>explain_max_cost</code></td><td>EXPLAIN pre-check</td></tr>
+<tr><td>Request body</td><td>2 MiB</td><td>Axum body limit layer</td></tr>
+<tr><td>Cache entries</td><td><code>max_entries</code></td><td>moka TinyLFU eviction</td></tr>
+<tr><td>Cache entry TTL</td><td><code>ttl_secs</code></td><td>moka time-to-live</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="5-graceful-shutdown"><a class="header" href="#5-graceful-shutdown">5. Graceful Shutdown</a></h3>
+<p>On <code>SIGTERM</code> or <code>Ctrl+C</code>:</p>
+<ol>
+<li>Stop accepting new connections</li>
+<li>Wait for in-flight requests to complete</li>
+<li>Drain the connection pool</li>
+<li>Exit cleanly</li>
+</ol>
+<p>No request is silently dropped. No connection is leaked.</p>
+<hr>
+<h2 id="component-map"><a class="header" href="#component-map">Component Map</a></h2>
+<pre><code>GatewayState (shared Arc across all handlers)
+├── pool: PgPool                    — Connection pool with RLS-aware acquisition
+├── config: GatewayConfig           — All configuration (qail.toml + env overrides)
+├── policy_engine: PolicyEngine     — YAML-defined per-table, per-role policies
+├── schema: SchemaRegistry          — Auto-discovered table/column/FK metadata
+├── cache: QueryCache               — moka-backed LRU with table-level invalidation
+├── rate_limiter: RateLimiter       — Token bucket rate limiting
+├── explain_cache: ExplainCache     — Cached EXPLAIN results per query shape
+├── explain_config: ExplainConfig   — Cost/row thresholds for EXPLAIN pre-check
+├── tenant_semaphore: TenantSemaphore — Per-tenant concurrency limiter
+├── event_engine: EventTriggerEngine  — Webhook triggers on mutations
+└── user_operator_map: HashMap      — JWT user_id → operator_id resolution cache
+</code></pre>
+<hr>
+<h2 id="where-to-hook-observability"><a class="header" href="#where-to-hook-observability">Where to Hook Observability</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Signal</th><th>Endpoint / Header</th><th>Format</th></tr>
+</thead>
+<tbody>
+<tr><td>Metrics</td><td><code>GET /metrics</code></td><td>Prometheus</td></tr>
+<tr><td>Request ID</td><td><code>X-Request-Id</code> response header</td><td>UUID</td></tr>
+<tr><td>Latency</td><td><code>X-Response-Time</code> response header</td><td>Duration string</td></tr>
+<tr><td>Health</td><td><code>GET /health</code></td><td><code>200 OK</code> or error</td></tr>
+<tr><td>Schema</td><td><code>GET /api/_schema</code></td><td>JSON</td></tr>
+<tr><td>OpenAPI</td><td><code>GET /api/_openapi</code></td><td>OpenAPI 3.0 JSON</td></tr>
+<tr><td>Cache stats</td><td>Via <code>/metrics</code></td><td>hit/miss/entries/weighted_size</td></tr>
+</tbody>
+</table>
+</div>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="rest-api-reference"><a class="header" href="#rest-api-reference">REST API Reference</a></h1>
+<p>The gateway auto-discovers all tables and exposes them as REST endpoints under <code>/api/</code>.</p>
+<h2 id="endpoints"><a class="header" href="#endpoints">Endpoints</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Method</th><th>Path</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>GET</code></td><td><code>/api/{table}</code></td><td>List with filters, sort, pagination</td></tr>
+<tr><td><code>GET</code></td><td><code>/api/{table}/:id</code></td><td>Get by primary key</td></tr>
+<tr><td><code>GET</code></td><td><code>/api/{table}/_explain</code></td><td>EXPLAIN ANALYZE</td></tr>
+<tr><td><code>GET</code></td><td><code>/api/{table}/_aggregate</code></td><td>Aggregations</td></tr>
+<tr><td><code>GET</code></td><td><code>/api/{table}/:id/{child}</code></td><td>Nested resources (FK-based)</td></tr>
+<tr><td><code>POST</code></td><td><code>/api/{table}</code></td><td>Create (single or batch)</td></tr>
+<tr><td><code>PATCH</code></td><td><code>/api/{table}/:id</code></td><td>Partial update</td></tr>
+<tr><td><code>DELETE</code></td><td><code>/api/{table}/:id</code></td><td>Delete by primary key</td></tr>
+</tbody>
+</table>
+</div>
+<hr>
+<h2 id="filtering-1"><a class="header" href="#filtering-1">Filtering</a></h2>
+<p>All filter operators are supported as query parameters:</p>
+<pre><code>GET /api/orders?status=paid                              # Exact match
+GET /api/orders?total=gt.100                             # Greater than
+GET /api/orders?total=gte.50&amp;total=lte.200               # Range
+GET /api/orders?status=in.(paid,shipped)                 # IN list
+GET /api/orders?name=like.*ferry*                        # Pattern match
+GET /api/orders?name=ilike.*FERRY*                       # Case-insensitive
+GET /api/orders?notes=is_null                            # NULL check
+GET /api/orders?status=ne.cancelled                      # Not equal
+GET /api/orders?tags=contains.premium                    # Array contains
+</code></pre>
+<h3 id="operator-reference"><a class="header" href="#operator-reference">Operator Reference</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Operator</th><th>SQL</th><th>Example</th></tr>
+</thead>
+<tbody>
+<tr><td><code>eq</code> (default)</td><td><code>=</code></td><td><code>?status=paid</code></td></tr>
+<tr><td><code>ne</code></td><td><code>!=</code></td><td><code>?status=ne.cancelled</code></td></tr>
+<tr><td><code>gt</code> / <code>gte</code></td><td><code>&gt;</code> / <code>&gt;=</code></td><td><code>?total=gte.100</code></td></tr>
+<tr><td><code>lt</code> / <code>lte</code></td><td><code>&lt;</code> / <code>&lt;=</code></td><td><code>?age=lt.30</code></td></tr>
+<tr><td><code>in</code></td><td><code>IN (...)</code></td><td><code>?status=in.(active,pending)</code></td></tr>
+<tr><td><code>like</code></td><td><code>LIKE</code></td><td><code>?email=like.*@gmail*</code></td></tr>
+<tr><td><code>ilike</code></td><td><code>ILIKE</code></td><td><code>?name=ilike.*john*</code></td></tr>
+<tr><td><code>is_null</code></td><td><code>IS NULL</code></td><td><code>?deleted_at=is_null</code></td></tr>
+<tr><td><code>contains</code></td><td><code>@&gt;</code></td><td><code>?tags=contains.premium</code></td></tr>
+</tbody>
+</table>
+</div>
+<hr>
+<h2 id="full-text-search-1"><a class="header" href="#full-text-search-1">Full-Text Search</a></h2>
+<pre><code>GET /api/products?search=ferry+bali                      # Search all text columns
+GET /api/products?search=ferry&amp;search_columns=name,desc  # Search specific columns
+</code></pre>
+<p>Uses PostgreSQL’s <code>to_tsvector</code> / <code>websearch_to_tsquery</code> — supports natural language queries.</p>
+<hr>
+<h2 id="sorting-1"><a class="header" href="#sorting-1">Sorting</a></h2>
+<pre><code>GET /api/orders?sort=created_at                          # Ascending (default)
+GET /api/orders?sort=-total                              # Descending (prefix -)
+GET /api/orders?sort=-status,created_at                  # Multi-column
+</code></pre>
+<hr>
+<h2 id="pagination-1"><a class="header" href="#pagination-1">Pagination</a></h2>
+<pre><code>GET /api/orders?limit=25&amp;offset=50                       # Offset-based
+GET /api/orders?limit=25&amp;cursor=eyJpZCI6...              # Cursor-based
+</code></pre>
+<hr>
+<h2 id="column-selection--distinct"><a class="header" href="#column-selection--distinct">Column Selection &amp; Distinct</a></h2>
+<pre><code>GET /api/orders?select=id,status,total                   # Return specific columns
+GET /api/orders?distinct=status                           # Distinct values
+</code></pre>
+<hr>
+<h2 id="relationships--expansion-1"><a class="header" href="#relationships--expansion-1">Relationships &amp; Expansion</a></h2>
+<h3 id="fk-based-join-expansion-1"><a class="header" href="#fk-based-join-expansion-1">FK-Based JOIN Expansion</a></h3>
+<p>Automatically resolves foreign key relationships with <code>?expand=</code>:</p>
+<pre><code>GET /api/orders?expand=users                              # Inline user object
+GET /api/orders?expand=users,operators                    # Multiple relations
+GET /api/orders?expand=nested:users                       # Nested FK expansion
+</code></pre>
+<p>Response includes the full related object inline — <strong>no N+1 queries</strong>. The gateway performs a server-side JOIN.</p>
+<h3 id="nested-resource-routes-1"><a class="header" href="#nested-resource-routes-1">Nested Resource Routes</a></h3>
+<p>Access child resources through parent:</p>
+<pre><code>GET /api/operators/:id/orders                             # All orders for operator
+GET /api/users/:id/bookings?status=confirmed              # Filtered child resources
+</code></pre>
+<hr>
+<h2 id="mutations-1"><a class="header" href="#mutations-1">Mutations</a></h2>
+<h3 id="create-1"><a class="header" href="#create-1">Create</a></h3>
+<pre><code class="language-bash"># Single insert
+curl -X POST /api/orders -d '{"user_id": "...", "total": 100}'
+
+# Batch insert
+curl -X POST /api/orders -d '[{"total": 100}, {"total": 200}]'
+</code></pre>
+<h3 id="update-1"><a class="header" href="#update-1">Update</a></h3>
+<pre><code class="language-bash">curl -X PATCH /api/orders/:id -d '{"status": "shipped"}'
+</code></pre>
+<h3 id="upsert-1"><a class="header" href="#upsert-1">Upsert</a></h3>
+<pre><code class="language-bash">curl -X POST /api/orders -H "X-Upsert: true" \
+  -H "X-On-Conflict: order_number" \
+  -d '{"order_number": "ORD-001", "total": 150}'
+</code></pre>
+<h3 id="delete-1"><a class="header" href="#delete-1">Delete</a></h3>
+<pre><code class="language-bash">curl -X DELETE /api/orders/:id
+</code></pre>
+<h3 id="returning-clause-1"><a class="header" href="#returning-clause-1">Returning Clause</a></h3>
+<p>All mutations support <code>?returning=id,status</code> to get back specific columns after the operation.</p>
+<hr>
+<h2 id="aggregations-1"><a class="header" href="#aggregations-1">Aggregations</a></h2>
+<pre><code>GET /api/orders/_aggregate?fn=count                       # COUNT(*)
+GET /api/orders/_aggregate?fn=sum&amp;column=total            # SUM(total)
+GET /api/orders/_aggregate?fn=avg&amp;column=total            # AVG
+GET /api/orders/_aggregate?fn=min&amp;column=created_at       # MIN
+GET /api/orders/_aggregate?fn=max&amp;column=total            # MAX
+GET /api/orders/_aggregate?fn=count&amp;status=paid           # Filtered aggregation
+</code></pre>
+<p>Supported functions: <code>count</code>, <code>sum</code>, <code>avg</code>, <code>min</code>, <code>max</code>.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="authentication--security-1"><a class="header" href="#authentication--security-1">Authentication &amp; Security</a></h1>
+<p>The gateway provides multiple layers of security: JWT/webhook authentication, PostgreSQL Row-Level Security integration, a YAML policy engine, and query allow-listing.</p>
+<hr>
+<h2 id="jwt-authentication-1"><a class="header" href="#jwt-authentication-1">JWT Authentication</a></h2>
+<p>The gateway validates JWT tokens and extracts tenant context for RLS.</p>
+<p>Set <code>JWT_SECRET</code> as an environment variable or in <code>qail.toml</code>:</p>
+<pre><code class="language-toml"># qail.toml
+[gateway]
+jwt_secret = "your-hs256-secret"
+</code></pre>
+<p>Or set via environment variable (takes precedence over TOML):</p>
+<pre><code class="language-bash">export JWT_SECRET="your-hs256-secret"
+</code></pre>
+<p>The extracted claims (<code>operator_id</code>, <code>user_id</code>, <code>role</code>) are set as PostgreSQL session variables before every query, enabling native RLS enforcement:</p>
+<pre><code class="language-sql">set_config('app.current_operator_id', '&lt;from JWT&gt;', false);
+set_config('app.current_user_id', '&lt;from JWT&gt;', false);
+set_config('app.role', '&lt;from JWT&gt;', false);
+</code></pre>
+<hr>
+<h2 id="header-based-dev-auth-1"><a class="header" href="#header-based-dev-auth-1">Header-Based Dev Auth</a></h2>
+<p>For development, pass claims directly as headers:</p>
+<pre><code class="language-bash">curl -H "x-operator-id: uuid" -H "x-user-id: uuid" /api/orders
+</code></pre>
+<blockquote>
+<p><strong>Warning:</strong> Header-based auth is only active when <code>JWT_SECRET</code> is <strong>not set</strong>. In production with <code>JWT_SECRET</code> configured, these headers are ignored — role and identity are cryptographically bound to the JWT token.</p>
+</blockquote>
+<hr>
+<h2 id="webhook-auth-1"><a class="header" href="#webhook-auth-1">Webhook Auth</a></h2>
+<p>Delegate authentication to an external service:</p>
+<pre><code class="language-toml"># qail.toml
+[gateway.auth.webhook]
+url = "https://auth.example.com/verify"
+headers_forward = ["Authorization", "Cookie"]
+</code></pre>
+<p>The gateway forwards the specified headers to your auth endpoint. The webhook response becomes the auth context.</p>
+<hr>
+<h2 id="row-level-security-rls-1"><a class="header" href="#row-level-security-rls-1">Row-Level Security (RLS)</a></h2>
+<p>Every query is automatically scoped to the authenticated tenant via PostgreSQL’s native RLS. The gateway sets session variables before each query:</p>
+<pre><code class="language-sql">-- Automatically executed before every query:
+set_config('app.current_operator_id', '&lt;from JWT&gt;', false);
+set_config('app.current_user_id', '&lt;from JWT&gt;', false);
+set_config('app.role', '&lt;from JWT&gt;', false);
+</code></pre>
+<p>Your PostgreSQL RLS policies reference these variables:</p>
+<pre><code class="language-sql">CREATE POLICY tenant_isolation ON orders
+  FOR ALL
+  USING (operator_id = current_setting('app.operator_id')::uuid);
+
+ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE orders FORCE ROW LEVEL SECURITY;
+</code></pre>
+<p><strong>No manual WHERE clauses needed.</strong> The gateway + RLS combination provides database-level multi-tenancy.</p>
+<blockquote>
+<p><strong>Important:</strong> Your application database role must be a non-superuser with <code>NOBYPASSRLS</code>. Superusers bypass RLS even with <code>FORCE ROW LEVEL SECURITY</code>.</p>
+</blockquote>
+<hr>
+<h2 id="yaml-policy-engine-1"><a class="header" href="#yaml-policy-engine-1">YAML Policy Engine</a></h2>
+<p>Fine-grained access control per table, per role:</p>
+<pre><code class="language-yaml">policies:
+  orders:
+    roles:
+      agent:
+        select: true
+        insert: true
+        update: true
+        delete: false
+        columns: ["id", "status", "total", "created_at"]  # Column-level
+        filter:                                             # Row-level
+          operator_id: "x-operator-id"
+      viewer:
+        select: true
+        columns: ["id", "status"]
+</code></pre>
+<h3 id="column-permissions"><a class="header" href="#column-permissions">Column Permissions</a></h3>
+<p>Control which columns each role can read or write:</p>
+<ul>
+<li><strong>Whitelist:</strong> Only the listed columns are returned/allowed.</li>
+<li><strong>Blacklist:</strong> All columns except the listed ones are returned/allowed.</li>
+</ul>
+<p>Policies are applied at the AST level before the query reaches PostgreSQL — denied columns never leave the database.</p>
+<h3 id="operation-permissions"><a class="header" href="#operation-permissions">Operation Permissions</a></h3>
+<p>Control CRUD operations per role per table:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Permission</th><th>Operations</th></tr>
+</thead>
+<tbody>
+<tr><td><code>select</code></td><td><code>GET</code> list and single</td></tr>
+<tr><td><code>insert</code></td><td><code>POST</code> create</td></tr>
+<tr><td><code>update</code></td><td><code>PATCH</code> update</td></tr>
+<tr><td><code>delete</code></td><td><code>DELETE</code> delete</td></tr>
+</tbody>
+</table>
+</div>
+<hr>
+<h2 id="query-allow-listing-1"><a class="header" href="#query-allow-listing-1">Query Allow-Listing</a></h2>
+<p>Lock down which queries can run in production:</p>
+<pre><code class="language-toml"># qail.toml
+[gateway.security]
+allow_list_enabled = true
+allow_list = [
+  "GET /api/orders",
+  "GET /api/orders/:id",
+]
+complexity_limit = 10
+rate_limit = 100
+</code></pre>
+<p>When enabled, any query pattern not in the allow-list is rejected with <code>403 Forbidden</code>. This provides defense-in-depth: even if auth is bypassed, only pre-approved query shapes can execute.</p>
+<hr>
+<h2 id="security-summary"><a class="header" href="#security-summary">Security Summary</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Threat</th><th>Traditional REST</th><th>QAIL Gateway</th></tr>
+</thead>
+<tbody>
+<tr><td>SQL injection</td><td>Possible (one mistake)</td><td><strong>Impossible</strong> (binary AST)</td></tr>
+<tr><td>Tenant data leak</td><td>Missing WHERE clause</td><td><strong>RLS auto-injected</strong></td></tr>
+<tr><td>N+1 catastrophe</td><td>Default behavior</td><td><strong>Structurally impossible</strong></td></tr>
+<tr><td>Over-fetching</td><td>Manual column control</td><td><strong>Policy-enforced</strong></td></tr>
+<tr><td>Query abuse</td><td>Rate limiting only</td><td><strong>Allow-list + rate limit</strong></td></tr>
+</tbody>
+</table>
+</div>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="real-time--events"><a class="header" href="#real-time--events">Real-Time &amp; Events</a></h1>
+<p>The gateway supports real-time data through WebSocket subscriptions, live queries, and event triggers with webhook delivery.</p>
+<hr>
+<h2 id="websocket-subscriptions-1"><a class="header" href="#websocket-subscriptions-1">WebSocket Subscriptions</a></h2>
+<p>Subscribe to table changes via WebSocket (backed by PostgreSQL <code>LISTEN/NOTIFY</code>):</p>
+<pre><code class="language-javascript">const ws = new WebSocket('ws://localhost:8080/ws');
+ws.send(JSON.stringify({
+  type: 'subscribe',
+  table: 'orders',
+  filter: { status: 'paid' }
+}));
+
+ws.onmessage = (event) =&gt; {
+  const { type, data } = JSON.parse(event.data);
+  // type: "INSERT" | "UPDATE" | "DELETE"
+  console.log('Change:', type, data);
+};
+</code></pre>
+<p>Subscriptions are scoped by your RLS policies — each client only receives events for rows they are authorized to see.</p>
+<hr>
+<h2 id="live-queries-1"><a class="header" href="#live-queries-1">Live Queries</a></h2>
+<p>Auto-refresh query results when underlying data changes:</p>
+<pre><code class="language-javascript">ws.send(JSON.stringify({
+  type: 'live_query',
+  query: '/api/orders?status=paid&amp;sort=-created_at&amp;limit=10',
+  interval: 2000  // Poll interval in ms
+}));
+</code></pre>
+<p>The gateway re-executes the query at the specified interval and pushes updated results only when data has changed.</p>
+<hr>
+<h2 id="event-triggers-1"><a class="header" href="#event-triggers-1">Event Triggers</a></h2>
+<p>Fire webhooks on database mutations. Define triggers in YAML:</p>
+<pre><code class="language-yaml">events:
+  - name: order_created
+    table: orders
+    operations: [INSERT]
+    webhook: "https://api.example.com/hooks/order-created"
+    headers:
+      X-Secret: "webhook-secret-key"
+    retry:
+      count: 3
+      interval: 5000
+  - name: order_updated
+    table: orders
+    operations: [UPDATE]
+    webhook: "https://api.example.com/hooks/order-updated"
+</code></pre>
+<h3 id="webhook-payload"><a class="header" href="#webhook-payload">Webhook Payload</a></h3>
+<pre><code class="language-json">{
+  "trigger": "order_created",
+  "table": "orders",
+  "operation": "INSERT",
+  "data": {
+    "new": { "id": "uuid-...", "total": 150.00, "status": "pending" },
+    "old": null
+  },
+  "timestamp": "2025-01-15T10:30:00Z"
+}
+</code></pre>
+<h3 id="delivery-guarantees"><a class="header" href="#delivery-guarantees">Delivery Guarantees</a></h3>
+<ul>
+<li><strong>Non-blocking:</strong> Webhooks fire asynchronously via <code>tokio::spawn</code>. The REST response is never delayed.</li>
+<li><strong>Retry with backoff:</strong> Failed deliveries retry with exponential backoff up to the configured count.</li>
+<li><strong>Custom headers:</strong> Attach secret keys or auth tokens to webhook requests.</li>
+</ul>
+<h3 id="operations"><a class="header" href="#operations">Operations</a></h3>
+<p>Each trigger can fire on one or more operations:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Operation</th><th>Fires on</th><th>Payload</th></tr>
+</thead>
+<tbody>
+<tr><td><code>INSERT</code></td><td><code>POST /api/{table}</code></td><td><code>new</code> data</td></tr>
+<tr><td><code>UPDATE</code></td><td><code>PATCH /api/{table}/:id</code></td><td><code>new</code> + <code>old</code> data</td></tr>
+<tr><td><code>DELETE</code></td><td><code>DELETE /api/{table}/:id</code></td><td><code>old</code> data</td></tr>
+</tbody>
+</table>
+</div>
+<hr>
+<h2 id="ndjson-streaming"><a class="header" href="#ndjson-streaming">NDJSON Streaming</a></h2>
+<p>For large datasets, stream results as newline-delimited JSON:</p>
+<pre><code>GET /api/events?stream=true
+</code></pre>
+<p>Each row is sent as a separate JSON line with chunked transfer encoding — no buffering:</p>
+<pre><code>{"id":"uuid-1","type":"click","timestamp":"2025-01-01T00:00:00Z"}
+{"id":"uuid-2","type":"purchase","timestamp":"2025-01-01T00:01:00Z"}
+...
+</code></pre>
+<p>Ideal for data exports, ETL pipelines, and processing large tables without memory pressure.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="performance--observability"><a class="header" href="#performance--observability">Performance &amp; Observability</a></h1>
+<p>The gateway is built for production throughput with prepared statement caching, query caching, rate limiting, and full observability.</p>
+<hr>
+<h2 id="query-cache-1"><a class="header" href="#query-cache-1">Query Cache</a></h2>
+<p>LRU cache with configurable TTL and automatic table-level invalidation.</p>
+<pre><code class="language-toml">[gateway.cache]
+enabled = true
+max_entries = 1000
+ttl_secs = 60
+</code></pre>
+<h3 id="behavior"><a class="header" href="#behavior">Behavior</a></h3>
+<ul>
+<li><strong>Cache key:</strong> Normalized query string + auth context hash</li>
+<li><strong>Invalidation:</strong> Automatic on any mutation (<code>INSERT</code>, <code>UPDATE</code>, <code>DELETE</code>) to the same table</li>
+<li><strong>Eviction:</strong> LRU when capacity is reached</li>
+<li><strong>TTL:</strong> Configurable per-entry time-to-live</li>
+<li><strong>Correctness:</strong> Concurrent reads during a mutation never serve stale data — invalidation is atomic</li>
+</ul>
+<h3 id="cache-headers"><a class="header" href="#cache-headers">Cache Headers</a></h3>
+<p>Responses include cache status headers:</p>
+<pre><code>X-Cache: HIT                    # Served from cache
+X-Cache: MISS                   # Fresh query executed
+</code></pre>
+<hr>
+<h2 id="prepared-statement-caching-1"><a class="header" href="#prepared-statement-caching-1">Prepared Statement Caching</a></h2>
+<p>The gateway caches prepared statements per query shape, eliminating repeated parse overhead. This is separate from the query cache — it caches the PostgreSQL server-side prepared statement, not the result.</p>
+<hr>
+<h2 id="rate-limiting"><a class="header" href="#rate-limiting">Rate Limiting</a></h2>
+<p>Built-in token-bucket rate limiter keyed by client IP:</p>
+<pre><code class="language-toml">[gateway]
+rate_limit_rate = 100.0         # Tokens refilled per second
+rate_limit_burst = 200          # Maximum burst capacity
+</code></pre>
+<p>When exceeded, the gateway returns:</p>
+<pre><code>HTTP/1.1 429 Too Many Requests
+Retry-After: 1
+</code></pre>
+<pre><code class="language-json">{
+  "error": {
+    "code": "RATE_LIMITED",
+    "message": "Too many requests",
+    "status": 429
+  }
+}
+</code></pre>
+<hr>
+<h2 id="request-timeouts"><a class="header" href="#request-timeouts">Request Timeouts</a></h2>
+<p>All queries have a configurable timeout (default: 30 seconds, set via <code>statement_timeout_ms</code> in <code>qail.toml</code>). Long-running queries are cancelled and return:</p>
+<pre><code class="language-json">{
+  "error": {
+    "code": "TIMEOUT",
+    "message": "Request timed out",
+    "status": 408
+  }
+}
+</code></pre>
+<hr>
+<h2 id="prometheus-metrics-1"><a class="header" href="#prometheus-metrics-1">Prometheus Metrics</a></h2>
+<pre><code>GET /metrics
+</code></pre>
+<p>Exposes request counts, latencies (p50/p95/p99), error rates, cache hit ratios, and connection pool stats in Prometheus format.</p>
+<hr>
+<h2 id="request-tracing-1"><a class="header" href="#request-tracing-1">Request Tracing</a></h2>
+<p>Every response includes tracing headers:</p>
+<pre><code>X-Request-Id: req-uuid-...       # Unique request identifier
+X-Response-Time: 12ms            # Duration
+</code></pre>
+<hr>
+<h2 id="health-check-1"><a class="header" href="#health-check-1">Health Check</a></h2>
+<pre><code>GET /health
+</code></pre>
+<p>Returns <code>200 OK</code> when the gateway and database connection are healthy.</p>
+<hr>
+<h2 id="schema-introspection-1"><a class="header" href="#schema-introspection-1">Schema Introspection</a></h2>
+<pre><code>GET /api/_schema         # Full schema: tables, columns, types, FKs
+GET /api/_openapi        # Auto-generated OpenAPI 3.0 spec
+</code></pre>
+<p>The OpenAPI spec is generated from the live database schema — always up to date.</p>
+<hr>
+<h2 id="explain-cost-guard"><a class="header" href="#explain-cost-guard">EXPLAIN Cost Guard</a></h2>
+<p>The gateway runs <code>EXPLAIN</code> on read queries <strong>before execution</strong> to reject expensive queries early.</p>
+<p>Configure thresholds in <code>qail.toml</code>:</p>
+<pre><code class="language-toml">[gateway]
+explain_max_cost = 100000.0    # Reject if estimated cost exceeds this
+explain_max_rows = 1000000     # Reject if estimated rows exceed this
+</code></pre>
+<p>Per-role overrides allow analytics roles to run heavier queries:</p>
+<pre><code class="language-toml">[gateway.role_overrides.reporting]
+explain_max_cost = 500000.0
+</code></pre>
+<p>Rejected queries return a structured <code>QUERY_TOO_EXPENSIVE</code> error:</p>
+<pre><code class="language-json">{
+  "code": "QUERY_TOO_EXPENSIVE",
+  "message": "Query rejected: estimated cost 150000 exceeds limit 100000...",
+  "details": "{\"estimated_cost\":150000,\"cost_limit\":100000,\"estimated_rows\":2000000,\"row_limit\":1000000,\"suggestions\":[\"Add WHERE clauses\",\"Reduce ?expand depth\"]}"
+}
+</code></pre>
+<p>The <code>details</code> field is machine-readable JSON — client SDKs can parse it to display actionable suggestions.</p>
+<h3 id="explain-endpoint-1"><a class="header" href="#explain-endpoint-1">EXPLAIN Endpoint</a></h3>
+<p>Inspect query plans manually:</p>
+<pre><code>GET /api/orders/_explain?status=paid&amp;expand=users
+</code></pre>
+<p>Returns the PostgreSQL <code>EXPLAIN ANALYZE</code> output for the generated query.</p>
+<hr>
+<h2 id="error-responses"><a class="header" href="#error-responses">Error Responses</a></h2>
+<p>All errors follow a consistent JSON structure:</p>
+<pre><code class="language-json">{
+  "error": {
+    "code": "QUERY_ERROR",
+    "message": "column \"foo\" does not exist",
+    "status": 400,
+    "request_id": "req-uuid-..."
+  }
+}
+</code></pre>
+<h3 id="error-codes"><a class="header" href="#error-codes">Error Codes</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Code</th><th>HTTP</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>RATE_LIMITED</code></td><td>429</td><td>Rate limit exceeded</td></tr>
+<tr><td><code>CONCURRENCY_LIMIT</code></td><td>429</td><td>Tenant concurrency limit reached</td></tr>
+<tr><td><code>QUERY_TOO_EXPENSIVE</code></td><td>422</td><td>EXPLAIN cost/row estimate exceeded threshold</td></tr>
+<tr><td><code>TIMEOUT</code></td><td>408</td><td>Query exceeded statement timeout</td></tr>
+<tr><td><code>PARSE_ERROR</code></td><td>400</td><td>Malformed query parameters</td></tr>
+<tr><td><code>QUERY_ERROR</code></td><td>400</td><td>Database query failed</td></tr>
+<tr><td><code>UNAUTHORIZED</code></td><td>401</td><td>Authentication failed</td></tr>
+<tr><td><code>FORBIDDEN</code></td><td>403</td><td>Policy denied access</td></tr>
+<tr><td><code>NOT_FOUND</code></td><td>404</td><td>Resource not found</td></tr>
+<tr><td><code>INTERNAL</code></td><td>500</td><td>Unexpected server error</td></tr>
+</tbody>
+</table>
+</div>
+<hr>
+<h2 id="benchmark-gateway-vs-graphql"><a class="header" href="#benchmark-gateway-vs-graphql">Benchmark: Gateway vs GraphQL</a></h2>
+<p>The gateway’s <code>?expand=</code> does server-side JOINs — same approach as the Qail AST driver but over HTTP:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Approach</th><th>Avg Latency</th><th>DB Queries</th><th>vs Qail</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Qail AST</strong> (binary)</td><td><strong>449µs</strong></td><td>1</td><td>baseline</td></tr>
+<tr><td><strong>Gateway</strong> (<code>?expand=</code>)</td><td>635µs</td><td>1</td><td>1.4×</td></tr>
+<tr><td>GraphQL + DataLoader</td><td>1.52ms</td><td>3</td><td>3.4×</td></tr>
+<tr><td>GraphQL naive (N+1)</td><td>18.2ms</td><td>151</td><td><strong>40×</strong></td></tr>
+</tbody>
+</table>
+</div>
+<p>The 1.4× gap is pure JSON serialization overhead. On the wire, the gateway executes the exact same single-query JOIN as the Qail driver.</p>
+<blockquote>
+<p><strong>Unlike GraphQL</strong>, the gateway makes N+1 structurally impossible. <code>?expand=</code> always resolves to a server-side JOIN — there’s no resolver pattern to misconfigure.</p>
+</blockquote>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="benchmark-qail-vs-graphql-vs-rest"><a class="header" href="#benchmark-qail-vs-graphql-vs-rest">Benchmark: Qail vs GraphQL vs REST</a></h1>
+<p>A scientific comparison of <strong>seven architectural approaches</strong> to the same complex database query, proving why AST-native matters — and showing there’s still room to go faster.</p>
+<h2 id="the-query"><a class="header" href="#the-query">The Query</a></h2>
+<blockquote>
+<p>Get all enabled ferry connections with their origin harbor name, destination harbor name, and operator brand name — <strong>3×LEFT JOIN</strong>, filtered by <code>is_enabled</code>, sorted by name, limited to 50 rows.</p>
+</blockquote>
+<p>This is a realistic query that every SaaS backend encounters: fetching a list of resources with their related entities.</p>
+<h2 id="results"><a class="header" href="#results">Results</a></h2>
+<p>100 iterations, <code>--release</code> mode, PostgreSQL buffer cache pre-warmed, <strong>randomized execution order</strong> to eliminate ordering bias. Sorted by median (most stable metric).</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>#</th><th>Approach</th><th>Median</th><th>p99</th><th>DB Queries</th><th>vs Qail</th></tr>
+</thead>
+<tbody>
+<tr><td>1</td><td><strong>Qail AST (prepared)</strong></td><td><strong>224µs</strong></td><td>633µs</td><td><strong>1</strong></td><td>baseline</td></tr>
+<tr><td>2</td><td><strong>Qail AST (fast)</strong></td><td><strong>380µs</strong></td><td>494µs</td><td><strong>1</strong></td><td>1.7×</td></tr>
+<tr><td>3</td><td>Qail AST (uncached)</td><td>465µs</td><td>2.1ms</td><td>1</td><td>2.1×</td></tr>
+<tr><td>4</td><td>REST + <code>?expand=</code></td><td>539µs</td><td>1.7ms</td><td>1</td><td>2.4×</td></tr>
+<tr><td>5</td><td>GraphQL + DataLoader</td><td>1.09ms</td><td>2.5ms</td><td>~3</td><td>4.9×</td></tr>
+<tr><td>6</td><td>REST naive</td><td>17.7ms</td><td>54.6ms</td><td>~151</td><td>78.9×</td></tr>
+<tr><td>7</td><td>GraphQL naive</td><td>17.8ms</td><td>161.6ms</td><td>~151</td><td>79.6×</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="the-three-qail-tiers"><a class="header" href="#the-three-qail-tiers">The Three Qail Tiers</a></h3>
+<p>Qail offers three fetch modes, each trading overhead for features:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Mode</th><th>What It Does</th><th>Median</th><th>Why Use It</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Prepared</strong></td><td>Cached statement (skips Parse) — <code>Bind+Execute</code> only</td><td>224µs</td><td>Production default. Postgres skips query planning on repeat calls.</td></tr>
+<tr><td><strong>Fast</strong></td><td>Skips ColumnInfo metadata, no <code>Arc</code> clones per row</td><td>380µs</td><td>When you know your column layout and want zero allocation overhead.</td></tr>
+<tr><td><strong>Uncached</strong></td><td>Full <code>Parse+Bind+Execute</code> every call</td><td>465µs</td><td>Dynamic queries that change per request. Still faster than REST.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="what-this-proves"><a class="header" href="#what-this-proves">What This Proves</a></h3>
+<ul>
+<li><strong>Prepared statements are the headline</strong> — Qail prepared is <strong>2.4× faster than the best possible REST</strong> because Postgres skips query planning entirely</li>
+<li><strong>The fast path eliminates Rust overhead</strong> — Skipping ColumnInfo + Arc saves ~85µs per call (18% improvement over uncached)</li>
+<li><strong>DataLoader helps but still 4.9× slower</strong> — 3 round trips vs 1, and each trip has its own Parse+Bind+Execute cycle</li>
+<li><strong>N+1 is catastrophic</strong> — 79× slower with 151 database round trips. The p99 tells the real story: <strong>161ms</strong> tail latency on GraphQL naive</li>
+<li><strong>REST+expand ≈ Qail uncached + JSON overhead</strong> — when both do Parse+Bind+Execute with the same query, the gap is the JSON serialization cost</li>
+</ul>
+<h3 id="still-tuning"><a class="header" href="#still-tuning">Still Tuning</a></h3>
+<blockquote>
+<p><strong>These results are from early Qail development.</strong> The <code>fetch_all_fast</code> path was added during this benchmark session — a 10-minute optimization that saved 18%. There is significant headroom remaining:</p>
+<ul>
+<li><strong>SIMD row decoding</strong> — parsing fixed-width columns with SIMD instructions</li>
+<li><strong>Zero-copy text fields</strong> — borrowing from the receive buffer instead of allocating</li>
+<li><strong>Batch prepared execution</strong> — pipelining multiple Bind+Execute in a single round trip</li>
+<li><strong>Arena allocation</strong> — per-query bump allocator instead of per-row heap allocation</li>
+</ul>
+<p>Qail’s architecture (AST → binary wire protocol) is designed so these optimizations compose. Each one is a multiplier, not a replacement.</p>
+</blockquote>
+<h3 id="security-comparison"><a class="header" href="#security-comparison">Security Comparison</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th></th><th>Qail</th><th>GraphQL</th><th>REST</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>SQL Injection</strong></td><td>Impossible (binary AST)</td><td>String fields vulnerable</td><td>String queries vulnerable</td></tr>
+<tr><td><strong>Tenant Isolation</strong></td><td>RLS at protocol level</td><td>Per-resolver ACL</td><td>Per-middleware ACL</td></tr>
+<tr><td><strong>Query Abuse</strong></td><td>AST validates at compile time</td><td>Depth/complexity attacks</td><td>IDOR per endpoint</td></tr>
+</tbody>
+</table>
+</div>
+<hr>
+<h2 id="approach-1-qail-ast--prepared-production-default"><a class="header" href="#approach-1-qail-ast--prepared-production-default">Approach 1: Qail AST — Prepared (Production Default)</a></h2>
+<p>The fastest path. The prepared statement is cached after the first call — subsequent executions skip PostgreSQL’s Parse phase entirely, sending only <code>Bind+Execute</code>.</p>
+<p><strong>1 query. 1 round trip. No Parse. No JSON.</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use qail_core::prelude::*;
+use qail_core::ast::{Operator, JoinKind, SortOrder};
+use qail_pg::PgDriver;
+
+async fn run_qail_prepared(driver: &amp;mut PgDriver) -&gt; Result&lt;Vec&lt;QailRow&gt;, Box&lt;dyn std::error::Error&gt;&gt; {
+    let cmd = Qail::get("odyssey_connections")
+        .columns(vec![
+            "odyssey_connections.id",
+            "odyssey_connections.name",
+            "odyssey_connections.description",
+            "odyssey_connections.is_enabled",
+            "odyssey_connections.created_at",
+        ])
+        .join(JoinKind::Left, "harbors AS origin",
+              "odyssey_connections.origin_harbor_id", "origin.id")
+        .join(JoinKind::Left, "harbors AS dest",
+              "odyssey_connections.destination_harbor_id", "dest.id")
+        .join(JoinKind::Left, "operators",
+              "odyssey_connections.operator_id", "operators.id")
+        .column("origin.name AS origin_harbor")
+        .column("dest.name AS dest_harbor")
+        .column("operators.brand_name AS operator_name")
+        .filter("odyssey_connections.is_enabled", Operator::Eq, Value::Bool(true))
+        .order_by("odyssey_connections.name", SortOrder::Asc)
+        .limit(50);
+
+    // fetch_all_cached: first call does Parse+Bind+Execute,
+    // subsequent calls skip Parse (cached prepared statement)
+    let rows = driver.fetch_all_cached(&amp;cmd).await?;
+    Ok(rows)
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Generated SQL:</strong></p>
+<pre><code class="language-sql">SELECT odyssey_connections.id, odyssey_connections.name,
+       odyssey_connections.description, odyssey_connections.is_enabled,
+       odyssey_connections.created_at,
+       origin.name AS origin_harbor,
+       dest.name AS dest_harbor,
+       operators.brand_name AS operator_name
+FROM odyssey_connections
+LEFT JOIN harbors AS origin ON odyssey_connections.origin_harbor_id = origin.id
+LEFT JOIN harbors AS dest ON odyssey_connections.destination_harbor_id = dest.id
+LEFT JOIN operators ON odyssey_connections.operator_id = operators.id
+WHERE odyssey_connections.is_enabled = true
+ORDER BY odyssey_connections.name ASC
+LIMIT 50
+</code></pre>
+<blockquote>
+<p><strong>Key insight:</strong> This SQL is never generated as a string. The AST encodes directly to PostgreSQL’s binary wire protocol. There is zero injection surface because there are no strings to inject into.</p>
+</blockquote>
+<hr>
+<h2 id="approach-2-qail-ast--fast-zero-overhead-receive"><a class="header" href="#approach-2-qail-ast--fast-zero-overhead-receive">Approach 2: Qail AST — Fast (Zero-Overhead Receive)</a></h2>
+<p>Same query as prepared, but uses <code>fetch_all_fast</code> which skips building the <code>ColumnInfo</code> metadata HashMap and avoids <code>Arc::clone()</code> per row. This eliminates ~50 atomic reference count operations per call.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Same query as Approach 1, but:
+let rows = driver.fetch_all_fast(&amp;cmd).await?;
+// Rows come back without ColumnInfo — access by index only, not by name.
+// Saves: HashMap allocation + Arc::clone() × num_rows
+<span class="boring">}</span></code></pre>
+<blockquote>
+<p><strong>When to use:</strong> High-throughput codepaths where you know your column layout at compile time and don’t need name-based column access. The 18% speedup over uncached comes entirely from eliminating Rust-side allocation and reference counting.</p>
+</blockquote>
+<hr>
+<h2 id="approach-3-qail-ast--uncached-full-round-trip"><a class="header" href="#approach-3-qail-ast--uncached-full-round-trip">Approach 3: Qail AST — Uncached (Full Round Trip)</a></h2>
+<p>Full <code>Parse+Bind+Execute</code> on every call. This is the baseline for comparing against REST+expand, since both pay the same PostgreSQL protocol overhead.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let rows = driver.fetch_all_uncached(&amp;cmd).await?;
+// Parse+Bind+Execute every time — Postgres re-plans the query each call
+<span class="boring">}</span></code></pre>
+<blockquote>
+<p><strong>465µs vs 224µs:</strong> The 2.1× gap between uncached and prepared is pure Postgres query planning overhead. Prepared statements are free performance.</p>
+</blockquote>
+<hr>
+<h2 id="approach-4-graphql-naive--n1-resolvers"><a class="header" href="#approach-4-graphql-naive--n1-resolvers">Approach 4: GraphQL Naive — N+1 Resolvers</a></h2>
+<p>The classic GraphQL anti-pattern. Each resolver fires a separate query for each related entity:</p>
+<ol>
+<li><strong>Root query:</strong> Fetch all connections (1 query → 50 rows)</li>
+<li><strong>Per-row:</strong> For each connection, resolve origin harbor (50 queries)</li>
+<li><strong>Per-row:</strong> For each connection, resolve destination harbor (50 queries)</li>
+<li><strong>Per-row:</strong> For each connection, resolve operator (50 queries)</li>
+</ol>
+<p><strong>Total: ~151 queries per request.</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>async fn run_graphql_naive(driver: &amp;mut PgDriver)
+    -&gt; Result&lt;(usize, Duration, usize), Box&lt;dyn std::error::Error&gt;&gt;
+{
+    // Step 1: Root query
+    let root_cmd = Qail::get("odyssey_connections")
+        .filter("is_enabled", Operator::Eq, Value::Bool(true))
+        .order_by("name", SortOrder::Asc)
+        .limit(50);
+
+    let connections = driver.fetch_all_uncached(&amp;root_cmd).await?;
+
+    // Step 2: N+1 — resolve each relation individually
+    for conn in &amp;connections {
+        let origin_id = conn.text(2);
+        let dest_id = conn.text(3);
+        let op_id = conn.get_string(11);
+
+        // GET /harbors/:origin_id
+        driver.fetch_all_uncached(
+            &amp;Qail::get("harbors")
+                .filter("id", Operator::Eq, Value::String(origin_id))
+                .limit(1)
+        ).await?;
+
+        // GET /harbors/:dest_id
+        driver.fetch_all_uncached(
+            &amp;Qail::get("harbors")
+                .filter("id", Operator::Eq, Value::String(dest_id))
+                .limit(1)
+        ).await?;
+
+        // GET /operators/:op_id
+        if let Some(oid) = op_id {
+            driver.fetch_all_uncached(
+                &amp;Qail::get("operators")
+                    .filter("id", Operator::Eq, Value::String(oid))
+                    .limit(1)
+            ).await?;
+        }
+    }
+    // ...
+}
+<span class="boring">}</span></code></pre>
+<blockquote>
+<p><strong>Why this is the default:</strong> Most GraphQL tutorials teach exactly this pattern. Junior developers follow it because it’s “clean” — each resolver is independent. The N+1 problem is invisible until production load hits. The p99 of <strong>161ms</strong> means 1% of your requests take over 160ms — for a single database query.</p>
+</blockquote>
+<hr>
+<h2 id="approach-5-graphql--dataloader--batched-queries"><a class="header" href="#approach-5-graphql--dataloader--batched-queries">Approach 5: GraphQL + DataLoader — Batched Queries</a></h2>
+<p>The standard optimization. DataLoader collects all IDs from the root query, then fires batched <code>WHERE id IN (...)</code> queries:</p>
+<ol>
+<li><strong>Root query:</strong> Fetch all connections (1 query)</li>
+<li><strong>Batch:</strong> All unique harbor IDs → <code>WHERE id IN ($1, $2, ...)</code> (1 query)</li>
+<li><strong>Batch:</strong> All unique operator IDs → <code>WHERE id IN ($1, $2, ...)</code> (1 query)</li>
+</ol>
+<p><strong>Total: 3 queries per request.</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>async fn run_graphql_dataloader(driver: &amp;mut PgDriver)
+    -&gt; Result&lt;(usize, Duration, usize), Box&lt;dyn std::error::Error&gt;&gt;
+{
+    let connections = driver.fetch_all_uncached(&amp;root_cmd).await?;
+
+    // Collect unique IDs (DataLoader batching)
+    let mut harbor_ids = HashSet::new();
+    let mut operator_ids = HashSet::new();
+    for conn in &amp;connections {
+        harbor_ids.insert(conn.text(2));   // origin
+        harbor_ids.insert(conn.text(3));   // destination
+        if let Some(oid) = conn.get_string(11) {
+            operator_ids.insert(oid);
+        }
+    }
+
+    // Batch: SELECT * FROM harbors WHERE id IN (...)
+    let harbor_ids_list: Vec&lt;String&gt; = harbor_ids.into_iter().collect();
+    driver.fetch_all_uncached(
+        &amp;Qail::get("harbors").filter("id", Operator::In,
+            Value::Array(harbor_ids_list.iter()
+                .map(|s| Value::String(s.clone())).collect()))
+    ).await?;
+
+    // Batch: SELECT * FROM operators WHERE id IN (...)
+    let op_ids_list: Vec&lt;String&gt; = operator_ids.into_iter().collect();
+    if !op_ids_list.is_empty() {
+        driver.fetch_all_uncached(
+            &amp;Qail::get("operators").filter("id", Operator::In,
+                Value::Array(op_ids_list.iter()
+                    .map(|s| Value::String(s.clone())).collect()))
+        ).await?;
+    }
+    // ...
+}
+<span class="boring">}</span></code></pre>
+<blockquote>
+<p><strong>Still 3 round trips.</strong> In a local benchmark, latency is ~0ms. In production (App → RDS across AZs), each round trip adds 1-2ms. DataLoader’s 3-trip approach would add 3-6ms of pure network latency that Qail’s single-trip approach avoids entirely.</p>
+</blockquote>
+<hr>
+<h2 id="approach-6-rest-naive--sequential-calls--json"><a class="header" href="#approach-6-rest-naive--sequential-calls--json">Approach 6: REST Naive — Sequential Calls + JSON</a></h2>
+<p>Simulates a frontend client that:</p>
+<ol>
+<li><code>GET /api/connections</code> → JSON → parse</li>
+<li>For each connection: <code>GET /api/harbors/:id</code> → JSON → parse (×50 origins)</li>
+<li>For each connection: <code>GET /api/harbors/:id</code> → JSON → parse (×50 destinations)</li>
+<li>For each connection: <code>GET /api/operators/:id</code> → JSON → parse (×50 operators)</li>
+</ol>
+<p><strong>Total: ~151 queries + JSON serialization/deserialization overhead.</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>async fn run_rest_naive(driver: &amp;mut PgDriver)
+    -&gt; Result&lt;(usize, Duration, usize), Box&lt;dyn std::error::Error&gt;&gt;
+{
+    let connections = driver.fetch_all_uncached(&amp;root_cmd).await?;
+
+    // Serialize root response to JSON
+    let mut conn_data: Vec&lt;String&gt; = Vec::with_capacity(connections.len());
+    for conn in &amp;connections {
+        conn_data.push(format!(
+            r#"{{"id":"{}","odyssey_id":"{}","name":"{}"}}"#,
+            conn.text(0), conn.text(1), conn.text(4)
+        ));
+    }
+
+    // N+1: resolve each relation + JSON each response
+    for conn in &amp;connections {
+        let origin_id = conn.text(2);
+        let dest_id = conn.text(3);
+
+        let origin_rows = driver.fetch_all_uncached(
+            &amp;Qail::get("harbors")
+                .filter("id", Operator::Eq, Value::String(origin_id))
+                .limit(1)
+        ).await?;
+        // Simulate JSON deserialization
+        if let Some(h) = origin_rows.first() {
+            let _ = format!(r#"{{"name":"{}"}}"#, h.text(1));
+        }
+        // ... repeat for dest + operator
+    }
+    // ...
+}
+<span class="boring">}</span></code></pre>
+<hr>
+<h2 id="approach-7-rest--expand--server-side-join"><a class="header" href="#approach-7-rest--expand--server-side-join">Approach 7: REST + <code>?expand=</code> — Server-Side JOIN</a></h2>
+<p>The optimized REST pattern. The server performs the JOIN (same query as Qail AST) and returns denormalized JSON:</p>
+<p><code>GET /api/connections?expand=harbors,operators</code></p>
+<p><strong>1 query + JSON serialization overhead.</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>async fn run_rest_expand(driver: &amp;mut PgDriver)
+    -&gt; Result&lt;(usize, Duration), Box&lt;dyn std::error::Error&gt;&gt;
+{
+    // Same JOIN query as Qail (server-side)
+    let cmd = build_join_query();
+    let rows = driver.fetch_all_uncached(&amp;cmd).await?;
+
+    // Simulate full JSON response serialization
+    let mut json_out = String::with_capacity(4096);
+    json_out.push('[');
+    for (i, r) in rows.iter().enumerate() {
+        if i &gt; 0 { json_out.push(','); }
+        json_out.push_str(&amp;format!(
+            r#"{{"id":"{}","name":"{}","origin":"{}","dest":"{}","operator":"{}"}}"#,
+            r.text(0), r.text(1), r.text(5), r.text(6), r.text(7),
+        ));
+    }
+    json_out.push(']');
+    std::hint::black_box(&amp;json_out); // prevent compiler optimization
+    // ...
+}
+<span class="boring">}</span></code></pre>
+<blockquote>
+<p><strong>The 2.4× gap vs Qail prepared is JSON + query planning.</strong> REST+expand pays for both JSON serialization AND Parse+Bind+Execute (no prepared statement). Against Qail uncached, the gap narrows to just 1.15× — proving JSON overhead is minimal; the real win is prepared statements.</p>
+</blockquote>
+<hr>
+<h2 id="methodology"><a class="header" href="#methodology">Methodology</a></h2>
+<h3 id="randomized-execution-order"><a class="header" href="#randomized-execution-order">Randomized Execution Order</a></h3>
+<p>Approaches run in Fisher-Yates shuffled order to eliminate Postgres buffer cache ordering bias. Previous benchmarks showed the first approach could appear slower due to cold cache pages.</p>
+<h3 id="cache-equalization"><a class="header" href="#cache-equalization">Cache Equalization</a></h3>
+<p>A 10-iteration global warmup loads all table data pages into PostgreSQL’s buffer cache before any timed approach runs:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>println!("⏳ Global warmup (loading data pages into Postgres buffer cache)...");
+for _ in 0..10 {
+    let _ = driver.fetch_all_uncached(&amp;warmup_join).await?;
+    let _ = driver.fetch_all_uncached(&amp;warmup_harbors).await?;
+    let _ = driver.fetch_all_uncached(&amp;warmup_operators).await?;
+}
+println!("✓ Buffer cache warm — all approaches start equal");
+<span class="boring">}</span></code></pre>
+<h3 id="statistical-rigor"><a class="header" href="#statistical-rigor">Statistical Rigor</a></h3>
+<p>Each approach reports <strong>median</strong> (most stable, resistant to outliers) and <strong>p99</strong> (tail latency, shows worst-case behavior). The results table is sorted by median, not average, to avoid outlier distortion.</p>
+<h3 id="fair-protocol"><a class="header" href="#fair-protocol">Fair Protocol</a></h3>
+<p>All seven approaches use Qail’s <code>PgDriver</code> internally. This isolates the <strong>architectural difference</strong> (1 query vs N+1 vs batched, prepared vs uncached) from protocol differences. We’re measuring the cost of the pattern, not the driver.</p>
+<h3 id="rls-bypass"><a class="header" href="#rls-bypass">RLS Bypass</a></h3>
+<p>Row-Level Security is bypassed (<code>SET app.is_super_admin = 'true'</code>) so timing measures pure query performance. In production, Qail enforces RLS at the protocol level — GraphQL and REST must implement it at the application layer.</p>
+<h3 id="network-latency"><a class="header" href="#network-latency">Network Latency</a></h3>
+<p>This is a <strong>local</strong> benchmark (app and database on the same machine). Network latency = 0ms. In a real cloud deployment (e.g., AWS App → RDS), each database round trip adds <strong>1-2ms</strong> of network latency:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Approach</th><th>Local Median</th><th>Estimated Cloud Latency</th></tr>
+</thead>
+<tbody>
+<tr><td>Qail prepared (1 trip)</td><td>224µs</td><td>~1.5ms</td></tr>
+<tr><td>Qail uncached (1 trip)</td><td>465µs</td><td>~2ms</td></tr>
+<tr><td>DataLoader (3 trips)</td><td>1.09ms</td><td>~5-7ms</td></tr>
+<tr><td>Naive N+1 (151 trips)</td><td>17.8ms</td><td>~150-300ms</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>In production, the gap between Qail and N+1 widens from 79× to potentially 100-200×.</strong></p>
+<hr>
+<h2 id="run-it-yourself"><a class="header" href="#run-it-yourself">Run It Yourself</a></h2>
+<pre><code class="language-bash">DATABASE_URL=postgresql://user:pass@localhost:5432/yourdb \
+  cargo run --example battle_comparison --features chrono,uuid --release
+</code></pre>
+<p>The full benchmark source is at <a href="https://github.com/qail-io/qail/blob/main/pg/examples/battle_comparison.rs"><code>pg/examples/battle_comparison.rs</code></a>.</p>
+<div style="break-before: page; page-break-before: always;"></div>
 <h1 id="ast-builder-api"><a class="header" href="#ast-builder-api">AST Builder API</a></h1>
 <p>The recommended way to use QAIL. Build queries as typed Rust structs.</p>
 <h2 id="query-types"><a class="header" href="#query-types">Query Types</a></h2>
@@ -406,6 +1693,16 @@ qail migrate up old.qail:new.qail postgres://...
 <tr><td><code>Qail::add()</code></td><td>INSERT</td></tr>
 <tr><td><code>Qail::set()</code></td><td>UPDATE</td></tr>
 <tr><td><code>Qail::del()</code></td><td>DELETE</td></tr>
+<tr><td><code>Qail::put()</code></td><td>UPSERT (INSERT ON CONFLICT)</td></tr>
+<tr><td><code>Qail::make()</code></td><td>CREATE TABLE</td></tr>
+<tr><td><code>Qail::truncate()</code></td><td>TRUNCATE</td></tr>
+<tr><td><code>Qail::explain()</code></td><td>EXPLAIN</td></tr>
+<tr><td><code>Qail::explain_analyze()</code></td><td>EXPLAIN ANALYZE</td></tr>
+<tr><td><code>Qail::lock()</code></td><td>LOCK TABLE</td></tr>
+<tr><td><code>Qail::listen()</code></td><td>LISTEN (Pub/Sub)</td></tr>
+<tr><td><code>Qail::notify()</code></td><td>NOTIFY (Pub/Sub)</td></tr>
+<tr><td><code>Qail::unlisten()</code></td><td>UNLISTEN (Pub/Sub)</td></tr>
+<tr><td><code>Qail::export()</code></td><td>COPY TO</td></tr>
 </tbody>
 </table>
 </div>
@@ -443,7 +1740,23 @@ let cmd = Qail::get("users")
 </span>let cmd = Qail::del("users")
     .where_eq("id", 42);
 <span class="boring">}</span></code></pre>
+<h2 id="pubsub-listennotify"><a class="header" href="#pubsub-listennotify">Pub/Sub (LISTEN/NOTIFY)</a></h2>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Subscribe to a channel
+let listen = Qail::listen("orders");
+// → LISTEN orders
+
+// Send a notification
+let notify = Qail::notify("orders", "new_order:123");
+// → NOTIFY orders, 'new_order:123'
+
+// Unsubscribe
+let unlisten = Qail::unlisten("orders");
+// → UNLISTEN orders
+<span class="boring">}</span></code></pre>
 <h2 id="builder-methods"><a class="header" href="#builder-methods">Builder Methods</a></h2>
+<h3 id="column-selection"><a class="header" href="#column-selection">Column Selection</a></h3>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -451,17 +1764,143 @@ let cmd = Qail::get("users")
 </thead>
 <tbody>
 <tr><td><code>.columns([...])</code></td><td>Select specific columns</td></tr>
+<tr><td><code>.column("col")</code></td><td>Add a single column</td></tr>
 <tr><td><code>.select_all()</code></td><td>SELECT *</td></tr>
-<tr><td><code>.filter(col, op, val)</code></td><td>WHERE condition</td></tr>
-<tr><td><code>.where_eq(col, val)</code></td><td>WHERE col = val</td></tr>
-<tr><td><code>.order_by(col, dir)</code></td><td>ORDER BY</td></tr>
-<tr><td><code>.limit(n)</code></td><td>LIMIT n</td></tr>
-<tr><td><code>.offset(n)</code></td><td>OFFSET n</td></tr>
-<tr><td><code>.left_join(table, on_left, on_right)</code></td><td>LEFT JOIN</td></tr>
+<tr><td><code>.column_expr(expr)</code></td><td>Add an expression as column</td></tr>
 <tr><td><code>.returning([...])</code></td><td>RETURNING clause</td></tr>
+<tr><td><code>.returning_all()</code></td><td>RETURNING *</td></tr>
 </tbody>
 </table>
 </div>
+<h3 id="filtering-2"><a class="header" href="#filtering-2">Filtering</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Method</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>.filter(col, op, val)</code></td><td>WHERE condition</td></tr>
+<tr><td><code>.or_filter(col, op, val)</code></td><td>OR condition</td></tr>
+<tr><td><code>.where_eq(col, val)</code></td><td>WHERE col = val</td></tr>
+<tr><td><code>.eq(col, val)</code></td><td>Shorthand for <code>= val</code></td></tr>
+<tr><td><code>.ne(col, val)</code></td><td>Shorthand for <code>!= val</code></td></tr>
+<tr><td><code>.gt(col, val)</code></td><td><code>&gt; val</code></td></tr>
+<tr><td><code>.gte(col, val)</code></td><td><code>&gt;= val</code></td></tr>
+<tr><td><code>.lt(col, val)</code></td><td><code>&lt; val</code></td></tr>
+<tr><td><code>.lte(col, val)</code></td><td><code>&lt;= val</code></td></tr>
+<tr><td><code>.is_null(col)</code></td><td>IS NULL</td></tr>
+<tr><td><code>.is_not_null(col)</code></td><td>IS NOT NULL</td></tr>
+<tr><td><code>.like(col, pattern)</code></td><td>LIKE pattern</td></tr>
+<tr><td><code>.ilike(col, pattern)</code></td><td>ILIKE pattern (case-insensitive)</td></tr>
+<tr><td><code>.in_vals(col, [...])</code></td><td>IN (values)</td></tr>
+<tr><td><code>.filter_cond(condition)</code></td><td>Add a raw <code>Condition</code> struct</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="sorting--pagination"><a class="header" href="#sorting--pagination">Sorting &amp; Pagination</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Method</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>.order_by(col, dir)</code></td><td>ORDER BY</td></tr>
+<tr><td><code>.order_asc(col)</code></td><td>ORDER BY col ASC</td></tr>
+<tr><td><code>.order_desc(col)</code></td><td>ORDER BY col DESC</td></tr>
+<tr><td><code>.limit(n)</code></td><td>LIMIT n</td></tr>
+<tr><td><code>.offset(n)</code></td><td>OFFSET n</td></tr>
+<tr><td><code>.fetch_first(n)</code></td><td>FETCH FIRST n ROWS ONLY</td></tr>
+<tr><td><code>.fetch_with_ties(n)</code></td><td>FETCH FIRST n ROWS WITH TIES</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="joins"><a class="header" href="#joins">Joins</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Method</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>.left_join(table, left, right)</code></td><td>LEFT JOIN</td></tr>
+<tr><td><code>.inner_join(table, left, right)</code></td><td>INNER JOIN</td></tr>
+<tr><td><code>.left_join_as(table, alias, left, right)</code></td><td>LEFT JOIN with alias</td></tr>
+<tr><td><code>.inner_join_as(table, alias, left, right)</code></td><td>INNER JOIN with alias</td></tr>
+<tr><td><code>.join(kind, table, left, right)</code></td><td>Generic join</td></tr>
+<tr><td><code>.join_on(related)</code></td><td>Auto-inferred FK join</td></tr>
+<tr><td><code>.join_on_optional(related)</code></td><td>FK join (no-op if no relation)</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="grouping--aggregation"><a class="header" href="#grouping--aggregation">Grouping &amp; Aggregation</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Method</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>.group_by([...])</code></td><td>GROUP BY columns</td></tr>
+<tr><td><code>.having_cond(condition)</code></td><td>HAVING clause</td></tr>
+<tr><td><code>.distinct_on([...])</code></td><td>DISTINCT ON columns</td></tr>
+<tr><td><code>.distinct_on_all()</code></td><td>DISTINCT ON all columns</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="mutations-2"><a class="header" href="#mutations-2">Mutations</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Method</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>.values([...])</code></td><td>INSERT values</td></tr>
+<tr><td><code>.set_value(col, val)</code></td><td>SET col = val (UPDATE)</td></tr>
+<tr><td><code>.default_values()</code></td><td>INSERT with DEFAULT VALUES</td></tr>
+<tr><td><code>.on_conflict(...)</code></td><td>ON CONFLICT handling</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="advanced"><a class="header" href="#advanced">Advanced</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Method</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>.table_alias(alias)</code></td><td>FROM table AS alias</td></tr>
+<tr><td><code>.for_update()</code></td><td>SELECT … FOR UPDATE</td></tr>
+<tr><td><code>.for_share()</code></td><td>SELECT … FOR SHARE</td></tr>
+<tr><td><code>.for_no_key_update()</code></td><td>FOR NO KEY UPDATE</td></tr>
+<tr><td><code>.for_key_share()</code></td><td>FOR KEY SHARE</td></tr>
+<tr><td><code>.tablesample_bernoulli(pct)</code></td><td>TABLESAMPLE BERNOULLI</td></tr>
+<tr><td><code>.tablesample_system(pct)</code></td><td>TABLESAMPLE SYSTEM</td></tr>
+<tr><td><code>.repeatable(seed)</code></td><td>REPEATABLE (seed)</td></tr>
+<tr><td><code>.only()</code></td><td>FROM ONLY table</td></tr>
+<tr><td><code>.overriding_system_value()</code></td><td>OVERRIDING SYSTEM VALUE</td></tr>
+<tr><td><code>.overriding_user_value()</code></td><td>OVERRIDING USER VALUE</td></tr>
+<tr><td><code>.update_from([...])</code></td><td>UPDATE … FROM tables</td></tr>
+<tr><td><code>.delete_using([...])</code></td><td>DELETE … USING tables</td></tr>
+<tr><td><code>.with_ctes(ctes)</code></td><td>WITH (Common Table Expressions)</td></tr>
+<tr><td><code>.with_rls(&amp;ctx)</code></td><td>Inject RLS context</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="materialized-views"><a class="header" href="#materialized-views">Materialized Views</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Create
+let view = Qail::create_materialized_view(
+    "monthly_stats",
+    Qail::get("orders")
+        .columns(["date_trunc('month', created_at) AS month", "sum(total)"])
+        .group_by(["month"])
+);
+
+// Refresh
+let refresh = Qail::refresh_materialized_view("monthly_stats");
+
+// Drop
+let drop = Qail::drop_materialized_view("monthly_stats");
+<span class="boring">}</span></code></pre>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="expression-types"><a class="header" href="#expression-types">Expression Types</a></h1>
 <p>QAIL v0.14.2 provides <strong>100% PostgreSQL expression coverage</strong>. All expression types are native AST nodes that encode directly to wire protocol bytes.</p>
@@ -683,6 +2122,16 @@ let mode = GroupByMode::GroupingSets(vec![
 <tr><td><code>Action::Index</code></td><td><code>CREATE INDEX</code></td><td>✓</td></tr>
 <tr><td><code>Action::CreateView</code></td><td><code>CREATE VIEW AS</code></td><td>✓ v0.14.2</td></tr>
 <tr><td><code>Action::DropView</code></td><td><code>DROP VIEW</code></td><td>✓ v0.14.2</td></tr>
+<tr><td><code>Action::CreateMaterializedView</code></td><td><code>CREATE MATERIALIZED VIEW</code></td><td>✓</td></tr>
+<tr><td><code>Action::RefreshMaterializedView</code></td><td><code>REFRESH MATERIALIZED VIEW</code></td><td>✓</td></tr>
+<tr><td><code>Action::DropMaterializedView</code></td><td><code>DROP MATERIALIZED VIEW</code></td><td>✓</td></tr>
+<tr><td><code>Action::Truncate</code></td><td><code>TRUNCATE</code></td><td>✓</td></tr>
+<tr><td><code>Action::Explain</code></td><td><code>EXPLAIN</code></td><td>✓</td></tr>
+<tr><td><code>Action::ExplainAnalyze</code></td><td><code>EXPLAIN ANALYZE</code></td><td>✓</td></tr>
+<tr><td><code>Action::Lock</code></td><td><code>LOCK TABLE</code></td><td>✓</td></tr>
+<tr><td><code>Action::Listen</code></td><td><code>LISTEN channel</code></td><td>✓</td></tr>
+<tr><td><code>Action::Notify</code></td><td><code>NOTIFY channel, 'payload'</code></td><td>✓</td></tr>
+<tr><td><code>Action::Unlisten</code></td><td><code>UNLISTEN channel</code></td><td>✓</td></tr>
 </tbody>
 </table>
 </div>
@@ -1030,7 +2479,7 @@ ColumnType::Jsonb.supports_indexing()     // false - warned before migration
 <h3 id="insert"><a class="header" href="#insert">Insert</a></h3>
 <pre><code>add users values (email = "alice@example.com", name = "Alice")
 </code></pre>
-<h3 id="update"><a class="header" href="#update">Update</a></h3>
+<h3 id="update-2"><a class="header" href="#update-2">Update</a></h3>
 <pre><code>set users values (status = "active") where id = 42
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div>
@@ -1287,7 +2736,7 @@ if row.is_null_by_name("deleted_at") { ... }
 <pre><code class="language-toml">[dependencies]
 qail-redis = "0.14"
 </code></pre>
-<h2 id="quick-start-1"><a class="header" href="#quick-start-1">Quick Start</a></h2>
+<h2 id="quick-start-2"><a class="header" href="#quick-start-2">Quick Start</a></h2>
 <pre class="playground"><code class="language-rust">use qail_redis::{RedisDriver, RedisExt};
 use qail_core::prelude::*;
 
@@ -2226,48 +3675,66 @@ Qail::get(users::table)
 <span class="boring">}</span></code></pre>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="connection-pooling-2"><a class="header" href="#connection-pooling-2">Connection Pooling</a></h1>
-<p>Efficient connection reuse with <code>PgPool</code>.</p>
+<p>Efficient connection reuse with built-in multi-tenant safety.</p>
 <h2 id="configuration-1"><a class="header" href="#configuration-1">Configuration</a></h2>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>use qail_pg::driver::{PgPool, PoolConfig};
+</span>use qail_pg::{PgPool, PoolConfig};
 
 let config = PoolConfig::new("localhost", 5432, "user", "database")
     .password("secret")
     .max_connections(20)
     .min_connections(5);
 <span class="boring">}</span></code></pre>
-<h2 id="creating-a-pool"><a class="header" href="#creating-a-pool">Creating a Pool</a></h2>
+<p>Or load from <code>qail.toml</code>:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>let pool = PgPool::connect(config).await?;
+</span>let pool = PgPool::from_config().await?;
 <span class="boring">}</span></code></pre>
 <h2 id="acquiring-connections"><a class="header" href="#acquiring-connections">Acquiring Connections</a></h2>
+<p>Always use RLS-aware methods for tenant queries:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>// This waits if all connections are in use
-let mut conn = pool.acquire().await?;
+</span>use qail_core::rls::RlsContext;
 
-// Use the connection
-conn.simple_query("SELECT 1").await?;
+// Tenant-scoped connection — RLS is set before any query runs
+let ctx = RlsContext::operator(operator_id);
+let mut conn = pool.acquire_with_rls(ctx).await?;
 
-// Connection automatically returned to pool when dropped
+// With custom statement timeout (milliseconds)
+let mut conn = pool.acquire_with_rls_timeout(ctx, 30_000).await?;
+
+// System connection — no tenant context (for schema introspection, migrations)
+let mut conn = pool.acquire_system().await?;
 <span class="boring">}</span></code></pre>
+<blockquote>
+<p><strong>Warning:</strong> Never use <code>acquire_raw()</code> for tenant queries. It returns a connection with <strong>no RLS context</strong>, bypassing row-level security. This method is crate-internal only.</p>
+</blockquote>
+<h2 id="connection-lifecycle"><a class="header" href="#connection-lifecycle">Connection Lifecycle</a></h2>
+<p>Every connection follows a strict lifecycle:</p>
+<pre><code>acquire_with_rls(ctx)
+  → set_config('app.current_operator_id', '...', false)
+  → set_config('app.is_super_admin', '...', false)
+  → execute queries (RLS policies filter rows automatically)
+  → release()
+      → DISCARD ALL (clears ALL server-side state)
+      → clear client-side caches
+      → return to pool
+</code></pre>
+<p><code>DISCARD ALL</code> destroys prepared statements, temp tables, GUCs, and all session state. This guarantees zero state leakage between tenants sharing the same physical connection.</p>
 <h2 id="pool-stats"><a class="header" href="#pool-stats">Pool Stats</a></h2>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>// Current idle connections
-let idle = pool.idle_count().await;
-
-// Maximum configured connections
-let max = pool.max_connections();
+</span>let stats = pool.stats();
+println!("Active: {}, Idle: {}", stats.active, stats.idle);
 <span class="boring">}</span></code></pre>
 <h2 id="best-practices-3"><a class="header" href="#best-practices-3">Best Practices</a></h2>
 <ol>
 <li><strong>Create pool once</strong> at application startup</li>
 <li><strong>Share via <code>Arc</code></strong> across threads/tasks</li>
 <li><strong>Don’t hold connections</strong> longer than needed</li>
-<li><strong>Set appropriate pool size</strong> (CPU cores × 2 is a good start)</li>
+<li><strong>Always use <code>acquire_with_rls()</code></strong> for tenant queries — never <code>acquire_raw()</code></li>
+<li><strong>Set appropriate pool size</strong> — CPU cores × 2 is a good start</li>
 </ol>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -2278,7 +3745,8 @@ let pool = Arc::new(PgPool::connect(config).await?);
 // Clone Arc for each task
 let pool_clone = pool.clone();
 tokio::spawn(async move {
-    let conn = pool_clone.acquire().await?;
+    let ctx = RlsContext::operator(op_id);
+    let conn = pool_clone.acquire_with_rls(ctx).await?;
     // ...
 });
 <span class="boring">}</span></code></pre>
@@ -2455,7 +3923,7 @@ impl ToPg for MyType {
 <p><strong>New in v0.14.20</strong> — Full Diesel-like type checking for QAIL queries</p>
 </blockquote>
 <p>QAIL now supports compile-time type validation through generated schema files, similar to Diesel but with AST-native architecture.</p>
-<h2 id="quick-start-2"><a class="header" href="#quick-start-2">Quick Start</a></h2>
+<h2 id="quick-start-3"><a class="header" href="#quick-start-3">Quick Start</a></h2>
 <h3 id="1-generate-schema"><a class="header" href="#1-generate-schema">1. Generate Schema</a></h3>
 <pre><code class="language-bash">qail types schema.qail -o src/schema.rs
 </code></pre>
@@ -2581,9 +4049,9 @@ query.typed_eq(users::age(), "eighteen");
     .typed_column(users::email());
 <span class="boring">}</span></code></pre>
 <div style="break-before: page; page-break-before: always;"></div>
-<h1 id="row-level-security-rls"><a class="header" href="#row-level-security-rls">Row-Level Security (RLS)</a></h1>
+<h1 id="row-level-security-rls-2"><a class="header" href="#row-level-security-rls-2">Row-Level Security (RLS)</a></h1>
 <blockquote>
-<p><strong>New in v0.15.6</strong> — The first Rust PostgreSQL driver with built-in multi-tenant data isolation</p>
+<p><strong>New in v0.15</strong> — The first Rust PostgreSQL driver with built-in multi-tenant data isolation</p>
 </blockquote>
 <p>QAIL injects tenant context at the <strong>AST level</strong>, ensuring every query is automatically scoped to the correct operator, agent, or user — without manual <code>WHERE</code> clauses.</p>
 <h2 id="the-problem"><a class="header" href="#the-problem">The Problem</a></h2>
@@ -2650,9 +4118,9 @@ admin.bypasses_rls(); // true
 │  AST Builder adds RLS context to query            │
 │       ↓                                           │
 │  PgDriver::execute()                              │
-│  ├─ SET app.operator_id = '&lt;uuid&gt;'               │
-│  ├─ SET app.agent_id = '&lt;uuid&gt;'                  │
-│  └─ Execute query on SAME connection             │
+│  ├─ set_config('app.current_operator_id', '&lt;uuid&gt;', false) │
+│  ├─ set_config('app.current_agent_id', '&lt;uuid&gt;', false)    │
+│  └─ Execute query on SAME connection                       │
 │       ↓                                           │
 │  PostgreSQL RLS Policy                            │
 │  CREATE POLICY tenant_isolation ON bookings       │
@@ -2711,7 +4179,7 @@ let query = Qail::typed(bookings::table)
 <h1 id="centralized-configuration"><a class="header" href="#centralized-configuration">Centralized Configuration</a></h1>
 <p>Qail uses a single <code>qail.toml</code> file as the source of truth for all components. Configuration follows a layered priority:</p>
 <p><strong>Environment Variables &gt; <code>qail.toml</code> &gt; Hardcoded Defaults</strong></p>
-<h2 id="quick-start-3"><a class="header" href="#quick-start-3">Quick Start</a></h2>
+<h2 id="quick-start-4"><a class="header" href="#quick-start-4">Quick Start</a></h2>
 <p>Generate a config with <code>qail init</code>, or create <code>qail.toml</code> manually:</p>
 <pre><code class="language-toml">[project]
 name = "my-app"
@@ -2745,6 +4213,22 @@ max_connections = 10
 bind = "0.0.0.0:8080"
 cors = true
 policy = "policies.yaml"
+max_result_rows = 10000
+statement_timeout_ms = 30000
+explain_max_cost = 100000.0
+explain_max_rows = 1000000
+max_expand_depth = 3
+tenant_max_concurrent = 10
+
+# Per-role guard overrides — override global defaults for specific roles.
+# Any field not specified here falls back to the global [gateway] default.
+[gateway.role_overrides.reporting]
+max_result_rows = 100000
+statement_timeout_ms = 120000
+explain_max_cost = 500000.0
+
+[gateway.role_overrides.admin]
+max_expand_depth = 5
 
 [gateway.cache]
 enabled = true

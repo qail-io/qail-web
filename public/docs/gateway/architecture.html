@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>CLI Commands - QAIL Documentation</title>
+        <title>Architecture &amp; Invariants - QAIL Documentation</title>
 
 
         <!-- Custom HTML head -->
@@ -147,7 +147,7 @@
                         <a href="https://github.com/qail-io/qail" title="Git repository" aria-label="Git repository">
                             <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></span>
                         </a>
-                        <a href="https://github.com/qail-io/qail/edit/main/docs/src/reference/cli.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                        <a href="https://github.com/qail-io/qail/edit/main/docs/src/gateway/architecture.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
                             <span class=fa-svg id="git-edit-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M421.7 220.3l-11.3 11.3-22.6 22.6-205 205c-6.6 6.6-14.8 11.5-23.8 14.1L30.8 511c-8.4 2.5-17.5 .2-23.7-6.1S-1.5 489.7 1 481.2L38.7 353.1c2.6-9 7.5-17.2 14.1-23.8l205-205 22.6-22.6 11.3-11.3 33.9 33.9 62.1 62.1 33.9 33.9zM96 353.9l-9.3 9.3c-.9 .9-1.6 2.1-2 3.4l-25.3 86 86-25.3c1.3-.4 2.5-1.1 3.4-2l9.3-9.3H112c-8.8 0-16-7.2-16-16V353.9zM453.3 19.3l39.4 39.4c25 25 25 65.5 0 90.5l-14.5 14.5-22.6 22.6-11.3 11.3-33.9-33.9-62.1-62.1L314.3 67.7l11.3-11.3 22.6-22.6 14.5-14.5c25-25 65.5-25 90.5 0z"/></svg></span>
                         </a>
 
@@ -181,273 +181,178 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="cli-commands"><a class="header" href="#cli-commands">CLI Commands</a></h1>
-<p>The <code>qail</code> command-line tool — v0.15.8.</p>
-<h2 id="installation"><a class="header" href="#installation">Installation</a></h2>
-<pre><code class="language-bash">cargo install qail
-</code></pre>
-<h2 id="commands"><a class="header" href="#commands">Commands</a></h2>
-<h3 id="qail-init"><a class="header" href="#qail-init"><code>qail init</code></a></h3>
-<p>Initialize a new QAIL project. Auto-detects running PostgreSQL instances on the host, Docker, and Podman.</p>
-<pre><code class="language-bash"># Interactive mode — scans for running databases
-qail init
-# 🪝 QAIL Project Initialization
-# Scanning for PostgreSQL instances...
-#   ✓ Found 2 instance(s):
-#     1.  🖥  host localhost:5432 (host)
-#     2.  🐳 docker localhost:5433 (docker) — my-pg
-#     3.  Enter URL manually
-# Select [1-3]:
-
-# Non-interactive mode (CI/scripting)
-qail init --name myapp --mode postgres --url postgres://localhost/mydb
-qail init --name myapp --mode hybrid --url postgres://localhost/mydb --deployment docker
-</code></pre>
-<p><strong>Options:</strong></p>
-<ul>
-<li><code>--name &lt;NAME&gt;</code>: Project name</li>
-<li><code>--mode &lt;MODE&gt;</code>: Database mode (<code>postgres</code>, <code>qdrant</code>, <code>hybrid</code>)</li>
-<li><code>--url &lt;URL&gt;</code>: Database URL (skips interactive prompt)</li>
-<li><code>--deployment &lt;TYPE&gt;</code>: Deployment type (<code>host</code>, <code>docker</code>, <code>podman</code>)</li>
-</ul>
-<p>Generates <code>qail.toml</code> and necessary migration files.</p>
+                        <h1 id="architecture--invariants"><a class="header" href="#architecture--invariants">Architecture &amp; Invariants</a></h1>
+<p>This page describes the gateway’s internal architecture — the request lifecycle, security boundaries, and the invariants that make multi-tenant isolation structural rather than behavioral.</p>
+<p><strong>Read time: ~10 minutes.</strong></p>
 <hr>
-<h3 id="qail-exec"><a class="header" href="#qail-exec"><code>qail exec</code></a></h3>
-<p>Execute QAIL statements against a database:</p>
-<pre><code class="language-bash"># Inline queries
-qail exec "get users'id'email[active = true]" --url postgres://...
-qail exec "add users fields name, email values 'Alice', 'a@test.com'" --url postgres://... --tx
-qail exec "set users[id = 1] fields name = 'Bob'" --url postgres://...
-
-# Count rows
-qail exec "cnt orders[status = 'paid']" --url postgres://...
-# → SELECT COUNT(*) FROM orders WHERE status = 'paid'
-
-# JSON output (pipe-friendly)
-qail exec "get users" --url postgres://... --json
-qail exec "get users" --url postgres://... --json | jq '.[].email'
-
-# From file
-qail exec -f seed.qail --url postgres://...
-
-# Dry-run (preview generated SQL)
-qail exec "get users'*'" --dry-run
-# 📋 Parsed 1 QAIL statement(s)
-# 🔍 DRY-RUN MODE — Generated SQL:
-#   SELECT * FROM users
-
-# With SSH tunnel
-qail exec "get users" --url postgres://remote/db --ssh user@bastion
+<h2 id="request-lifecycle"><a class="header" href="#request-lifecycle">Request Lifecycle</a></h2>
+<p>Every HTTP request flows through a fixed, ordered pipeline:</p>
+<pre><code> Client Request
+       │
+ ┌─────▼─────────────────────────────────────────────────────┐
+ │  1. CORS + Security Headers                               │
+ │     X-Content-Type-Options: nosniff                       │
+ │     X-Frame-Options: DENY                                 │
+ │     Body size limit: 2 MiB                                │
+ ├───────────────────────────────────────────────────────────┤
+ │  2. Rate Limiter                                          │
+ │     Token bucket per IP (configurable burst + rate)       │
+ │     → 429 Too Many Requests on exhaustion                 │
+ ├───────────────────────────────────────────────────────────┤
+ │  3. Authentication                                        │
+ │     JWT validation (HS256) → extract operator_id,         │
+ │     user_id, role from claims                             │
+ │     Fallback: header-based (dev only, no JWT_SECRET)      │
+ ├───────────────────────────────────────────────────────────┤
+ │  4. Policy Engine                                         │
+ │     YAML-defined per-table, per-role access control       │
+ │     Column filtering at AST level                         │
+ │     → 403 Forbidden on policy violation                   │
+ ├───────────────────────────────────────────────────────────┤
+ │  5. Tenant Concurrency Gate                               │
+ │     Per-tenant semaphore (configurable permits)           │
+ │     Prevents one tenant from consuming all connections    │
+ │     → 429 on tenant saturation                            │
+ ├───────────────────────────────────────────────────────────┤
+ │  6. Connection Acquisition                                │
+ │     pool.acquire_with_rls(RlsContext) or                  │
+ │     pool.acquire_with_rls_timeout(RlsContext, timeout)    │
+ │     Sets PostgreSQL GUCs:                                 │
+ │       set_config('app.current_operator_id', '...', false) │
+ │       set_config('app.is_super_admin', '...', false)      │
+ ├───────────────────────────────────────────────────────────┤
+ │  7. EXPLAIN Pre-Check (reads only)                        │
+ │     EXPLAIN on generated SQL before execution             │
+ │     Rejects if cost &gt; explain_max_cost                    │
+ │              or rows &gt; explain_max_rows                   │
+ │     → QUERY_TOO_EXPENSIVE with structured JSON detail     │
+ ├───────────────────────────────────────────────────────────┤
+ │  8. Query Execution                                       │
+ │     AST → SQL transpilation → prepared statement cache    │
+ │     PostgreSQL RLS policies filter rows invisibly         │
+ │     Result row cap: max_result_rows (configurable)        │
+ ├───────────────────────────────────────────────────────────┤
+ │  9. Connection Release                                    │
+ │     DISCARD ALL → clears server-side state                │
+ │     Client caches cleared (prepared stmts, column info)   │
+ │     Connection returned to pool in clean state            │
+ └───────────────────────────────────────────────────────────┘
+       │
+ JSON Response + X-Request-Id + X-Response-Time
 </code></pre>
-<p><strong>Syntax:</strong></p>
-<pre><code>add &lt;table&gt; fields &lt;col1&gt;, &lt;col2&gt; values &lt;val1&gt;, &lt;val2&gt;
-set &lt;table&gt;[id = $1] fields name = 'new', updated_at = now
-del &lt;table&gt;[id = $1]
-get &lt;table&gt;'id'name[active = true]
-cnt &lt;table&gt;[active = true]
-</code></pre>
-<p><strong>Value Types:</strong></p>
+<hr>
+<h2 id="connection-safety-model"><a class="header" href="#connection-safety-model">Connection Safety Model</a></h2>
+<p>The connection pool enforces a strict lifecycle:</p>
+<h3 id="acquisition"><a class="header" href="#acquisition">Acquisition</a></h3>
+<p>Three public methods — <code>acquire_raw()</code> is <strong>crate-internal only</strong>:</p>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Type</th><th>Examples</th></tr>
+<tr><th>Method</th><th>RLS</th><th>Timeout</th><th>Use Case</th></tr>
 </thead>
 <tbody>
-<tr><td>Strings</td><td><code>'hello'</code>, <code>"world"</code></td></tr>
-<tr><td>Numbers</td><td><code>42</code>, <code>3.14</code>, <code>-1</code></td></tr>
-<tr><td>Booleans</td><td><code>true</code>, <code>false</code></td></tr>
-<tr><td>Null</td><td><code>null</code></td></tr>
-<tr><td>Parameters</td><td><code>$1</code>, <code>$2</code>, <code>:name</code></td></tr>
-<tr><td>Intervals</td><td><code>24h</code>, <code>7d</code>, <code>30m</code></td></tr>
-<tr><td>JSON</td><td><code>["a", "b"]</code>, <code>{"key": "val"}</code></td></tr>
-<tr><td>Timestamp</td><td><code>now</code></td></tr>
+<tr><td><code>acquire_with_rls(ctx)</code></td><td>✅ Set</td><td>Default</td><td>Normal tenant queries</td></tr>
+<tr><td><code>acquire_with_rls_timeout(ctx, ms)</code></td><td>✅ Set</td><td>Custom</td><td>Gateway with <code>statement_timeout_ms</code></td></tr>
+<tr><td><code>acquire_system()</code></td><td>✅ Empty</td><td>Default</td><td>Schema introspection, migrations</td></tr>
+<tr><td><code>acquire_raw()</code> ⚠️</td><td>❌ None</td><td>Default</td><td><strong>Internal only</strong> — requires <code>// SAFETY:</code> comment</td></tr>
 </tbody>
 </table>
 </div>
-<p><strong>Options:</strong></p>
-<ul>
-<li><code>-f, --file &lt;FILE&gt;</code>: Path to <code>.qail</code> file with statements</li>
-<li><code>-u, --url &lt;URL&gt;</code>: Database connection URL</li>
-<li><code>--json</code>: Output SELECT results as JSON array</li>
-<li><code>--tx</code>: Wrap all statements in a transaction</li>
-<li><code>--dry-run</code>: Preview generated SQL without executing</li>
-<li><code>--ssh &lt;USER@HOST&gt;</code>: SSH tunnel via bastion host</li>
-</ul>
-<hr>
-<h3 id="qail-pull"><a class="header" href="#qail-pull"><code>qail pull</code></a></h3>
-<p>Extract schema from a live database:</p>
-<pre><code class="language-bash">qail pull postgres://user:pass@localhost/db &gt; schema.qail
+<h3 id="release"><a class="header" href="#release">Release</a></h3>
+<p>Every connection release executes:</p>
+<pre><code class="language-sql">DISCARD ALL;   -- Clears prepared statements, temp tables, GUCs, session state
 </code></pre>
-<hr>
-<h3 id="qail-diff"><a class="header" href="#qail-diff"><code>qail diff</code></a></h3>
-<p>Compare two schemas or detect drift against a live database:</p>
-<pre><code class="language-bash"># Compare two schema files
-qail diff old.qail new.qail
-qail diff old.qail new.qail --format json
+<p>Followed by client-side cleanup:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>conn.prepared_statements.clear();
+conn.stmt_cache.clear();
+conn.column_info_cache.clear();
 
-# Live drift detection (introspects running database)
-qail diff _ schema.qail --live --url postgres://localhost/mydb
-# Drift detection: [live DB] → schema.qail
-#   → Introspecting live database...
-#     80 tables, 287 indexes introspected
-#   ✅ No drift detected — live DB matches schema file.
-</code></pre>
-<p><strong>Options:</strong></p>
-<ul>
-<li><code>--format &lt;FMT&gt;</code>: Output format (<code>sql</code>, <code>json</code>, <code>pretty</code>)</li>
-<li><code>--live</code>: Use live database introspection as “old” schema</li>
-<li><code>--url &lt;URL&gt;</code>: Database URL (required with <code>--live</code>)</li>
-</ul>
-<hr>
-<h3 id="qail-check"><a class="header" href="#qail-check"><code>qail check</code></a></h3>
-<p>Validate a schema file or preview migration safety:</p>
-<pre><code class="language-bash"># Validate schema
-qail check schema.qail
-# ✓ Schema is valid
-#   Tables: 80 | Columns: 1110 | Indexes: 287
-#   ✓ 82 primary key(s)
-
-# Check migration safety
-qail check old.qail:new.qail
-# ✓ Both schemas are valid
-# Migration preview: 4 operation(s)
-#   ✓ 3 safe operation(s)
-#   ⚠️  1 reversible operation(s)
+debug_assert!(conn.prepared_statements.is_empty(),
+    "INVARIANT VIOLATED: prepared statements survived DISCARD ALL");
+<span class="boring">}</span></code></pre>
+<p>This guarantees <strong>zero state leakage</strong> between tenants sharing the same physical connection.</p>
+<h3 id="why-acquire_raw-is-restricted"><a class="header" href="#why-acquire_raw-is-restricted">Why <code>acquire_raw()</code> Is Restricted</a></h3>
+<p><code>acquire_raw()</code> returns a connection with <strong>no RLS context</strong>. If used for tenant queries, it would bypass row-level security entirely.</p>
+<p>Every internal call site must include a <code>// SAFETY:</code> comment explaining why raw acquisition is justified (typically: “RLS context is set immediately on the next line”). This convention is enforced via CI:</p>
+<pre><code class="language-bash"># Must return empty — every acquire_raw() must have a SAFETY comment
+grep -rn "acquire_raw" pg/src/ | grep -v "// SAFETY:"
 </code></pre>
 <hr>
-<h2 id="migrate-commands"><a class="header" href="#migrate-commands">Migrate Commands</a></h2>
-<h3 id="qail-migrate-status"><a class="header" href="#qail-migrate-status"><code>qail migrate status</code></a></h3>
-<p>View migration history with rich tabular output:</p>
-<pre><code class="language-bash">qail migrate status postgres://...
-# 📋 Migration Status — mydb
-# ┌──────────┬────────────────────┬─────────────────────┬──────────────┐
-# │ Version  │ Name               │ Applied At          │ Checksum     │
-# ├──────────┼────────────────────┼─────────────────────┼──────────────┤
-# │ 001      │ qail_queue         │ 2026-02-01 10:00:00 │ a3b8d1...    │
-# │ 002      │ add_users          │ 2026-02-05 14:32:00 │ f81d4f...    │
-# └──────────┴────────────────────┴─────────────────────┴──────────────┘
-</code></pre>
-<h3 id="qail-migrate-up"><a class="header" href="#qail-migrate-up"><code>qail migrate up</code></a></h3>
-<p>Apply migrations:</p>
-<pre><code class="language-bash">qail migrate up v1.qail:v2.qail postgres://...
-
-# With codebase check (warns about breaking references)
-qail migrate up v1.qail:v2.qail postgres://... -c ./src
-</code></pre>
-<h3 id="qail-migrate-down"><a class="header" href="#qail-migrate-down"><code>qail migrate down</code></a></h3>
-<p>Rollback migrations:</p>
-<pre><code class="language-bash">qail migrate down v1.qail:v2.qail postgres://...
-</code></pre>
-<h3 id="qail-migrate-plan"><a class="header" href="#qail-migrate-plan"><code>qail migrate plan</code></a></h3>
-<p>Preview migration SQL without executing (dry-run):</p>
-<pre><code class="language-bash">qail migrate plan old.qail:new.qail
-# 📋 Migration Plan (dry-run)
-# ┌─ UP (2 operations) ─────────────────────────────────┐
-# │ 1. ALTER TABLE users ADD COLUMN verified BOOLEAN
-# │ 2. CREATE INDEX idx_users_email ON users (email)
-# └─────────────────────────────────────────────────────┘
-
-# Save to file
-qail migrate plan old.qail:new.qail --output migration.sql
-</code></pre>
-<h3 id="qail-migrate-analyze"><a class="header" href="#qail-migrate-analyze"><code>qail migrate analyze</code></a></h3>
-<p>Analyze codebase for breaking changes before migrating:</p>
-<pre><code class="language-bash">qail migrate analyze old.qail:new.qail --codebase ./src
-# 🔍 Migration Impact Analyzer
-# Scanning codebase... Found 395 query references
-#
-# ⚠️  BREAKING CHANGES DETECTED
-# ┌─ DROP TABLE promotions (6 references) ─────────────┐
-# │ ❌ src/repository/promotion.rs:89 → INSERT INTO...
-# │ ❌ src/repository/promotion.rs:264 → SELECT...
-# └────────────────────────────────────────────────────┘
-</code></pre>
-<h3 id="qail-migrate-apply"><a class="header" href="#qail-migrate-apply"><code>qail migrate apply</code></a></h3>
-<p>Apply file-based migrations from <code>migrations/</code> directory:</p>
-<pre><code class="language-bash">qail migrate apply
-# → Found 1 migrations to apply
-# ✓ Connected to mydb
-#   → 001_qail_queue.up.qail... ✓
-# ✓ All migrations applied successfully!
-</code></pre>
-<h3 id="qail-migrate-reset"><a class="header" href="#qail-migrate-reset"><code>qail migrate reset</code></a></h3>
-<p>Nuclear option — drop all objects, clear history, re-apply target schema:</p>
-<pre><code class="language-bash">qail migrate reset schema.qail postgres://...
-# ⚠️  This will DROP all tables, clear migration history, and recreate from schema.
-# Phase 1: DROP all tables...
-# Phase 2: CLEAR migration history...
-# Phase 3: CREATE from schema...
-# ✓ Reset complete
-</code></pre>
-<h3 id="qail-migrate-shadow"><a class="header" href="#qail-migrate-shadow"><code>qail migrate shadow</code></a></h3>
-<p>Test migrations against a shadow database:</p>
-<pre><code class="language-bash">qail migrate shadow v1.qail:v2.qail postgres://shadow-db/...
-</code></pre>
-<hr>
-<h2 id="other-commands"><a class="header" href="#other-commands">Other Commands</a></h2>
-<h3 id="qail-explain"><a class="header" href="#qail-explain"><code>qail explain</code></a></h3>
-<p>Parse and explain a QAIL query:</p>
-<pre><code class="language-bash">qail "get users'id'email[active = true]"
-# SELECT id, email FROM users WHERE active = true
-</code></pre>
-<h3 id="qail-repl"><a class="header" href="#qail-repl"><code>qail repl</code></a></h3>
-<p>Interactive QAIL REPL — type queries, see SQL in real-time:</p>
-<pre><code class="language-bash">qail repl
-# 🪝 QAIL REPL v0.15.8
-# Type QAIL queries, see SQL output.
-# qail&gt; get users[active = true]
-# → SELECT * FROM users WHERE active = true
-</code></pre>
-<h3 id="qail-types"><a class="header" href="#qail-types"><code>qail types</code></a></h3>
-<p>Generate typed Rust schema from <code>.qail</code> file:</p>
-<pre><code class="language-bash">qail types schema.qail &gt; src/generated/schema.rs
-</code></pre>
-<h3 id="qail-watch"><a class="header" href="#qail-watch"><code>qail watch</code></a></h3>
-<p>Watch schema file for changes and auto-generate migrations:</p>
-<pre><code class="language-bash">qail watch schema.qail --url postgres://... --auto-apply
-</code></pre>
-<h3 id="qail-lint"><a class="header" href="#qail-lint"><code>qail lint</code></a></h3>
-<p>Check schema for best practices:</p>
-<pre><code class="language-bash">qail lint schema.qail
-# 🔍 Schema Linter
-# ⚠ 144 warning(s)
-# ℹ 266 info(s)
-</code></pre>
+<h2 id="core-invariants"><a class="header" href="#core-invariants">Core Invariants</a></h2>
+<p>These are the properties the system guarantees. If any are violated, it’s a bug.</p>
+<h3 id="1-fail-closed-rls"><a class="header" href="#1-fail-closed-rls">1. Fail-Closed RLS</a></h3>
+<p>Every tenant query runs on a connection where RLS GUCs are set <strong>before</strong> any SQL executes. If GUC setup fails, the connection is not used — the error propagates to the caller.</p>
+<p>There is no code path where a tenant query runs on a connection with another tenant’s context.</p>
+<h3 id="2-cost-bounded-execution"><a class="header" href="#2-cost-bounded-execution">2. Cost-Bounded Execution</a></h3>
+<p>Read queries are gated by EXPLAIN analysis before execution. If the estimated cost or row count exceeds configured limits, the query is rejected <strong>before</strong> touching the database.</p>
+<p>Limits are configurable per role via <code>[gateway.role_overrides.&lt;role&gt;]</code> in <code>qail.toml</code>, allowing analytics roles to run heavier queries without weakening default safety.</p>
+<h3 id="3-tenant-isolation-on-connection-reuse"><a class="header" href="#3-tenant-isolation-on-connection-reuse">3. Tenant Isolation on Connection Reuse</a></h3>
+<p>When a connection is released and re-acquired by a different tenant:</p>
+<ol>
+<li><code>DISCARD ALL</code> destroys all server-side state</li>
+<li>Client-side caches are cleared</li>
+<li>New RLS context is set for the new tenant</li>
+</ol>
+<p>The integration test <code>test_pool_connection_recycling_isolation</code> verifies this with a pool of size 1, forcing the same physical connection to serve two different tenants sequentially.</p>
+<h3 id="4-bounded-resource-consumption"><a class="header" href="#4-bounded-resource-consumption">4. Bounded Resource Consumption</a></h3>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Check</th><th>Level</th><th>Description</th></tr>
+<tr><th>Resource</th><th>Bound</th><th>Mechanism</th></tr>
 </thead>
 <tbody>
-<tr><td>Missing primary key</td><td>🔴 ERROR</td><td>Every table needs a PK</td></tr>
-<tr><td>Missing created_at/updated_at</td><td>⚠️ WARNING</td><td>Audit trail columns</td></tr>
-<tr><td><code>_id</code> column without <code>references()</code></td><td>⚠️ WARNING</td><td>FK integrity</td></tr>
-<tr><td>Uppercase table names</td><td>⚠️ WARNING</td><td>Use snake_case</td></tr>
+<tr><td>Connections</td><td><code>max_connections</code></td><td>Pool size cap</td></tr>
+<tr><td>Per-tenant connections</td><td><code>tenant_max_concurrent</code></td><td>Semaphore per operator</td></tr>
+<tr><td>Result rows</td><td><code>max_result_rows</code></td><td>Row cap per query</td></tr>
+<tr><td>Query duration</td><td><code>statement_timeout_ms</code></td><td>PostgreSQL <code>SET LOCAL</code></td></tr>
+<tr><td>Query cost</td><td><code>explain_max_cost</code></td><td>EXPLAIN pre-check</td></tr>
+<tr><td>Request body</td><td>2 MiB</td><td>Axum body limit layer</td></tr>
+<tr><td>Cache entries</td><td><code>max_entries</code></td><td>moka TinyLFU eviction</td></tr>
+<tr><td>Cache entry TTL</td><td><code>ttl_secs</code></td><td>moka time-to-live</td></tr>
 </tbody>
 </table>
 </div>
-<h3 id="qail-sync-generate"><a class="header" href="#qail-sync-generate"><code>qail sync generate</code></a></h3>
-<p>Generate trigger migrations from <code>[[sync]]</code> rules in <code>qail.toml</code> (Hybrid mode):</p>
-<pre><code class="language-bash">qail sync generate
-# ✓ Created migrations/002_qail_sync_triggers.up.qail
-</code></pre>
-<h3 id="qail-worker"><a class="header" href="#qail-worker"><code>qail worker</code></a></h3>
-<p>Start the background worker to sync PostgreSQL → Qdrant (Hybrid mode):</p>
-<pre><code class="language-bash">qail worker --interval 1000 --batch 100
+<h3 id="5-graceful-shutdown"><a class="header" href="#5-graceful-shutdown">5. Graceful Shutdown</a></h3>
+<p>On <code>SIGTERM</code> or <code>Ctrl+C</code>:</p>
+<ol>
+<li>Stop accepting new connections</li>
+<li>Wait for in-flight requests to complete</li>
+<li>Drain the connection pool</li>
+<li>Exit cleanly</li>
+</ol>
+<p>No request is silently dropped. No connection is leaked.</p>
+<hr>
+<h2 id="component-map"><a class="header" href="#component-map">Component Map</a></h2>
+<pre><code>GatewayState (shared Arc across all handlers)
+├── pool: PgPool                    — Connection pool with RLS-aware acquisition
+├── config: GatewayConfig           — All configuration (qail.toml + env overrides)
+├── policy_engine: PolicyEngine     — YAML-defined per-table, per-role policies
+├── schema: SchemaRegistry          — Auto-discovered table/column/FK metadata
+├── cache: QueryCache               — moka-backed LRU with table-level invalidation
+├── rate_limiter: RateLimiter       — Token bucket rate limiting
+├── explain_cache: ExplainCache     — Cached EXPLAIN results per query shape
+├── explain_config: ExplainConfig   — Cost/row thresholds for EXPLAIN pre-check
+├── tenant_semaphore: TenantSemaphore — Per-tenant concurrency limiter
+├── event_engine: EventTriggerEngine  — Webhook triggers on mutations
+└── user_operator_map: HashMap      — JWT user_id → operator_id resolution cache
 </code></pre>
 <hr>
-<h2 id="global-options"><a class="header" href="#global-options">Global Options</a></h2>
+<h2 id="where-to-hook-observability"><a class="header" href="#where-to-hook-observability">Where to Hook Observability</a></h2>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Flag</th><th>Description</th></tr>
+<tr><th>Signal</th><th>Endpoint / Header</th><th>Format</th></tr>
 </thead>
 <tbody>
-<tr><td><code>-d, --dialect</code></td><td>Target SQL dialect (<code>pg</code>, <code>mysql</code>)</td></tr>
-<tr><td><code>-f, --format</code></td><td>Output format (<code>sql</code>, <code>ast</code>, <code>json</code>)</td></tr>
-<tr><td><code>-v, --verbose</code></td><td>Verbose output</td></tr>
-<tr><td><code>--version</code></td><td>Show version</td></tr>
-<tr><td><code>--help</code></td><td>Show help</td></tr>
+<tr><td>Metrics</td><td><code>GET /metrics</code></td><td>Prometheus</td></tr>
+<tr><td>Request ID</td><td><code>X-Request-Id</code> response header</td><td>UUID</td></tr>
+<tr><td>Latency</td><td><code>X-Response-Time</code> response header</td><td>Duration string</td></tr>
+<tr><td>Health</td><td><code>GET /health</code></td><td><code>200 OK</code> or error</td></tr>
+<tr><td>Schema</td><td><code>GET /api/_schema</code></td><td>JSON</td></tr>
+<tr><td>OpenAPI</td><td><code>GET /api/_openapi</code></td><td>OpenAPI 3.0 JSON</td></tr>
+<tr><td>Cache stats</td><td>Via <code>/metrics</code></td><td>hit/miss/entries/weighted_size</td></tr>
 </tbody>
 </table>
 </div>
@@ -456,11 +361,11 @@ qail migrate plan old.qail:new.qail --output migration.sql
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../features/configuration.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../gateway.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                             </a>
 
-                            <a rel="next prefetch" href="../reference/api.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../gateway/rest-api.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                             </a>
 
@@ -470,11 +375,11 @@ qail migrate plan old.qail:new.qail --output migration.sql
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../features/configuration.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../gateway.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                     </a>
 
-                    <a rel="next prefetch" href="../reference/api.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../gateway/rest-api.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                     </a>
             </nav>

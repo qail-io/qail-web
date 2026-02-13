@@ -3,10 +3,30 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 ---
 
 <BaseLayout
-    title="Roadmap | QAIL"
-    description="QAIL Roadmap: The journey from SQL strings to pure AST-native database access."
+    title="Roadmap | QAIL — The Provably Correct Backend"
+    description="QAIL Roadmap 2026: From AST-native database access to compile-time correctness proofs. 7 systems complete, 3 visionary phases ahead."
 >
     <style>
+        .roadmap-hero {
+            text-align: center;
+            padding: 2rem 0 1rem;
+        }
+        .roadmap-hero h1 {
+            font-size: clamp(2rem, 5vw, 3rem);
+            margin-bottom: 0.5rem;
+        }
+        .roadmap-hero .version-tag {
+            display: inline-block;
+            background: rgba(34, 197, 94, 0.15);
+            color: #22c55e;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            font-family: "JetBrains Mono", monospace;
+        }
+
         .evolution-block {
             background: var(--bg-secondary);
             border-radius: 12px;
@@ -14,7 +34,6 @@ import BaseLayout from "../layouts/BaseLayout.astro";
             margin: 1.5rem 0;
             font-family: "JetBrains Mono", monospace;
         }
-
         .evolution-block .era {
             display: flex;
             align-items: center;
@@ -22,23 +41,19 @@ import BaseLayout from "../layouts/BaseLayout.astro";
             padding: 0.5rem 0;
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
-
         .evolution-block .era:last-child {
             border-bottom: none;
         }
-
         .evolution-block .era-num {
             color: var(--primary);
             font-weight: 700;
             min-width: 60px;
         }
-
         .evolution-block .era-name {
             color: var(--text-primary);
             font-weight: 600;
             min-width: 140px;
         }
-
         .evolution-block .era-desc {
             color: var(--text-secondary);
             font-size: 0.9rem;
@@ -50,34 +65,36 @@ import BaseLayout from "../layouts/BaseLayout.astro";
             padding: 1.5rem;
             margin: 1.5rem 0;
         }
-
         .roadmap-section h3 {
             margin-top: 0;
             display: flex;
             align-items: center;
             gap: 0.5rem;
+            flex-wrap: wrap;
         }
-
         .roadmap-section .badge {
             font-size: 0.75rem;
             padding: 0.25rem 0.75rem;
             border-radius: 20px;
             font-weight: 600;
         }
-
         .badge-done {
             background: rgba(34, 197, 94, 0.2);
             color: #22c55e;
         }
-
         .badge-progress {
             background: rgba(59, 130, 246, 0.2);
             color: #3b82f6;
         }
-
         .badge-planned {
             background: rgba(168, 85, 247, 0.2);
             color: #a855f7;
+        }
+        .badge-version {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-secondary);
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.7rem;
         }
 
         .task-list {
@@ -85,19 +102,17 @@ import BaseLayout from "../layouts/BaseLayout.astro";
             padding: 0;
             margin: 1rem 0 0 0;
         }
-
         .task-list li {
             padding: 0.5rem 0;
             display: flex;
             align-items: center;
             gap: 0.75rem;
             border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            font-size: 0.95rem;
         }
-
         .task-list li:last-child {
             border-bottom: none;
         }
-
         .task-list .check {
             width: 20px;
             height: 20px;
@@ -106,125 +121,189 @@ import BaseLayout from "../layouts/BaseLayout.astro";
             align-items: center;
             justify-content: center;
             font-size: 12px;
+            flex-shrink: 0;
         }
-
         .check-done {
             background: rgba(34, 197, 94, 0.2);
             color: #22c55e;
         }
-
         .check-pending {
             background: rgba(255, 255, 255, 0.1);
             color: var(--text-secondary);
         }
 
-        .architecture-diagram {
-            background: #0d1117;
-            border-radius: 12px;
-            padding: 1.5rem;
-            font-family: "JetBrains Mono", monospace;
-            font-size: 0.85rem;
-            overflow-x: auto;
-            margin: 1.5rem 0;
-            line-height: 1.5;
+        .phase-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 1rem;
+            margin-bottom: 0.25rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .phase-label:first-of-type {
+            margin-top: 0.5rem;
+            border-top: none;
         }
 
         .acknowledgment {
-            background: linear-gradient(
-                135deg,
-                rgba(59, 130, 246, 0.1),
-                rgba(168, 85, 247, 0.1)
-            );
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(168, 85, 247, 0.1));
             border-left: 4px solid var(--primary);
             padding: 1rem 1.5rem;
             border-radius: 0 8px 8px 0;
             margin: 2rem 0;
         }
 
-        .version-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 1rem 0;
+        .vision-section {
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.08), rgba(59, 130, 246, 0.08));
+            border: 1px solid rgba(168, 85, 247, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        .vision-section h3 {
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
         }
 
-        .version-table th,
-        .version-table td {
-            padding: 0.75rem;
+        .vision-quote {
+            margin: 1rem 0;
+            padding: 1rem 1.5rem;
+            border-left: 3px solid #a855f7;
+            background: rgba(168, 85, 247, 0.08);
+            font-style: italic;
+            color: var(--text-secondary);
+            border-radius: 0 8px 8px 0;
+            font-size: 0.9rem;
+        }
+
+        .highlight-quote {
+            border-left-color: #22c55e;
+            background: rgba(34, 197, 94, 0.08);
+            color: #22c55e;
+            font-weight: 500;
+        }
+
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            font-size: 0.9rem;
+        }
+        .summary-table th,
+        .summary-table td {
+            padding: 0.75rem 1rem;
             text-align: left;
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
-
-        .version-table th {
+        .summary-table th {
             color: var(--text-secondary);
             font-weight: 600;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .summary-table td:nth-child(2) {
+            font-family: "JetBrains Mono", monospace;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+            margin: 1rem 0;
+        }
+        .stat-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            text-align: center;
+        }
+        .stat-card .stat-value {
+            font-family: "JetBrains Mono", monospace;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--accent-cyan);
+        }
+        .stat-card .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        @media (max-width: 768px) {
+            .evolution-block .era {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.25rem;
+            }
+            .summary-table {
+                font-size: 0.8rem;
+            }
+            .summary-table th,
+            .summary-table td {
+                padding: 0.5rem 0.5rem;
+            }
         }
     </style>
 
     <header class="page-header">
-        <div class="container">
+        <div class="container roadmap-hero">
+            <span class="version-tag">v0.18.5 · Feb 2026</span>
             <h1>Roadmap</h1>
             <p class="subtitle">
-                The journey to pure AST-native database access.
+                The Provably Correct Backend
             </p>
         </div>
     </header>
 
     <main class="page-content">
         <div class="container prose">
+
+            <!-- Vision -->
             <section>
                 <h2>🎯 Vision</h2>
                 <blockquote class="manifesto-quote">
-                    "SQL is a text protocol designed for humans to type.<br />
-                    QAIL is a binary protocol designed for machines to optimize."
+                    "If it compiles, the query is correct."
                 </blockquote>
             </section>
 
+            <!-- Evolution -->
             <section>
                 <h2>The Evolution</h2>
                 <div class="evolution-block">
                     <div class="era">
                         <span class="era-num">Era 1</span>
                         <span class="era-name">SQL Strings</span>
-                        <span class="era-desc"
-                            >"Trust me, this string is safe"</span
-                        >
+                        <span class="era-desc">"Trust me, this string is safe"</span>
                     </div>
                     <div class="era">
                         <span class="era-num">Era 2</span>
                         <span class="era-name">ORMs</span>
-                        <span class="era-desc"
-                            >"Safe, but locked to one language"</span
-                        >
+                        <span class="era-desc">"Safe, but locked to one language"</span>
                     </div>
                     <div class="era">
                         <span class="era-num">Era 3</span>
                         <span class="era-name">Query Builders</span>
-                        <span class="era-desc"
-                            >"Safe, but still generates strings"</span
-                        >
+                        <span class="era-desc">"Safe, but still generates strings"</span>
                     </div>
                     <div class="era">
                         <span class="era-num">Era 4</span>
                         <span class="era-name">SQLx</span>
-                        <span class="era-desc"
-                            >"Compile-time checked SQL — the breakthrough"</span
-                        >
+                        <span class="era-desc">"Compile-time checked SQL — the breakthrough"</span>
                     </div>
                     <div
                         class="era"
                         style="background: rgba(59, 130, 246, 0.1); border-radius: 8px; padding: 0.75rem;"
                     >
-                        <span class="era-num" style="color: var(--accent-blue);"
-                            >Era 5</span
-                        >
-                        <span
-                            class="era-name"
-                            style="color: var(--accent-blue);">QAIL</span
-                        >
-                        <span class="era-desc"
-                            >"Pure AST that compiles directly to wire protocol"</span
-                        >
+                        <span class="era-num" style="color: var(--accent-blue);">Era 5</span>
+                        <span class="era-name" style="color: var(--accent-blue);">QAIL</span>
+                        <span class="era-desc">"Pure AST that compiles directly to wire protocol"</span>
                     </div>
                 </div>
 
@@ -236,249 +315,343 @@ import BaseLayout from "../layouts/BaseLayout.astro";
                 </div>
             </section>
 
+            <!-- ═══════════════════════ COMPLETED ═══════════════════════ -->
             <section>
                 <h2>✅ Completed</h2>
 
+                <!-- 1. First-Class Relations -->
                 <div class="roadmap-section">
                     <h3>
-                        <span class="badge badge-done">Done</span> Core AST (qail-core)
+                        <span class="badge badge-done">Done</span>
+                        1. First-Class Relations
+                        <span class="badge badge-version">v0.16.0</span>
                     </h3>
+                    <div class="phase-label">Phase 1 · Runtime Registry</div>
                     <ul class="task-list">
-                        <li>
-                            <span class="check check-done">✓</span> Qail universal
-                            AST representation
-                        </li>
-                        <li>
-                            <span class="check check-done">✓</span> DML: get, add,
-                            set, del commands
-                        </li>
-                        <li>
-                            <span class="check check-done">✓</span> DDL: make (CREATE
-                            TABLE), index (CREATE INDEX)
-                        </li>
-                        <li>
-                            <span class="check check-done">✓</span> Joins: left/right/inner
-                            with ON conditions
-                        </li>
-                        <li>
-                            <span class="check check-done">✓</span> CTEs: WITH clause
-                            support
-                        </li>
-                        <li>
-                            <span class="check check-done">✓</span> Expressions: CASE
-                            WHEN, aggregates, window functions
-                        </li>
-                        <li>
-                            <span class="check check-done">✓</span> Builder API for
-                            type-safe query construction
-                        </li>
+                        <li><span class="check check-done">✓</span> <code>ref:</code> syntax in <code>schema.qail</code></li>
+                        <li><span class="check check-done">✓</span> <code>RelationRegistry</code> for runtime lookup</li>
+                        <li><span class="check check-done">✓</span> <code>Qail::join_on("table")</code> — string-based API</li>
+                    </ul>
+                    <div class="phase-label">Phase 2 · Fully Typed Codegen</div>
+                    <ul class="task-list">
+                        <li><span class="check check-done">✓</span> <code>build.rs</code> generates <code>schema_gen.rs</code> with typed structs</li>
+                        <li><span class="check check-done">✓</span> <code>TypedColumn&lt;T&gt;</code> with Rust type mapping (SQL→Rust)</li>
+                        <li><span class="check check-done">✓</span> Table structs implement <code>Table</code> trait</li>
+                    </ul>
+                    <div class="phase-label">Phase 3 · Logic-Safe Relations</div>
+                    <ul class="task-list">
+                        <li><span class="check check-done">✓</span> <code>RelatedTo&lt;T&gt;</code> trait with bidirectional impls from <code>ref:</code></li>
+                        <li><span class="check check-done">✓</span> <code>TypedQail&lt;T&gt;</code> + <code>join_related()</code> — compile error if unrelated</li>
+                    </ul>
+                    <div class="phase-label">Phase 4 · Compile-Time Data Governance</div>
+                    <ul class="task-list">
+                        <li><span class="check check-done">✓</span> <code>protected</code> keyword in <code>schema.qail</code></li>
+                        <li><span class="check check-done">✓</span> <code>TypedColumn&lt;T, P&gt;</code> with <code>Public</code> / <code>Protected</code> markers</li>
+                        <li><span class="check check-done">✓</span> Compile-time policy enforcement via type system</li>
                     </ul>
                 </div>
 
+                <!-- 2. SaaS Multi-Tenant Isolation -->
                 <div class="roadmap-section">
                     <h3>
-                        <span class="badge badge-done">Done</span> PostgreSQL Driver
-                        (qail-pg)
+                        <span class="badge badge-done">Done</span>
+                        2. SaaS Multi-Tenant Isolation (RLS)
+                        <span class="badge badge-version">v0.15.6</span>
                     </h3>
+                    <div class="phase-label">Phase 1 · Driver-Level Context</div>
                     <ul class="task-list">
-                        <li>
-                            <span class="check check-done">✓</span> Wire protocol
-                            types (FrontendMessage, BackendMessage)
-                        </li>
-                        <li>
-                            <span class="check check-done">✓</span> AstEncoder: AST
-                            → BytesMut (DML + DDL)
-                        </li>
-                        <li>
-                            <span class="check check-done">✓</span> Native TLS support
-                            (Let's Encrypt)
-                        </li>
-                        <li>
-                            <span class="check check-done">✓</span> Connection handling
-                            with tokio
-                        </li>
-                        <li>
-                            <span class="check check-done">✓</span> Layer 2/3 separation
-                            (protocol/ vs driver/)
-                        </li>
+                        <li><span class="check check-done">✓</span> <code>RlsContext</code> struct — operator_id, agent_id, is_super_admin</li>
+                        <li><span class="check check-done">✓</span> <code>PgDriver.set_rls_context(ctx)</code> — calls <code>set_config()</code></li>
+                    </ul>
+                    <div class="phase-label">Phase 2 · Pool-Level RLS Acquisition</div>
+                    <ul class="task-list">
+                        <li><span class="check check-done">✓</span> <code>PgPool.acquire_with_rls(ctx)</code> — acquire + set in one call</li>
+                        <li><span class="check check-done">✓</span> <code>PooledConnection</code> auto-clears RLS on Drop — no stale tenant leaks</li>
+                    </ul>
+                    <div class="phase-label">Phase 3 · Policy Definition API</div>
+                    <ul class="task-list">
+                        <li><span class="check check-done">✓</span> <code>RlsPolicy</code> builder + <code>AlterOp::ForceRowLevelSecurity</code></li>
+                        <li><span class="check check-done">✓</span> SQL transpiler for ENABLE + FORCE + CREATE POLICY</li>
+                    </ul>
+                    <div class="phase-label">Phase 4 · AST-Level Query Injection</div>
+                    <ul class="task-list">
+                        <li><span class="check check-done">✓</span> <code>TenantRegistry</code> auto-detects tables with <code>operator_id</code></li>
+                        <li><span class="check check-done">✓</span> <code>Qail::with_rls(ctx)</code> — GET→filter, ADD→payload injection</li>
+                        <li><span class="check check-done">✓</span> Super admins + unregistered tables bypass automatically</li>
                     </ul>
                 </div>
 
+                <!-- 3. Schema DDL -->
                 <div class="roadmap-section">
                     <h3>
-                        <span class="badge badge-done">Done</span> Developer Tools
+                        <span class="badge badge-done">Done</span>
+                        3. Schema DDL — Full PostgreSQL Coverage
+                        <span class="badge badge-version">v0.18.5</span>
+                    </h3>
+                    <div class="phase-label">Phase 1 · Core Objects</div>
+                    <ul class="task-list">
+                        <li><span class="check check-done">✓</span> CREATE/DROP EXTENSION, ENUM, SEQUENCE</li>
+                        <li><span class="check check-done">✓</span> CREATE/ALTER/DROP TABLE with all column properties</li>
+                        <li><span class="check check-done">✓</span> Multi-column foreign keys, expression indexes</li>
+                    </ul>
+                    <div class="phase-label">Phase 2 · Programmable Objects</div>
+                    <ul class="task-list">
+                        <li><span class="check check-done">✓</span> Views + Materialized Views</li>
+                        <li><span class="check check-done">✓</span> Functions (PL/pgSQL) + Triggers</li>
+                        <li><span class="check check-done">✓</span> GRANT/REVOKE, COMMENT ON, <code>enable_rls</code> / <code>force_rls</code></li>
+                    </ul>
+                    <div class="phase-label">Phase 3 · RLS Policy Definition</div>
+                    <ul class="task-list">
+                        <li><span class="check check-done">✓</span> Policy syntax in <code>.qail</code> — permissive + restrictive</li>
+                        <li><span class="check check-done">✓</span> Per-command scope: ALL, SELECT, INSERT, UPDATE, DELETE</li>
+                        <li><span class="check check-done">✓</span> Role targeting: <code>to app_user</code></li>
+                    </ul>
+                </div>
+
+                <!-- 4. Database Introspection -->
+                <div class="roadmap-section">
+                    <h3>
+                        <span class="badge badge-done">Done</span>
+                        4. Database Introspection — Fully AST-Native
+                        <span class="badge badge-version">v0.18.5</span>
+                    </h3>
+                    <div class="phase-label">Phase 1 · Core Introspection</div>
+                    <ul class="task-list">
+                        <li><span class="check check-done">✓</span> <code>qail pull --url postgres://...</code> → <code>schema.qail</code></li>
+                        <li><span class="check check-done">✓</span> Tables, columns, types, defaults, constraints, indexes</li>
+                        <li><span class="check check-done">✓</span> FKs with actions (CASCADE, SET NULL, RESTRICT, etc.)</li>
+                    </ul>
+                    <div class="phase-label">Phase 2 · Programmable Objects</div>
+                    <ul class="task-list">
+                        <li><span class="check check-done">✓</span> Views, materialized views, functions, triggers</li>
+                        <li><span class="check check-done">✓</span> Grants, sequences, enums, extensions</li>
+                    </ul>
+                    <div class="phase-label">Phase 3 · Zero Raw SQL</div>
+                    <ul class="task-list">
+                        <li><span class="check check-done">✓</span> RLS policies via <code>Qail::get("pg_policies")</code></li>
+                        <li><span class="check check-done">✓</span> <code>policy_parser</code> module for SQL→Expr conversion</li>
+                        <li><span class="check check-done">✓</span> <strong>Zero raw SQL in introspection</strong> — every query is AST-native</li>
+                    </ul>
+                </div>
+
+                <!-- 5. Migration Engine -->
+                <div class="roadmap-section">
+                    <h3>
+                        <span class="badge badge-done">Done</span>
+                        5. Migration Engine
+                        <span class="badge badge-version">v0.15.9</span>
+                    </h3>
+                    <div class="phase-label">Phase 1 · Schema Diffing</div>
+                    <ul class="task-list">
+                        <li><span class="check check-done">✓</span> <code>diff_schemas()</code> — old vs new comparison</li>
+                        <li><span class="check check-done">✓</span> <code>AlterOp</code> enum with intent-aware hints: rename, transform, drop confirm</li>
+                        <li><span class="check check-done">✓</span> FK-ordered table creation (parent before child)</li>
+                    </ul>
+                    <div class="phase-label">Phase 2 · CLI Commands</div>
+                    <ul class="task-list">
+                        <li><span class="check check-done">✓</span> <code>qail migrate apply</code>, <code>create</code>, <code>status</code>, <code>reset</code>, <code>up</code>, <code>down</code></li>
+                        <li><span class="check check-done">✓</span> <code>qail diff --live</code> — schema drift detection</li>
+                    </ul>
+                    <div class="phase-label">Phase 3 · Enterprise Features</div>
+                    <ul class="task-list">
+                        <li><span class="check check-done">✓</span> Shadow migrations — COPY streaming, safe promote</li>
+                        <li><span class="check check-done">✓</span> <code>MigrationClass</code>: Reversible, DataLosing, Irreversible</li>
+                        <li><span class="check check-done">✓</span> <code>qail migrate analyze</code> — scans codebase for affected queries</li>
+                    </ul>
+                </div>
+
+                <!-- 6. Multi-Driver Unified AST -->
+                <div class="roadmap-section">
+                    <h3>
+                        <span class="badge badge-done">Done</span>
+                        6. Multi-Driver Unified AST
+                        <span class="badge badge-version">v0.14.13</span>
+                    </h3>
+                    <div class="stat-grid">
+                        <div class="stat-card">
+                            <div class="stat-value">5,000 q/s</div>
+                            <div class="stat-label">Prepared Statements</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">1.3M q/s</div>
+                            <div class="stat-label">10-conn Pool</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">13%</div>
+                            <div class="stat-label">Faster than Qdrant SDK</div>
+                        </div>
+                    </div>
+                    <ul class="task-list">
+                        <li><span class="check check-done">✓</span> <strong>PostgreSQL</strong> — zero-copy wire protocol, SCRAM-SHA-256, TLS, COPY streaming</li>
+                        <li><span class="check check-done">✓</span> <strong>Qdrant</strong> — zero-copy gRPC, HTTP/2 batch pipelining, connection pool</li>
+                        <li><span class="check check-done">✓</span> <strong>Native Cache</strong> — in-process LRU with TTL, auto table-level invalidation (<code>DashMap</code>)</li>
+                    </ul>
+                </div>
+
+                <!-- 7. CLI Toolchain -->
+                <div class="roadmap-section">
+                    <h3>
+                        <span class="badge badge-done">Done</span>
+                        7. CLI Toolchain
+                        <span class="badge badge-version">v0.15.7</span>
                     </h3>
                     <ul class="task-list">
-                        <li>
-                            <span class="check check-done">✓</span> CLI: qail command
-                            with REPL
-                        </li>
-                        <li>
-                            <span class="check check-done">✓</span> LSP: VS Code extension
-                        </li>
-                        <li>
-                            <span class="check check-done">✓</span> WASM: Browser
-                            playground
-                        </li>
+                        <li><span class="check check-done">✓</span> <code>qail init</code> — project scaffold (supports <code>--url</code>, <code>--deployment</code>)</li>
+                        <li><span class="check check-done">✓</span> <code>qail pull</code> — live DB → <code>schema.qail</code> (fully AST-native)</li>
+                        <li><span class="check check-done">✓</span> <code>qail exec</code> — type-safe execution (<code>--json</code>, <code>--tx</code>)</li>
+                        <li><span class="check check-done">✓</span> <code>qail diff</code> — schema comparison + drift detection</li>
+                        <li><span class="check check-done">✓</span> <code>qail types</code> — <code>schema.qail</code> → Rust typed schema module</li>
+                        <li><span class="check check-done">✓</span> <code>qail check</code> — validate <code>.qail</code> syntax</li>
+                        <li><span class="check check-done">✓</span> <code>qail worker</code> — hybrid outbox daemon (PG → Qdrant sync)</li>
+                        <li><span class="check check-done">✓</span> LSP server (<code>qail-lsp</code>) for editor integration</li>
                     </ul>
                 </div>
             </section>
 
+            <!-- ═══════════════════════ FUTURE ═══════════════════════ -->
             <section>
-                <h2>🚀 Completed: v0.16.0</h2>
-                <p>
-                    <strong>Theme:</strong> "Performance & Polish"
-                </p>
+                <h2>🔮 Future</h2>
 
-                <div class="roadmap-section">
+                <!-- 8. Schema-as-Proof -->
+                <div class="vision-section">
                     <h3>
-                        <span class="badge badge-done">Done</span> Centralized Configuration (v0.16.0)
+                        <span class="badge badge-planned">Next</span>
+                        8. Schema-as-Proof System
                     </h3>
+                    <div class="vision-quote">
+                        "The schema becomes a type parameter. The compiler becomes the theorem prover."
+                    </div>
+
+                    <div class="phase-label">Phase 1 · Column Existence Proof</div>
                     <ul class="task-list">
-                        <li>
-                            <span class="check check-done">✓</span> QailConfig loader
-                            with {'${VAR}'} env expansion
-                        </li>
-                        <li>
-                            <span class="check check-done">✓</span> Layered priority:
-                            env vars > qail.toml > defaults
-                        </li>
-                        <li>
-                            <span class="check check-done">✓</span> Driver integrations:
-                            pg, redis, qdrant, gateway
-                        </li>
-                        <li>
-                            <span class="check check-done">✓</span> PgPool::from_config()
-                            one-liner creation
-                        </li>
+                        <li><span class="check check-pending">○</span> <code>schema.qail</code> → codegen → <code>Schema</code> trait with associated types</li>
+                        <li><span class="check check-pending">○</span> <code>Qail&lt;S: Schema&gt;</code> carries schema as phantom type parameter</li>
+                        <li><span class="check check-pending">○</span> Column selection proven at compile time — no proc macros, no external provers</li>
+                    </ul>
+                    <div class="phase-label">Phase 2 · Type-Safe Filters</div>
+                    <ul class="task-list">
+                        <li><span class="check check-pending">○</span> Filter comparisons proven against column types</li>
+                        <li><span class="check check-pending">○</span> <code>TypedFilter&lt;S&gt;</code> ensures operand type matches column type</li>
+                    </ul>
+                    <div class="phase-label">Phase 3 · Join Validity Graph</div>
+                    <ul class="task-list">
+                        <li><span class="check check-pending">○</span> FK relationship graph encoded at type level</li>
+                        <li><span class="check check-pending">○</span> N-way joins proven valid via <code>RelatedTo&lt;T&gt;</code> chain</li>
+                    </ul>
+                    <div class="phase-label">Phase 4 · RLS Proof Witness</div>
+                    <ul class="task-list">
+                        <li><span class="check check-pending">○</span> RLS-protected tables get marker trait</li>
+                        <li><span class="check check-pending">○</span> Queries without <code>.with_rls()</code> on protected tables = compile error</li>
+                        <li><span class="check check-pending">○</span> <code>RlsProof&lt;T&gt;</code> witness type provided by middleware</li>
+                    </ul>
+                    <div class="vision-quote highlight-quote">
+                        "Data leakage becomes a type error, not a security incident."
+                    </div>
+                </div>
+
+                <!-- 9. Data Virtualization -->
+                <div class="vision-section">
+                    <h3>
+                        <span class="badge badge-planned">Planned</span>
+                        9. Native Versioning (Data Virtualization)
+                    </h3>
+                    <div class="vision-quote">
+                        "GitHub for Databases" — branching at the application layer.
+                    </div>
+                    <ul class="task-list">
+                        <li><span class="check check-pending">○</span> Gateway middleware with <code>X-Branch-ID</code> header</li>
+                        <li><span class="check check-pending">○</span> Row-level branching (<code>WHERE _branch_id = ?</code>)</li>
+                        <li><span class="check check-pending">○</span> Copy-on-Write strategy for writes</li>
+                        <li><span class="check check-pending">○</span> CLI: <code>qail branch create</code>, <code>qail checkout</code></li>
                     </ul>
                 </div>
 
-                <div class="roadmap-section">
+                <!-- 10. Infrastructure-Aware Compiler -->
+                <div class="vision-section">
                     <h3>
-                        <span class="badge badge-done">Done</span> Wire Protocol
+                        <span class="badge badge-planned">Planned</span>
+                        10. Infrastructure-Aware Compiler
                     </h3>
+                    <div class="vision-quote">
+                        Verify external resources at compile time.
+                    </div>
                     <ul class="task-list">
-                        <li>
-                            <span class="check check-done">✓</span> Extended Query
-                            Protocol (Parse/Bind/Execute)
-                        </li>
-                        <li>
-                            <span class="check check-done">✓</span> Parameter binding
-                            in wire protocol
-                        </li>
-                        <li>
-                            <span class="check check-done">✓</span> Row decoding (bytes
-                            → typed values)
-                        </li>
-                        <li>
-                            <span class="check check-done">✓</span> Connection pooling
-                            (PostgreSQL & Qdrant)
-                        </li>
-                        <li>
-                            <span class="check check-done">✓</span> Transaction support
-                            (BEGIN/COMMIT/ROLLBACK)
-                        </li>
-                    </ul>
-                </div>
-
-                <div class="roadmap-section">
-                    <h3>
-                        <span class="badge badge-done">Done</span> Hybrid Architecture
-                    </h3>
-                    <ul class="task-list">
-                        <li>
-                            <span class="check check-done">✓</span> Qdrant Driver
-                            (Zero-Copy gRPC)
-                        </li>
-                        <li>
-                            <span class="check check-done">✓</span> Sync Worker (PostgreSQL
-                            → Qdrant)
-                        </li>
-                        <li>
-                            <span class="check check-done">✓</span> File-Based Migrations
-                        </li>
-                        <li>
-                            <span class="check check-done">✓</span> Automatic Trigger
-                            Generation
-                        </li>
-                    </ul>
-                </div>
-
-                <div class="roadmap-section">
-                    <h3>
-                        <span class="badge badge-done">Done</span> First-Class Relations (v0.15.0)
-                    </h3>
-                    <ul class="task-list">
-                        <li>
-                            <span class="check check-done">✓</span> Schema ref: syntax
-                            for FK definitions
-                        </li>
-                        <li>
-                            <span class="check check-done">✓</span> RelationRegistry
-                            with bidirectional lookup
-                        </li>
-                        <li>
-                            <span class="check check-done">✓</span> Qail::join_on() for
-                            implicit LEFT JOINs
-                        </li>
-                        <li>
-                            <span class="check check-done">✓</span> join_on_optional()
-                            for safe non-panic version
-                        </li>
+                        <li><span class="check check-pending">○</span> <code>schema.qail</code> extensions: <code>bucket</code>, <code>queue</code>, <code>topic</code></li>
+                        <li><span class="check check-pending">○</span> <code>build.rs</code> validates resources exist in Terraform/AWS/GCP</li>
+                        <li><span class="check check-pending">○</span> Compile error if referencing non-existent infra</li>
                     </ul>
                 </div>
             </section>
 
+            <!-- Summary Table -->
             <section>
-                <h2>🔮 Future: v1.0.0</h2>
-                <p><strong>Theme:</strong> "Production Ready"</p>
-
-                <div class="roadmap-section">
-                    <h3>
-                        <span class="badge badge-planned">Planned</span> Core Features
-                    </h3>
-                    <ul class="task-list">
-                        <li>
-                            <span class="check check-pending">○</span> Full Extended
-                            Query Protocol
-                        </li>
-                        <li>
-                            <span class="check check-pending">○</span> Prepared statement
-                            caching
-                        </li>
-                        <li>
-                            <span class="check check-pending">○</span> SCRAM-SHA-256
-                            authentication
-                        </li>
-                        <li>
-                            <span class="check check-pending">○</span> Zero-copy row
-                            decoding
-                        </li>
-                        <li>
-                            <span class="check check-pending">○</span> Pipeline mode
-                            (batch queries)
-                        </li>
-                    </ul>
-                </div>
-
-                <div class="roadmap-section">
-                    <h3>
-                        <span class="badge badge-planned">Planned</span> Multi-Database
-                    </h3>
-                    <ul class="task-list">
-                        <li>
-                            <span class="check check-pending">○</span> qail-mysql
-                            — MySQL wire protocol
-                        </li>
-                        <li>
-                            <span class="check check-pending">○</span> qail-sqlite
-                            — SQLite (embedded, no network)
-                        </li>
-                    </ul>
+                <h2>📊 Current Status</h2>
+                <div style="overflow-x: auto;">
+                    <table class="summary-table">
+                        <thead>
+                            <tr>
+                                <th>Section</th>
+                                <th>Status</th>
+                                <th>Version</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1. First-Class Relations</td>
+                                <td><span class="badge badge-done">✅ Complete (4/4)</span></td>
+                                <td>v0.16.0</td>
+                            </tr>
+                            <tr>
+                                <td>2. SaaS RLS Isolation</td>
+                                <td><span class="badge badge-done">✅ Complete (4/4)</span></td>
+                                <td>v0.15.6</td>
+                            </tr>
+                            <tr>
+                                <td>3. Schema DDL Coverage</td>
+                                <td><span class="badge badge-done">✅ Complete (3/3)</span></td>
+                                <td>v0.18.5</td>
+                            </tr>
+                            <tr>
+                                <td>4. Database Introspection</td>
+                                <td><span class="badge badge-done">✅ Complete (3/3)</span></td>
+                                <td>v0.18.5</td>
+                            </tr>
+                            <tr>
+                                <td>5. Migration Engine</td>
+                                <td><span class="badge badge-done">✅ Complete (3/3)</span></td>
+                                <td>v0.15.9</td>
+                            </tr>
+                            <tr>
+                                <td>6. Multi-Driver AST</td>
+                                <td><span class="badge badge-done">✅ Complete</span></td>
+                                <td>v0.14.13</td>
+                            </tr>
+                            <tr>
+                                <td>7. CLI Toolchain</td>
+                                <td><span class="badge badge-done">✅ Complete</span></td>
+                                <td>v0.15.7</td>
+                            </tr>
+                            <tr>
+                                <td>8. Schema-as-Proof</td>
+                                <td><span class="badge badge-planned">⏳ Planned</span></td>
+                                <td>—</td>
+                            </tr>
+                            <tr>
+                                <td>9. Data Virtualization</td>
+                                <td><span class="badge badge-planned">⏳ Planned</span></td>
+                                <td>—</td>
+                            </tr>
+                            <tr>
+                                <td>10. Infra-Aware Compiler</td>
+                                <td><span class="badge badge-planned">⏳ Planned</span></td>
+                                <td>—</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </section>
 
+            <!-- Philosophy -->
             <section>
                 <h2>💡 Philosophy</h2>
                 <blockquote

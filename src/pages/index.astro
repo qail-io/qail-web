@@ -2,7 +2,7 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 ---
 
-<BaseLayout title="QAIL — AST-Native PostgreSQL Driver with Built-in RLS for Rust" description="The only Rust PostgreSQL driver with built-in Row-Level Security (RLS), compile-time relation safety, and AST-level tenant injection. Multi-tenant SaaS made safe.">
+<BaseLayout title="QAIL — The AST Protocol for Data" description="One AST replaces REST, GraphQL, and ORMs. Binary wire protocol, built-in RLS, compile-time safety. 41× faster than GraphQL N+1. Native Rust with drivers for every language.">
     <!-- Hero -->
     <header class="hero">
         <div class="hero-bg"></div>
@@ -11,33 +11,15 @@ import BaseLayout from "../layouts/BaseLayout.astro";
                 <span class="hero-icon">🪝</span>
                 <span>QAIL</span>
             </h1>
-            <p class="hero-subtitle">The Decision Layer</p>
+            <p class="hero-subtitle">The AST Protocol</p>
             <p class="hero-tagline">
-                <em
-                    >Postgres stores facts, Qdrant stores meaning, Redis stores
-                    time</em
-                > — <span class="highlight">QAIL decides.</span>
+                One query language. <span class="highlight">Every layer.</span>
             </p>
-            <div
-                style="margin: 1.5rem 0; display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.9rem;"
-            >
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <span style="color: #10b981;">✅ PostgreSQL</span>
-                    <span style="color: #6b7280;">—</span>
-                    <em style="color: #9ca3af;">Your source of truth</em>
-                </div>
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <span style="color: #f59e0b;">🚧 Qdrant</span>
-                    <span style="color: #6b7280;">—</span>
-                    <em style="color: #9ca3af;">Semantic search & embeddings</em
-                    >
-                </div>
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <span style="color: #60a5fa;">🔜 Redis</span>
-                    <span style="color: #6b7280;">—</span>
-                    <em style="color: #9ca3af;">Caching & ephemeral state</em>
-                </div>
-            </div>
+            <p style="max-width: 520px; margin: 0 auto 1.5rem; color: var(--text-muted); font-size: 0.95rem; line-height: 1.6;">
+                QAIL eliminates hand-written endpoints, query builders, and ORM abstractions
+                with a single AST that flows from schema to database — binary-encoded,
+                type-safe, with built-in Row-Level Security.
+            </p>
 
             <div class="hero-demo">
                 <div class="demo-compare">
@@ -84,57 +66,6 @@ import BaseLayout from "../layouts/BaseLayout.astro";
                 </div>
             </div>
 
-            <!-- Why AST-Native? -->
-            <div
-                class="ast-comparison"
-                style="margin: 2rem auto; display: flex; flex-direction: column; gap: 1rem; max-width: 700px;"
-            >
-                <div
-                    style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; background: rgba(239, 68, 68, 0.1); border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.3);"
-                >
-                    <span style="font-size: 1.2rem;">❌</span>
-                    <span style="opacity: 0.6; font-size: 0.8rem;">ORMs:</span>
-                    <code style="font-size: 0.7rem; opacity: 0.8;"
-                        >Code → Parse → AST → <s>SQL String</s> → <s
-                            >DB Parses Again</s
-                        > → Execute</code
-                    >
-                </div>
-                <div
-                    style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; background: rgba(234, 179, 8, 0.1); border-radius: 8px; border: 1px solid rgba(234, 179, 8, 0.3);"
-                >
-                    <span style="font-size: 1.2rem;">⚠️</span>
-                    <span
-                        style="opacity: 0.8; font-size: 0.8rem; color: #eab308;"
-                        >Raw SQL:</span
-                    >
-                    <code
-                        style="font-size: 0.7rem; color: #eab308; opacity: 0.9;"
-                        >"SELECT..." → DB Parses → Execute</code
-                    >
-                    <span
-                        style="font-size: 0.7rem; opacity: 0.7; margin-left: auto;"
-                        >Errors at runtime.</span
-                    >
-                </div>
-                <div
-                    style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; background: rgba(34, 197, 94, 0.1); border-radius: 8px; border: 1px solid rgba(34, 197, 94, 0.3);"
-                >
-                    <span style="font-size: 1.2rem;">✅</span>
-                    <span
-                        style="opacity: 0.9; font-size: 0.8rem; color: #22c55e;"
-                        >QAIL:</span
-                    >
-                    <code style="font-size: 0.75rem; color: #22c55e;"
-                        >AST → Binary Protocol → Execute</code
-                    >
-                    <span
-                        style="font-size: 0.7rem; opacity: 0.7; margin-left: auto;"
-                        >Errors at compile-time.</span
-                    >
-                </div>
-            </div>
-
             <div class="hero-cta">
                 <a href="/docs" class="btn btn-primary"> Get Started </a>
                 <a href="/philosophy" class="btn btn-secondary">
@@ -151,13 +82,6 @@ import BaseLayout from "../layouts/BaseLayout.astro";
                         class="copy-btn"
                         onclick="copyText('cargo install qail', this)"
                         >Copy</button
-                    >
-                </div>
-                <div class="hero-install">
-                    <code>npm i qail-wasm</code>
-                    <button
-                        class="copy-btn"
-                        onclick="copyText('npm i qail-wasm', this)">Copy</button
                     >
                 </div>
                 <div class="hero-install" style="border-color: #f7a41d;">
@@ -281,128 +205,236 @@ import BaseLayout from "../layouts/BaseLayout.astro";
                 <p
                     style="font-size: 0.8rem; opacity: 0.6; margin-top: -0.5rem;"
                 >
-                    Native Rust • Universal C-API • WASM
+                    Native Rust • Universal C-API • FFI Bindings
                 </p>
             </div>
         </div>
     </header>
 
-    <!-- Features -->
-    <section id="features" class="features">
+    <!-- Benchmark Results -->
+    <section id="benchmarks" style="padding: 4rem 0; background: var(--surface-2);">
         <div class="container">
-            <h2 class="section-title">Why QAIL?</h2>
+            <h2 class="section-title">Real Benchmark: N+1 Battle Test</h2>
             <p
-                style="text-align: center; margin-bottom: 2rem; color: var(--text-muted);"
+                style="text-align: center; margin-bottom: 2.5rem; color: var(--text-muted); max-width: 600px; margin-left: auto; margin-right: auto;"
             >
-                AST-first. Native drivers. Zero transpilation overhead.
+                Same query. Same database. Same 50-row result set with 3 JOINs.<br/>
+                100 iterations, release build, buffer cache warmed.
             </p>
-            <div class="features-grid">
-                <div class="feature-card highlight-card">
-                    <div class="feature-icon">🧬</div>
-                    <h3>AST-First Architecture</h3>
-                    <p>
-                        Build queries as native data structures. No string
-                        parsing. No text-to-AST-to-text overhead.
-                    </p>
+
+            <!-- Benchmark bars -->
+            <div style="max-width: 700px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.25rem;">
+                <!-- QAIL -->
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div style="width: 140px; text-align: right; font-size: 0.85rem; font-weight: 600; color: #22c55e;">QAIL AST</div>
+                    <div style="flex: 1; position: relative;">
+                        <div style="height: 40px; width: 3%; min-width: 28px; background: linear-gradient(90deg, #22c55e, #4ade80); border-radius: 8px; display: flex; align-items: center; justify-content: flex-end; padding-right: 0.5rem;">
+                        </div>
+                        <span style="position: absolute; left: 40px; top: 50%; transform: translateY(-50%); font-size: 0.8rem; font-weight: 700; color: #22c55e;">436µs</span>
+                    </div>
+                    <div style="width: 80px; font-size: 0.75rem; color: var(--text-muted);">1 query</div>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🔌</div>
-                    <h3>Native Database Drivers</h3>
-                    <p>
-                        Direct wire protocol. No SQLx middleman. Full control
-                        over connection and execution.
-                    </p>
+
+                <!-- GraphQL + DataLoader -->
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div style="width: 140px; text-align: right; font-size: 0.85rem; font-weight: 600; color: #e535ab;">GQL + DataLoader</div>
+                    <div style="flex: 1; position: relative;">
+                        <div style="height: 40px; width: 5.5%; min-width: 50px; background: linear-gradient(90deg, #e535ab, #ff69b4); border-radius: 8px;">
+                        </div>
+                        <span style="position: absolute; left: 62px; top: 50%; transform: translateY(-50%); font-size: 0.8rem; font-weight: 700; color: #e535ab;">923µs</span>
+                    </div>
+                    <div style="width: 80px; font-size: 0.75rem; color: var(--text-muted);">~3 queries</div>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🛡️</div>
-                    <h3>Structurally Safe</h3>
-                    <p>
-                        Injection impossible by design. Code and data separated
-                        at the AST level, not string level.
-                    </p>
+
+                <!-- GraphQL Naive -->
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div style="width: 140px; text-align: right; font-size: 0.85rem; font-weight: 600; color: #f59e0b;">GQL Naive</div>
+                    <div style="flex: 1;">
+                        <div style="height: 40px; width: 100%; background: linear-gradient(90deg, #f59e0b, #fbbf24); border-radius: 8px; display: flex; align-items: center; justify-content: flex-end; padding-right: 0.75rem;">
+                            <span style="font-size: 0.8rem; font-weight: 700; color: #000;">18ms · 41× slower</span>
+                        </div>
+                    </div>
+                    <div style="width: 80px; font-size: 0.75rem; color: var(--text-muted);">~151 queries</div>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🌐</div>
-                    <h3>SQL + Vector Unified</h3>
-                    <p>
-                        Same Qail AST encodes to PostgreSQL and Qdrant.
-                        Relational AND vector search, one syntax.
-                    </p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">⚡</div>
-                    <h3>Zero Overhead</h3>
-                    <p>
-                        No runtime parsing. AST is built at compile time,
-                        serialized directly to wire protocol.
-                    </p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🎯</div>
-                    <h3>Type Safe End-to-End</h3>
-                    <p>
-                        Schema validation at build time. Wrong queries don't
-                        compile. Wrong types don't bind.
-                    </p>
-                </div>
-                <div class="feature-card highlight-card">
-                    <div class="feature-icon">🔐</div>
-                    <h3>Built-in Row-Level Security</h3>
-                    <p>
-                        AST-level tenant injection for multi-tenant SaaS.
-                        <code>Qail::with_rls(ctx)</code> auto-scopes every query — no manual WHERE clauses, no data leaks.
-                    </p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🔗</div>
-                    <h3>Compile-Time Join Safety</h3>
-                    <p>
-                        <code>TypedQail&lt;T&gt;</code> + <code>RelatedTo&lt;T&gt;</code> — the compiler rejects invalid table joins. Schema-aware codegen from <code>build.rs</code>.
-                    </p>
+
+                <!-- REST Naive -->
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div style="width: 140px; text-align: right; font-size: 0.85rem; font-weight: 600; color: #ef4444;">REST Naive</div>
+                    <div style="flex: 1;">
+                        <div style="height: 40px; width: 93%; background: linear-gradient(90deg, #ef4444, #f87171); border-radius: 8px; display: flex; align-items: center; justify-content: flex-end; padding-right: 0.75rem;">
+                            <span style="font-size: 0.8rem; font-weight: 700; color: #fff;">16.8ms · 39× slower</span>
+                        </div>
+                    </div>
+                    <div style="width: 80px; font-size: 0.75rem; color: var(--text-muted);">~151 queries</div>
                 </div>
             </div>
 
-            <!-- QAIL's Position -->
-            <div
-                style="margin-top: 3rem; background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%); border-radius: 16px; padding: 2rem; text-align: center;"
-            >
-                <h3 style="color: #fff; margin: 0 0 1.5rem; font-size: 1.5rem;">
-                    🦀 QAIL's Position
-                </h3>
-                <div
-                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1.5rem; color: #e2e8f0;"
-                >
-                    <div>
-                        <div style="font-size: 1.75rem; font-weight: 700;">
-                            4% faster than C
-                        </div>
-                        <div style="font-size: 0.875rem; opacity: 0.8;">
-                            353k vs 339k q/s
-                        </div>
-                    </div>
-                    <div>
-                        <div style="font-size: 1.75rem; font-weight: 700;">
-                            12% ahead of Go
-                        </div>
-                        <div style="font-size: 0.875rem; opacity: 0.8;">
-                            pgx 303k q/s
-                        </div>
-                    </div>
-                    <div>
-                        <div style="font-size: 1.75rem; font-weight: 700;">
-                            16x faster
-                        </div>
-                        <div style="font-size: 0.875rem; opacity: 0.8;">
-                            Python asyncpg ~21k q/s
-                        </div>
-                    </div>
-                </div>
+            <p style="text-align: center; margin-top: 2rem; font-size: 0.85rem; color: var(--text-muted);">
+                QAIL sends <strong style="color: #22c55e;">1 SQL JOIN</strong>. GraphQL/REST resolve N+1 with <strong style="color: #ef4444;">151 round-trips</strong> to Postgres.
+            </p>
+            <p style="text-align: center; margin-top: 0.5rem;">
                 <a
                     href="/benchmarks"
-                    style="display: inline-block; margin-top: 1.5rem; color: #60a5fa; font-size: 0.9rem; text-decoration: none;"
+                    style="color: var(--accent); text-decoration: none; font-size: 0.9rem;"
+                    >View all benchmarks →</a
                 >
-                    View full benchmarks →
-                </a>
+            </p>
+        </div>
+    </section>
+
+    <!-- The Stack -->
+    <section id="stack" class="features">
+        <div class="container">
+            <h2 class="section-title">The QAIL Stack</h2>
+            <p
+                style="text-align: center; margin-bottom: 2.5rem; color: var(--text-muted); max-width: 550px; margin-left: auto; margin-right: auto;"
+            >
+                Four layers. One AST flows through all of them.
+            </p>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; max-width: 1000px; margin: 0 auto;">
+                <!-- Core -->
+                <div class="feature-card highlight-card" style="border-top: 3px solid #22c55e;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+                        <span style="font-size: 1.5rem;">🧬</span>
+                        <div>
+                            <h3 style="margin: 0; font-size: 1.1rem;">qail-core</h3>
+                            <span style="font-size: 0.7rem; color: #22c55e; font-weight: 600;">THE AST</span>
+                        </div>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+                        Parser, transpiler, type system. Queries are data structures,
+                        not strings. Schema validation at compile time.
+                    </p>
+                    <pre style="background: rgba(0,0,0,0.3); padding: 0.75rem; border-radius: 8px; font-size: 0.75rem; margin: 0; overflow-x: auto;"><code><span style="color: #22c55e;">get</span> users <span style="color: #22c55e;">fields</span> id, email
+  <span style="color: #22c55e;">where</span> active = true
+  <span style="color: #22c55e;">order by</span> created_at desc
+  <span style="color: #22c55e;">limit</span> 10</code></pre>
+                </div>
+
+                <!-- Drivers -->
+                <div class="feature-card" style="border-top: 3px solid #3b82f6;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+                        <span style="font-size: 1.5rem;">🔌</span>
+                        <div>
+                            <h3 style="margin: 0; font-size: 1.1rem;">qail-pg / qdrant</h3>
+                            <span style="font-size: 0.7rem; color: #3b82f6; font-weight: 600;">NATIVE DRIVERS</span>
+                        </div>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+                        Direct wire protocol. Built-in RLS context per connection.
+                        No SQLx middleman. Facts + Meaning.
+                    </p>
+                    <pre style="background: rgba(0,0,0,0.3); padding: 0.75rem; border-radius: 8px; font-size: 0.75rem; margin: 0; overflow-x: auto;"><code><span style="color: #3b82f6;">let</span> driver = PgDriver::connect_env().<span style="color: #3b82f6;">await</span>?;
+driver.set_rls_context(
+    RlsContext::operator(<span style="color: #fbbf24;">"op-456"</span>)
+).<span style="color: #3b82f6;">await</span>?;
+driver.fetch_all(&cmd).<span style="color: #3b82f6;">await</span>?</code></pre>
+                </div>
+
+                <!-- Gateway -->
+                <div class="feature-card highlight-card" style="border-top: 3px solid #a855f7;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+                        <span style="font-size: 1.5rem;">🚀</span>
+                        <div>
+                            <h3 style="margin: 0; font-size: 1.1rem;">qail-gateway</h3>
+                            <span style="font-size: 0.7rem; color: #a855f7; font-weight: 600;">AUTO-REST + BINARY PROTOCOL</span>
+                        </div>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+                        Zero-code API from your schema. Auto-REST with FK expansion,
+                        policy engine, WebSocket subscriptions, binary AST wire format.
+                    </p>
+                    <pre style="background: rgba(0,0,0,0.3); padding: 0.75rem; border-radius: 8px; font-size: 0.75rem; margin: 0; overflow-x: auto;"><code><span style="color: #a855f7;">GET</span> /api/bookings
+    ?status.eq=confirmed
+    &sort=created_at:desc
+    &expand=routes,payments
+    &limit=20</code></pre>
+                </div>
+
+                <!-- Workflow -->
+                <div class="feature-card" style="border-top: 3px solid #f59e0b;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+                        <span style="font-size: 1.5rem;">⚙️</span>
+                        <div>
+                            <h3 style="margin: 0; font-size: 1.1rem;">qail-workflow</h3>
+                            <span style="font-size: 0.7rem; color: #f59e0b; font-weight: 600;">STATE MACHINES</span>
+                        </div>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+                        Declarative multi-step orchestration. Database queries,
+                        notifications, and events in typed state machines.
+                    </p>
+                    <pre style="background: rgba(0,0,0,0.3); padding: 0.75rem; border-radius: 8px; font-size: 0.75rem; margin: 0; overflow-x: auto;"><code><span style="color: #f59e0b;">Workflow</span>::new(<span style="color: #fbbf24;">"booking"</span>)
+    .step(<span style="color: #fbbf24;">"validate"</span>, validate_fn)
+    .step(<span style="color: #fbbf24;">"charge"</span>, payment_fn)
+    .step(<span style="color: #fbbf24;">"confirm"</span>, confirm_fn)
+    .on_error(rollback_fn)</code></pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works — Pipeline -->
+    <section id="pipeline" style="padding: 4rem 0; background: var(--surface-2);">
+        <div class="container">
+            <h2 class="section-title">Every Entry Point → One Pipeline</h2>
+            <p
+                style="text-align: center; margin-bottom: 2.5rem; color: var(--text-muted); max-width: 550px; margin-left: auto; margin-right: auto;"
+            >
+                REST params, text queries, or binary AST — all converge to the same struct.
+                Policy injection and schema validation happen once, on the AST.
+            </p>
+
+            <div style="max-width: 700px; margin: 0 auto;">
+                <!-- Entry Points -->
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
+                    <div style="background: var(--surface-1); border-radius: 12px; padding: 1rem; text-align: center; border: 1px solid rgba(255,255,255,0.06);">
+                        <div style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.25rem;">REST</div>
+                        <code style="font-size: 0.75rem; color: #ef4444;">GET /api/users?active=true</code>
+                    </div>
+                    <div style="background: var(--surface-1); border-radius: 12px; padding: 1rem; text-align: center; border: 1px solid rgba(255,255,255,0.06);">
+                        <div style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.25rem;">Text</div>
+                        <code style="font-size: 0.75rem; color: #3b82f6;">get users where active = true</code>
+                    </div>
+                    <div style="background: var(--surface-1); border-radius: 12px; padding: 1rem; text-align: center; border: 1px solid rgba(255,255,255,0.06);">
+                        <div style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.25rem;">Binary</div>
+                        <code style="font-size: 0.75rem; color: #a855f7;">bincode::serialize(&cmd)</code>
+                    </div>
+                </div>
+
+                <!-- Arrow -->
+                <div style="text-align: center; font-size: 1.5rem; margin: 0.5rem 0; opacity: 0.4;">↓</div>
+
+                <!-- AST -->
+                <div style="background: linear-gradient(135deg, rgba(34,197,94,0.15), rgba(34,197,94,0.05)); border: 1px solid rgba(34,197,94,0.3); border-radius: 12px; padding: 1.25rem; text-align: center; margin-bottom: 0.75rem;">
+                    <div style="font-size: 0.7rem; color: #22c55e; font-weight: 600; margin-bottom: 0.5rem;">QAIL AST</div>
+                    <code style="font-size: 0.8rem; color: #4ade80;">Qail &#123; action: Get, table: "users", cages: [Filter(active = true)] &#125;</code>
+                </div>
+
+                <div style="text-align: center; font-size: 1.5rem; margin: 0.5rem 0; opacity: 0.4;">↓</div>
+
+                <!-- Policy Engine -->
+                <div style="background: var(--surface-1); border-radius: 12px; padding: 1rem; text-align: center; border: 1px solid rgba(255,255,255,0.06); margin-bottom: 0.75rem;">
+                    <div style="font-size: 0.7rem; color: #f59e0b; font-weight: 600; margin-bottom: 0.25rem;">POLICY ENGINE</div>
+                    <code style="font-size: 0.75rem; color: var(--text-muted);">+ injects <span style="color: #f59e0b;">AND operator_id = 'op-456'</span></code>
+                </div>
+
+                <div style="text-align: center; font-size: 1.5rem; margin: 0.5rem 0; opacity: 0.4;">↓</div>
+
+                <!-- Transpiler -->
+                <div style="background: var(--surface-1); border-radius: 12px; padding: 1rem; text-align: center; border: 1px solid rgba(255,255,255,0.06); margin-bottom: 0.75rem;">
+                    <div style="font-size: 0.7rem; color: #3b82f6; font-weight: 600; margin-bottom: 0.25rem;">TRANSPILER</div>
+                    <code style="font-size: 0.75rem; color: var(--text-muted);">cmd.to_sql() → <span style="color: #3b82f6;">SELECT * FROM users WHERE active = true AND operator_id = 'op-456'</span></code>
+                </div>
+
+                <div style="text-align: center; font-size: 1.5rem; margin: 0.5rem 0; opacity: 0.4;">↓</div>
+
+                <!-- Database -->
+                <div style="background: linear-gradient(135deg, #336791, #4a7faa); border-radius: 12px; padding: 1rem; text-align: center;">
+                    <div style="font-size: 0.7rem; color: rgba(255,255,255,0.7); font-weight: 600; margin-bottom: 0.25rem;">POSTGRESQL (with PG-native RLS)</div>
+                    <div style="font-size: 0.85rem; color: white; font-weight: 600;">1 query. 1 connection. Done.</div>
+                </div>
             </div>
         </div>
     </section>
@@ -410,14 +442,14 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     <!-- Supported Databases -->
     <section
         id="databases"
-        style="padding: 4rem 0; background: var(--surface-2);"
+        style="padding: 4rem 0;"
     >
         <div class="container">
             <h2 class="section-title">Supported Databases</h2>
             <p
                 style="text-align: center; margin-bottom: 2rem; color: var(--text-muted);"
             >
-                One AST. Three powerhouses. Facts + Meaning + Time.
+                One AST. Two powerhouses. Cache built-in.
             </p>
 
             <div
@@ -468,48 +500,41 @@ import BaseLayout from "../layouts/BaseLayout.astro";
                     <div
                         style="margin-top: 1rem; padding: 0.5rem 1rem; background: rgba(255,255,255,0.2); border-radius: 20px; display: inline-block;"
                     >
-                        <span style="color: #f97316; font-weight: 600;"
-                            >α Alpha</span
+                        <span style="color: #22c55e; font-weight: 600;"
+                            >Production</span
                         >
                     </div>
                 </div>
                 <div
                     class="db-card"
-                    style="background: linear-gradient(135deg, #dc382d 0%, #ff6b5b 100%); padding: 2rem; border-radius: 16px; text-align: center; min-width: 280px;"
+                    style="background: linear-gradient(135deg, #0d9488 0%, #2dd4bf 100%); padding: 2rem; border-radius: 16px; text-align: center; min-width: 280px;"
                 >
-                    <img
-                        src="/icons/redis.svg"
-                        alt="Redis"
-                        width="64"
-                        style="margin-bottom: 1rem;"
-                    />
-                    <h3 style="color: white; margin: 0 0 0.5rem;">Redis</h3>
+                    <div style="width: 64px; height: 64px; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.15); border-radius: 16px;">
+                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                            <path d="M9 12l2 2 4-4"/>
+                        </svg>
+                    </div>
+                    <h3 style="color: white; margin: 0 0 0.5rem;">Native Cache</h3>
                     <p
                         style="color: rgba(255,255,255,0.8); margin: 0; font-size: 0.9rem;"
                     >
-                        Cache • Sessions • TTL
+                        LRU • TTL • Zero Latency
                     </p>
                     <div
                         style="margin-top: 1rem; padding: 0.5rem 1rem; background: rgba(255,255,255,0.2); border-radius: 20px; display: inline-block;"
                     >
-                        <span style="color: #60a5fa; font-weight: 600;"
-                            >Planned</span
+                        <span style="color: #22c55e; font-weight: 600;"
+                            >Built-in</span
                         >
                     </div>
                 </div>
             </div>
-
-            <p
-                style="text-align: center; color: var(--text-muted); font-size: 0.9rem;"
-            >
-                The modern stack: PostgreSQL for facts, Qdrant for meaning,
-                Redis for time.
-            </p>
         </div>
     </section>
 
     <!-- Language Bindings -->
-    <section id="bindings" style="padding: 4rem 0;">
+    <section id="bindings" style="padding: 4rem 0; background: var(--surface-2);">
         <div class="container">
             <h2 class="section-title">Language Drivers</h2>
             <p
@@ -532,8 +557,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
                         height="32"
                     />
                     <h4>Zig</h4>
-                    <code style="font-size: 0.7rem;">Pure Zig • TLS • Pool</code
-                    >
+                    <code style="font-size: 0.7rem;">Pure Zig • TLS • Pool</code>
                     <span class="badge ready" style="background: #22c55e;"
                         >v0.2.0</span
                     >
@@ -559,7 +583,6 @@ import BaseLayout from "../layouts/BaseLayout.astro";
                     <h4>PHP</h4>
                     <code style="font-size: 0.7rem;"
                         >31K q/s • 2.6x Eloquent</code
-                    >
                     >
                     <span class="badge">GitHub</span>
                 </div>
@@ -587,9 +610,9 @@ import BaseLayout from "../layouts/BaseLayout.astro";
                         width="32"
                         height="32"
                     />
-                    <h4>WASM / Node</h4>
-                    <code>npm i qail-wasm</code>
-                    <span class="badge ready">NPM</span>
+                    <h4>Node.js</h4>
+                    <code style="font-size: 0.7rem;">FFI • Native Addon</code>
+                    <span class="badge">GitHub</span>
                 </div>
             </div>
             <p style="text-align: center; margin-top: 2rem;">
@@ -603,7 +626,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     </section>
 
     <!-- Migration Safety -->
-    <section id="safety" style="padding: 4rem 0; background: var(--surface-2);">
+    <section id="safety" style="padding: 4rem 0;">
         <div class="container">
             <h2 class="section-title">🛡️ The "Wait, Stop!" Feature</h2>
             <p
@@ -696,75 +719,25 @@ import BaseLayout from "../layouts/BaseLayout.astro";
             </div>
         </div>
     </section>
+
+    <!-- CTA -->
+    <section class="cta">
+        <div class="container">
+            <h2>The data layer you don't write.</h2>
+            <p style="margin-bottom: 2rem; color: var(--text-muted);">
+                One AST. Binary wire. Compile-time safety. Built-in RLS.
+            </p>
+            <div class="cta-buttons">
+                <a href="/docs" class="btn btn-primary btn-large">
+                    Read the Docs
+                </a>
+                <a
+                    href="https://github.com/qail-io/qail"
+                    class="btn btn-secondary btn-large"
+                >
+                    View on GitHub
+                </a>
+            </div>
+        </div>
+    </section>
 </BaseLayout>
-
-<!-- Platforms -->
-<section class="cta" style="background: var(--surface-2);">
-    <div class="container">
-        <h2>One Language. Everywhere.</h2>
-        <div
-            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 2rem;"
-        >
-            <div
-                style="text-align: center; padding: 1.5rem; background: var(--surface-1); border-radius: 12px;"
-            >
-                <img
-                    src="/icons/rust.svg"
-                    alt="Rust"
-                    width="32"
-                    height="32"
-                    style="margin-bottom: 0.5rem;"
-                />
-                <h4 style="margin: 0;">Rust</h4>
-                <p
-                    style="margin: 0.5rem 0 0 0; color: var(--text-muted); font-size: 0.9rem;"
-                >
-                    qail-core + builder API
-                </p>
-            </div>
-            <div
-                style="text-align: center; padding: 1.5rem; background: var(--surface-1); border-radius: 12px;"
-            >
-                <div style="font-size: 2rem; margin-bottom: 0.5rem;">🌐</div>
-                <h4 style="margin: 0;">Browser</h4>
-                <p
-                    style="margin: 0.5rem 0 0 0; color: var(--text-muted); font-size: 0.9rem;"
-                >
-                    qail-wasm (~50KB)
-                </p>
-            </div>
-            <div
-                style="text-align: center; padding: 1.5rem; background: linear-gradient(135deg, var(--primary), #9F6BFF); border-radius: 12px; color: white;"
-            >
-                <div style="font-size: 2rem; margin-bottom: 0.5rem;">📦</div>
-                <h4 style="margin: 0;">Node.js</h4>
-                <p
-                    style="margin: 0.5rem 0 0 0; opacity: 0.9; font-size: 0.9rem;"
-                >
-                    npm install qail-wasm
-                </p>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- CTA -->
-<section class="cta">
-    <div class="container">
-        <h2>Skip the String Layer.</h2>
-        <p style="margin-bottom: 2rem; color: var(--text-muted);">
-            Build with AST. Execute with Bytes.
-        </p>
-        <div class="cta-buttons">
-            <a href="/docs" class="btn btn-primary btn-large">
-                Read the Docs
-            </a>
-            <a
-                href="https://github.com/qail-io/qail"
-                class="btn btn-secondary btn-large"
-            >
-                View on GitHub
-            </a>
-        </div>
-    </div>
-</section>

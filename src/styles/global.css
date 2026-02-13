@@ -611,29 +611,110 @@ body {
 
 /* Footer */
 .footer {
-    padding: 48px 0;
+    padding: 64px 0 0;
     border-top: 1px solid rgba(255, 255, 255, 0.05);
+    background: var(--bg-card);
 }
 
-.footer-content {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 24px;
-    flex-wrap: wrap;
-    text-align: center;
+.footer-grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1fr 1fr;
+    gap: 48px;
+    padding-bottom: 48px;
 }
 
-.footer-brand {
+.footer-brand-link {
     display: flex;
     align-items: center;
     gap: 8px;
+    text-decoration: none;
+    color: var(--text-primary);
     font-weight: 700;
+    font-size: 1.25rem;
+    margin-bottom: 12px;
 }
 
-.footer p {
+.footer-brand-name {
+    font-weight: 800;
+}
+
+.footer-tagline {
     color: var(--text-secondary);
     font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 16px;
+}
+
+.footer-social {
+    display: flex;
+    gap: 12px;
+}
+
+.footer-social a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-secondary);
+    transition: var(--transition);
+}
+
+.footer-social a:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--accent-cyan);
+}
+
+.footer-heading {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+}
+
+.footer-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.footer-links a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: var(--transition);
+}
+
+.footer-links a:hover {
+    color: var(--accent-green);
+}
+
+.footer-bottom {
+    padding: 20px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    text-align: center;
+}
+
+.footer-bottom p {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+}
+
+.footer-bottom a {
+    color: var(--accent-cyan);
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.footer-bottom a:hover {
+    color: var(--accent-green);
 }
 
 /* Mobile Toggle & Menu */
@@ -819,6 +900,15 @@ body {
 
     .features-grid {
         grid-template-columns: 1fr;
+    }
+
+    .footer-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 32px;
+    }
+
+    .footer-brand-col {
+        grid-column: 1 / -1;
     }
 }
 
