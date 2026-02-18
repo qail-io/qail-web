@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "coal";
             const default_dark_theme = "coal";
-            window.path_to_searchindex_js = "../searchindex-2ddfd2a5.js";
+            window.path_to_searchindex_js = "../searchindex-2706ae00.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-77e67636.js"></script>
+        <script src="../toc-d260c190.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -182,7 +182,7 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="postgresql-driver"><a class="header" href="#postgresql-driver">PostgreSQL Driver</a></h1>
-<p>The <code>qail-pg</code> crate provides a native PostgreSQL driver with AST-native wire protocol encoding.</p>
+<p>The <code>qail-pg</code> crate provides a <strong>native PostgreSQL driver</strong> with AST-native wire protocol encoding. It communicates directly with Postgres at the wire level — no libpq, no ORM, no SQL strings.</p>
 <h2 id="features"><a class="header" href="#features">Features</a></h2>
 <ul>
 <li><strong>AST-Native</strong> — Direct AST to wire protocol, no SQL strings</li>
@@ -190,14 +190,120 @@
 <li><strong>LRU Statement Cache</strong> — Bounded cache (100 max), auto-evicts</li>
 <li><strong>SSL/TLS</strong> — Full TLS with mutual TLS (mTLS) support</li>
 <li><strong>SCRAM-SHA-256</strong> — Secure password authentication</li>
-<li><strong>Connection Pooling</strong> — Efficient resource management</li>
-<li><strong>COPY Protocol</strong> — Bulk insert for high throughput</li>
+<li><strong>Connection Pooling</strong> — Efficient resource management with RLS-safe checkout</li>
+<li><strong>COPY Protocol</strong> — Bulk insert for high throughput (1.63M rows/sec)</li>
+<li><strong>Pipeline Execution</strong> — Multiple queries per round-trip</li>
 <li><strong>Cursors</strong> — Stream large result sets</li>
 <li><strong>Transactions</strong> — BEGIN/COMMIT/ROLLBACK</li>
 </ul>
 <hr>
+<h2 id="architecture"><a class="header" href="#architecture">Architecture</a></h2>
+<p>Understanding <strong>which type to use</strong> is the most important concept:</p>
+<pre><code>PgPool (manages N connections, handles checkout/return)
+  └── PooledConnection (auto-returns to pool on Drop, resets RLS)
+        └── PgConnection (raw TCP/TLS stream, wire protocol I/O)
+              └── PgDriver (convenience wrapper over PgConnection)
+</code></pre>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Type</th><th>Use When</th></tr>
+</thead>
+<tbody>
+<tr><td><code>PgDriver</code></td><td>Quick scripts, benchmarks, single-connection use cases</td></tr>
+<tr><td><code>PgConnection</code></td><td>You need raw control (TLS, mTLS, Unix sockets, manual lifecycle)</td></tr>
+<tr><td><code>PgPool</code></td><td><strong>Production code</strong> — multi-connection, concurrent workloads</td></tr>
+<tr><td><code>PooledConnection</code></td><td>You called <code>pool.acquire()</code> — auto-returns when dropped</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Rule of thumb:</strong> If you’re building a server, use <code>PgPool</code>. Everything else is for specialized cases.</p>
+<hr>
+<h2 id="connection-methods"><a class="header" href="#connection-methods">Connection Methods</a></h2>
+<p>Choose based on your deployment:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Scenario</th><th>Method</th><th>Notes</th></tr>
+</thead>
+<tbody>
+<tr><td>Local dev (<code>pg_hba.conf = trust</code>)</td><td><code>PgDriver::connect()</code></td><td>No password required</td></tr>
+<tr><td>Password auth (most common)</td><td><code>PgDriver::connect_with_password()</code></td><td>Auto SCRAM-SHA-256</td></tr>
+<tr><td>Cloud DB (RDS, Cloud SQL, Supabase)</td><td><code>PgConnection::connect_tls()</code></td><td>Server-side TLS</td></tr>
+<tr><td>Zero-trust / mTLS</td><td><code>PgConnection::connect_mtls()</code></td><td>Client certificate</td></tr>
+<tr><td>Unix socket (same host)</td><td><code>PgConnection::connect_unix()</code></td><td>Lowest latency</td></tr>
+<tr><td><code>.env</code> / <code>DATABASE_URL</code></td><td><code>PgDriver::connect_env()</code></td><td>Parses URL format</td></tr>
+<tr><td>Custom config</td><td><code>PgDriver::builder()</code></td><td>Builder pattern for full control</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="basic-connection"><a class="header" href="#basic-connection">Basic Connection</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use qail_pg::PgDriver;
+
+// Trust mode (no password)
+let driver = PgDriver::connect("localhost", 5432, "user", "db").await?;
+
+// With password (auto-detects MD5 or SCRAM-SHA-256)
+let driver = PgDriver::connect_with_password(
+    "localhost", 5432, "user", "db", "password"
+).await?;
+
+// From DATABASE_URL env var
+let driver = PgDriver::connect_env().await?;
+<span class="boring">}</span></code></pre>
+<h3 id="ssltls"><a class="header" href="#ssltls">SSL/TLS</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use qail_pg::PgConnection;
+
+// Standard TLS — verifies server certificate
+let conn = PgConnection::connect_tls("localhost", 5432, "user", "db").await?;
+<span class="boring">}</span></code></pre>
+<h3 id="mutual-tls-client-certificates"><a class="header" href="#mutual-tls-client-certificates">Mutual TLS (Client Certificates)</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use qail_pg::{PgConnection, TlsConfig};
+
+let config = TlsConfig {
+    client_cert_pem: cert_bytes,
+    client_key_pem: key_bytes,
+    ca_cert_pem: Some(ca_bytes),
+};
+
+let conn = PgConnection::connect_mtls("localhost", 5432, "user", "db", config).await?;
+<span class="boring">}</span></code></pre>
+<h3 id="unix-socket"><a class="header" href="#unix-socket">Unix Socket</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let conn = PgConnection::connect_unix(
+    "/var/run/postgresql",  // socket directory
+    "user",
+    "db"
+).await?;
+<span class="boring">}</span></code></pre>
+<hr>
+<h2 id="ast-native-queries"><a class="header" href="#ast-native-queries">AST-Native Queries</a></h2>
+<p>All queries are constructed through the typed AST — no raw SQL strings.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use qail_core::Qail;
+
+let cmd = Qail::get("users").select_all().limit(10);
+
+// Fetch all rows
+let rows = driver.fetch_all(&amp;cmd).await?;
+
+// Fetch one row
+let row = driver.fetch_one(&amp;cmd).await?;
+
+// Execute mutation (returns affected rows)
+let affected = driver.execute(&amp;cmd).await?;
+<span class="boring">}</span></code></pre>
+<hr>
 <h2 id="statement-cache-lru"><a class="header" href="#statement-cache-lru">Statement Cache (LRU)</a></h2>
-<p>Prepared statements are cached automatically for best performance.</p>
+<p>Prepared statements are cached automatically. The AST is hashed by structure, so identical query shapes reuse the same prepared statement.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>// Cache is bounded (default: 100 statements)
@@ -214,62 +320,62 @@ driver.clear_cache();
 <tr><th>Method</th><th>Description</th></tr>
 </thead>
 <tbody>
-<tr><td><code>fetch_all()</code></td><td>Uses cache (4,500+ q/s)</td></tr>
+<tr><td><code>fetch_all()</code></td><td>Uses cache (~25,000 q/s)</td></tr>
 <tr><td><code>fetch_all_uncached()</code></td><td>Skips cache</td></tr>
 <tr><td><code>cache_stats()</code></td><td>Returns (current, max)</td></tr>
 <tr><td><code>clear_cache()</code></td><td>Frees all cached statements</td></tr>
 </tbody>
 </table>
 </div>
-<h2 id="connection"><a class="header" href="#connection">Connection</a></h2>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use qail_pg::PgDriver;
-
-// Trust mode (no password)
-let driver = PgDriver::connect("localhost", 5432, "user", "db").await?;
-
-// With password (auto-detects MD5 or SCRAM-SHA-256)
-let driver = PgDriver::connect_with_password(
-    "localhost", 5432, "user", "db", "password"
-).await?;
-<span class="boring">}</span></code></pre>
 <hr>
-<h2 id="ssltls"><a class="header" href="#ssltls">SSL/TLS</a></h2>
-<h3 id="standard-tls"><a class="header" href="#standard-tls">Standard TLS</a></h3>
+<h2 id="pipeline-methods"><a class="header" href="#pipeline-methods">Pipeline Methods</a></h2>
+<p>Pipelining sends multiple queries in a <strong>single network round-trip</strong>. This is the key to high throughput. Choose based on your needs:</p>
+<pre><code>Do you need return values from each query?
+├── Yes
+│   └── pipeline_ast()              — full parse/bind/execute per query, returns rows
+│
+└── No (fire-and-forget mutations)
+    ├── Repeating the same query shape with different params?
+    │   ├── pipeline_ast_cached()   — hash-based statement reuse
+    │   └── pipeline_prepared_fast()— named prepared statement reuse
+    │
+    └── Different query shapes?
+        ├── pipeline_ast_fast()     — parse+bind+execute, discard results
+        ├── pipeline_simple_fast()  — simple query protocol (no params)
+        └── pipeline_bytes_fast()   — pre-encoded buffers (fastest possible)
+</code></pre>
+<h3 id="quick-reference"><a class="header" href="#quick-reference">Quick Reference</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Method</th><th style="text-align: center">Returns Rows?</th><th style="text-align: center">Statement Caching</th><th style="text-align: center">Relative Speed</th></tr>
+</thead>
+<tbody>
+<tr><td><code>pipeline_ast()</code></td><td style="text-align: center">✅</td><td style="text-align: center">Hash-based</td><td style="text-align: center">★★★</td></tr>
+<tr><td><code>pipeline_ast_fast()</code></td><td style="text-align: center">❌</td><td style="text-align: center">None</td><td style="text-align: center">★★★★</td></tr>
+<tr><td><code>pipeline_ast_cached()</code></td><td style="text-align: center">❌</td><td style="text-align: center">Hash + LRU</td><td style="text-align: center">★★★★★</td></tr>
+<tr><td><code>pipeline_bytes_fast()</code></td><td style="text-align: center">❌</td><td style="text-align: center">Pre-encoded</td><td style="text-align: center">★★★★★</td></tr>
+<tr><td><code>pipeline_prepared_fast()</code></td><td style="text-align: center">❌</td><td style="text-align: center">Named</td><td style="text-align: center">★★★★★</td></tr>
+<tr><td><code>pipeline_prepared_zerocopy()</code></td><td style="text-align: center">❌</td><td style="text-align: center">Named + zero-copy</td><td style="text-align: center">★★★★★</td></tr>
+<tr><td><code>pipeline_prepared_ultra()</code></td><td style="text-align: center">❌</td><td style="text-align: center">Named + ultra</td><td style="text-align: center">★★★★★+</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="example-pipelined-inserts"><a class="header" href="#example-pipelined-inserts">Example: Pipelined Inserts</a></h3>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>use qail_pg::PgConnection;
+</span>let commands: Vec&lt;QailCmd&gt; = users.iter().map(|u| {
+    Qail::add("users")
+        .set("name", &amp;u.name)
+        .set("email", &amp;u.email)
+        .build()
+}).collect();
 
-let conn = PgConnection::connect_tls("localhost", 5432, "user", "db").await?;
-<span class="boring">}</span></code></pre>
-<h3 id="mutual-tls-client-certificates"><a class="header" href="#mutual-tls-client-certificates">Mutual TLS (Client Certificates)</a></h3>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use qail_pg::{PgConnection, TlsConfig};
+// Fire-and-forget — fastest for bulk mutations
+let affected = driver.pipeline_ast_fast(&amp;commands).await?;
 
-let config = TlsConfig {
-    client_cert_pem: cert_bytes,
-    client_key_pem: key_bytes,
-    ca_cert_pem: Some(ca_bytes),
-};
-
-let conn = PgConnection::connect_mtls("localhost", 5432, "user", "db", config).await?;
-<span class="boring">}</span></code></pre>
-<hr>
-<h2 id="ast-native-queries"><a class="header" href="#ast-native-queries">AST-Native Queries</a></h2>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>let cmd = Qail::get("users").select_all().limit(10);
-
-// Fetch all rows
-let rows = driver.fetch_all(&amp;cmd).await?;
-
-// Fetch one row
-let row = driver.fetch_one(&amp;cmd).await?;
-
-// Execute mutation (returns affected rows)
-let affected = driver.execute(&amp;cmd).await?;
+// With results — slower but returns inserted rows
+let rows = driver.pipeline_ast(&amp;commands).await?;
 <span class="boring">}</span></code></pre>
 <hr>
 <h2 id="connection-pooling"><a class="header" href="#connection-pooling">Connection Pooling</a></h2>
@@ -291,7 +397,25 @@ conn.simple_query("SELECT 1").await?;
 // Check idle count
 let idle = pool.idle_count().await;
 <span class="boring">}</span></code></pre>
-<h3 id="pool-timeout-configuration"><a class="header" href="#pool-timeout-configuration">Pool Timeout Configuration</a></h3>
+<h3 id="pool-with-rls-multi-tenant"><a class="header" href="#pool-with-rls-multi-tenant">Pool with RLS (Multi-Tenant)</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use qail_core::RlsContext;
+
+let ctx = RlsContext {
+    operator_id: "tenant-123".into(),
+    agent_id: Some("agent-456".into()),
+    is_super_admin: false,
+};
+
+// Acquire + set RLS context in one call
+// On Drop: auto-clears RLS context, then returns to pool
+let mut conn = pool.acquire_with_rls(&amp;ctx).await?;
+<span class="boring">}</span></code></pre>
+<blockquote>
+<p><strong>Important:</strong> When using <code>acquire_with_rls()</code>, the RLS context is automatically cleared when the connection is returned to the pool. This prevents cross-tenant data leakage — a connection used by Tenant A will never carry Tenant A’s context when checked out by Tenant B.</p>
+</blockquote>
+<h3 id="pool-configuration"><a class="header" href="#pool-configuration">Pool Configuration</a></h3>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use std::time::Duration;
@@ -307,15 +431,19 @@ let config = PoolConfig::new("localhost", 5432, "user", "db")
 <tr><th>Option</th><th>Default</th><th>Description</th></tr>
 </thead>
 <tbody>
+<tr><td><code>max_connections</code></td><td>10</td><td>Maximum pool size</td></tr>
+<tr><td><code>min_connections</code></td><td>1</td><td>Minimum idle connections</td></tr>
 <tr><td><code>idle_timeout</code></td><td>10 min</td><td>Stale connections auto-discarded</td></tr>
 <tr><td><code>acquire_timeout</code></td><td>30 sec</td><td>Max wait for connection</td></tr>
 <tr><td><code>connect_timeout</code></td><td>10 sec</td><td>Max time to establish new connection</td></tr>
+<tr><td><code>max_lifetime</code></td><td>30 min</td><td>Max age of any connection</td></tr>
+<tr><td><code>test_on_acquire</code></td><td>true</td><td>Ping connection before returning</td></tr>
 </tbody>
 </table>
 </div>
 <hr>
 <h2 id="bulk-insert-copy-protocol"><a class="header" href="#bulk-insert-copy-protocol">Bulk Insert (COPY Protocol)</a></h2>
-<p>High-performance bulk insert using PostgreSQL’s COPY protocol:</p>
+<p>High-performance bulk insert using PostgreSQL’s COPY protocol. Benchmarked at <strong>1.63M rows/sec</strong> for 100M rows.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use qail_core::ast::Value;
@@ -330,6 +458,19 @@ let rows = vec![
 let count = driver.copy_bulk(&amp;cmd, &amp;rows).await?;
 // count = 2
 <span class="boring">}</span></code></pre>
+<h3 id="performance-comparison"><a class="header" href="#performance-comparison">Performance Comparison</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Operation</th><th>Rows/sec</th><th>Notes</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>COPY bulk insert</strong></td><td><strong>1.63M</strong></td><td>Native COPY protocol</td></tr>
+<tr><td>Pipelined INSERT</td><td>180K</td><td>Extended Query</td></tr>
+<tr><td>Single INSERT</td><td>22K</td><td>Per-statement</td></tr>
+</tbody>
+</table>
+</div>
 <hr>
 <h2 id="cursor-streaming"><a class="header" href="#cursor-streaming">Cursor Streaming</a></h2>
 <p>Stream large result sets in batches:</p>
@@ -348,9 +489,7 @@ for batch in batches {
 <h2 id="transactions"><a class="header" href="#transactions">Transactions</a></h2>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>use qail_pg::PgConnection;
-
-let mut conn = PgConnection::connect("localhost", 5432, "user", "db").await?;
+</span>let mut conn = pool.acquire().await?;
 
 conn.begin_transaction().await?;
 // ... queries ...
@@ -358,25 +497,6 @@ conn.commit().await?;
 
 // Or rollback on error
 conn.rollback().await?;
-<span class="boring">}</span></code></pre>
-<hr>
-<h2 id="-raw-sql-discouraged"><a class="header" href="#-raw-sql-discouraged">⚠️ Raw SQL (Discouraged)</a></h2>
-<p><code>execute_raw</code> exists for legacy compatibility but <strong>violates AST-native philosophy</strong>.</p>
-<p>Use AST-native alternatives:</p>
-<ul>
-<li>Transactions: <code>conn.begin_transaction()</code>, <code>conn.commit()</code>, <code>conn.rollback()</code></li>
-<li>DDL: Use QAIL schema syntax and migrate command</li>
-</ul>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>// ❌ Avoid
-driver.execute_raw("BEGIN").await?;
-
-// ✅ Prefer AST-native
-let mut conn = pool.acquire().await?;
-conn.begin_transaction().await?;
-// ... queries ...
-conn.commit().await?;
 <span class="boring">}</span></code></pre>
 <hr>
 <h2 id="row-decoding"><a class="header" href="#row-decoding">Row Decoding</a></h2>
@@ -389,7 +509,7 @@ let age = row.get_i32(1);
 <h3 id="by-column-name-recommended"><a class="header" href="#by-column-name-recommended">By Column Name (Recommended)</a></h3>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>// Safer - column order changes don't break code
+</span>// Safer — column order changes don't break code
 let name = row.get_string_by_name("name");
 let age = row.get_i32_by_name("age");
 let email = row.get_string_by_name("email");
@@ -397,7 +517,7 @@ let email = row.get_string_by_name("email");
 // Check if NULL
 if row.is_null_by_name("deleted_at") { ... }
 <span class="boring">}</span></code></pre>
-<p>Available get_by_name methods:</p>
+<p>Available <code>get_by_name</code> methods:</p>
 <ul>
 <li><code>get_string_by_name</code>, <code>get_i32_by_name</code>, <code>get_i64_by_name</code></li>
 <li><code>get_f64_by_name</code>, <code>get_bool_by_name</code></li>
@@ -426,6 +546,17 @@ if row.is_null_by_name("deleted_at") { ... }
 </tbody>
 </table>
 </div>
+<hr>
+<h2 id="-raw-sql-discouraged"><a class="header" href="#-raw-sql-discouraged">⚠️ Raw SQL (Discouraged)</a></h2>
+<p><code>execute_raw</code> exists for legacy compatibility but <strong>violates AST-native philosophy</strong>.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ Avoid
+driver.execute_raw("BEGIN").await?;
+
+// ✅ Prefer AST-native
+conn.begin_transaction().await?;
+<span class="boring">}</span></code></pre>
 
                     </main>
 
@@ -435,7 +566,7 @@ if row.is_null_by_name("deleted_at") { ... }
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                             </a>
 
-                            <a rel="next prefetch" href="../core/redis-driver.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../core/api-decision-guide.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                             </a>
 
@@ -449,7 +580,7 @@ if row.is_null_by_name("deleted_at") { ... }
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                     </a>
 
-                    <a rel="next prefetch" href="../core/redis-driver.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../core/api-decision-guide.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                     </a>
             </nav>

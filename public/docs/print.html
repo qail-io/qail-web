@@ -37,10 +37,10 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "coal";
-            window.path_to_searchindex_js = "searchindex-2ddfd2a5.js";
+            window.path_to_searchindex_js = "searchindex-2706ae00.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-77e67636.js"></script>
+        <script src="toc-d260c190.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -2488,7 +2488,7 @@ ColumnType::Jsonb.supports_indexing()     // false - warned before migration
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="postgresql-driver"><a class="header" href="#postgresql-driver">PostgreSQL Driver</a></h1>
-<p>The <code>qail-pg</code> crate provides a native PostgreSQL driver with AST-native wire protocol encoding.</p>
+<p>The <code>qail-pg</code> crate provides a <strong>native PostgreSQL driver</strong> with AST-native wire protocol encoding. It communicates directly with Postgres at the wire level — no libpq, no ORM, no SQL strings.</p>
 <h2 id="features"><a class="header" href="#features">Features</a></h2>
 <ul>
 <li><strong>AST-Native</strong> — Direct AST to wire protocol, no SQL strings</li>
@@ -2496,14 +2496,120 @@ ColumnType::Jsonb.supports_indexing()     // false - warned before migration
 <li><strong>LRU Statement Cache</strong> — Bounded cache (100 max), auto-evicts</li>
 <li><strong>SSL/TLS</strong> — Full TLS with mutual TLS (mTLS) support</li>
 <li><strong>SCRAM-SHA-256</strong> — Secure password authentication</li>
-<li><strong>Connection Pooling</strong> — Efficient resource management</li>
-<li><strong>COPY Protocol</strong> — Bulk insert for high throughput</li>
+<li><strong>Connection Pooling</strong> — Efficient resource management with RLS-safe checkout</li>
+<li><strong>COPY Protocol</strong> — Bulk insert for high throughput (1.63M rows/sec)</li>
+<li><strong>Pipeline Execution</strong> — Multiple queries per round-trip</li>
 <li><strong>Cursors</strong> — Stream large result sets</li>
 <li><strong>Transactions</strong> — BEGIN/COMMIT/ROLLBACK</li>
 </ul>
 <hr>
+<h2 id="architecture"><a class="header" href="#architecture">Architecture</a></h2>
+<p>Understanding <strong>which type to use</strong> is the most important concept:</p>
+<pre><code>PgPool (manages N connections, handles checkout/return)
+  └── PooledConnection (auto-returns to pool on Drop, resets RLS)
+        └── PgConnection (raw TCP/TLS stream, wire protocol I/O)
+              └── PgDriver (convenience wrapper over PgConnection)
+</code></pre>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Type</th><th>Use When</th></tr>
+</thead>
+<tbody>
+<tr><td><code>PgDriver</code></td><td>Quick scripts, benchmarks, single-connection use cases</td></tr>
+<tr><td><code>PgConnection</code></td><td>You need raw control (TLS, mTLS, Unix sockets, manual lifecycle)</td></tr>
+<tr><td><code>PgPool</code></td><td><strong>Production code</strong> — multi-connection, concurrent workloads</td></tr>
+<tr><td><code>PooledConnection</code></td><td>You called <code>pool.acquire()</code> — auto-returns when dropped</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Rule of thumb:</strong> If you’re building a server, use <code>PgPool</code>. Everything else is for specialized cases.</p>
+<hr>
+<h2 id="connection-methods"><a class="header" href="#connection-methods">Connection Methods</a></h2>
+<p>Choose based on your deployment:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Scenario</th><th>Method</th><th>Notes</th></tr>
+</thead>
+<tbody>
+<tr><td>Local dev (<code>pg_hba.conf = trust</code>)</td><td><code>PgDriver::connect()</code></td><td>No password required</td></tr>
+<tr><td>Password auth (most common)</td><td><code>PgDriver::connect_with_password()</code></td><td>Auto SCRAM-SHA-256</td></tr>
+<tr><td>Cloud DB (RDS, Cloud SQL, Supabase)</td><td><code>PgConnection::connect_tls()</code></td><td>Server-side TLS</td></tr>
+<tr><td>Zero-trust / mTLS</td><td><code>PgConnection::connect_mtls()</code></td><td>Client certificate</td></tr>
+<tr><td>Unix socket (same host)</td><td><code>PgConnection::connect_unix()</code></td><td>Lowest latency</td></tr>
+<tr><td><code>.env</code> / <code>DATABASE_URL</code></td><td><code>PgDriver::connect_env()</code></td><td>Parses URL format</td></tr>
+<tr><td>Custom config</td><td><code>PgDriver::builder()</code></td><td>Builder pattern for full control</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="basic-connection"><a class="header" href="#basic-connection">Basic Connection</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use qail_pg::PgDriver;
+
+// Trust mode (no password)
+let driver = PgDriver::connect("localhost", 5432, "user", "db").await?;
+
+// With password (auto-detects MD5 or SCRAM-SHA-256)
+let driver = PgDriver::connect_with_password(
+    "localhost", 5432, "user", "db", "password"
+).await?;
+
+// From DATABASE_URL env var
+let driver = PgDriver::connect_env().await?;
+<span class="boring">}</span></code></pre>
+<h3 id="ssltls"><a class="header" href="#ssltls">SSL/TLS</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use qail_pg::PgConnection;
+
+// Standard TLS — verifies server certificate
+let conn = PgConnection::connect_tls("localhost", 5432, "user", "db").await?;
+<span class="boring">}</span></code></pre>
+<h3 id="mutual-tls-client-certificates"><a class="header" href="#mutual-tls-client-certificates">Mutual TLS (Client Certificates)</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use qail_pg::{PgConnection, TlsConfig};
+
+let config = TlsConfig {
+    client_cert_pem: cert_bytes,
+    client_key_pem: key_bytes,
+    ca_cert_pem: Some(ca_bytes),
+};
+
+let conn = PgConnection::connect_mtls("localhost", 5432, "user", "db", config).await?;
+<span class="boring">}</span></code></pre>
+<h3 id="unix-socket"><a class="header" href="#unix-socket">Unix Socket</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let conn = PgConnection::connect_unix(
+    "/var/run/postgresql",  // socket directory
+    "user",
+    "db"
+).await?;
+<span class="boring">}</span></code></pre>
+<hr>
+<h2 id="ast-native-queries"><a class="header" href="#ast-native-queries">AST-Native Queries</a></h2>
+<p>All queries are constructed through the typed AST — no raw SQL strings.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use qail_core::Qail;
+
+let cmd = Qail::get("users").select_all().limit(10);
+
+// Fetch all rows
+let rows = driver.fetch_all(&amp;cmd).await?;
+
+// Fetch one row
+let row = driver.fetch_one(&amp;cmd).await?;
+
+// Execute mutation (returns affected rows)
+let affected = driver.execute(&amp;cmd).await?;
+<span class="boring">}</span></code></pre>
+<hr>
 <h2 id="statement-cache-lru"><a class="header" href="#statement-cache-lru">Statement Cache (LRU)</a></h2>
-<p>Prepared statements are cached automatically for best performance.</p>
+<p>Prepared statements are cached automatically. The AST is hashed by structure, so identical query shapes reuse the same prepared statement.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>// Cache is bounded (default: 100 statements)
@@ -2520,62 +2626,62 @@ driver.clear_cache();
 <tr><th>Method</th><th>Description</th></tr>
 </thead>
 <tbody>
-<tr><td><code>fetch_all()</code></td><td>Uses cache (4,500+ q/s)</td></tr>
+<tr><td><code>fetch_all()</code></td><td>Uses cache (~25,000 q/s)</td></tr>
 <tr><td><code>fetch_all_uncached()</code></td><td>Skips cache</td></tr>
 <tr><td><code>cache_stats()</code></td><td>Returns (current, max)</td></tr>
 <tr><td><code>clear_cache()</code></td><td>Frees all cached statements</td></tr>
 </tbody>
 </table>
 </div>
-<h2 id="connection"><a class="header" href="#connection">Connection</a></h2>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use qail_pg::PgDriver;
-
-// Trust mode (no password)
-let driver = PgDriver::connect("localhost", 5432, "user", "db").await?;
-
-// With password (auto-detects MD5 or SCRAM-SHA-256)
-let driver = PgDriver::connect_with_password(
-    "localhost", 5432, "user", "db", "password"
-).await?;
-<span class="boring">}</span></code></pre>
 <hr>
-<h2 id="ssltls"><a class="header" href="#ssltls">SSL/TLS</a></h2>
-<h3 id="standard-tls"><a class="header" href="#standard-tls">Standard TLS</a></h3>
+<h2 id="pipeline-methods"><a class="header" href="#pipeline-methods">Pipeline Methods</a></h2>
+<p>Pipelining sends multiple queries in a <strong>single network round-trip</strong>. This is the key to high throughput. Choose based on your needs:</p>
+<pre><code>Do you need return values from each query?
+├── Yes
+│   └── pipeline_ast()              — full parse/bind/execute per query, returns rows
+│
+└── No (fire-and-forget mutations)
+    ├── Repeating the same query shape with different params?
+    │   ├── pipeline_ast_cached()   — hash-based statement reuse
+    │   └── pipeline_prepared_fast()— named prepared statement reuse
+    │
+    └── Different query shapes?
+        ├── pipeline_ast_fast()     — parse+bind+execute, discard results
+        ├── pipeline_simple_fast()  — simple query protocol (no params)
+        └── pipeline_bytes_fast()   — pre-encoded buffers (fastest possible)
+</code></pre>
+<h3 id="quick-reference"><a class="header" href="#quick-reference">Quick Reference</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Method</th><th style="text-align: center">Returns Rows?</th><th style="text-align: center">Statement Caching</th><th style="text-align: center">Relative Speed</th></tr>
+</thead>
+<tbody>
+<tr><td><code>pipeline_ast()</code></td><td style="text-align: center">✅</td><td style="text-align: center">Hash-based</td><td style="text-align: center">★★★</td></tr>
+<tr><td><code>pipeline_ast_fast()</code></td><td style="text-align: center">❌</td><td style="text-align: center">None</td><td style="text-align: center">★★★★</td></tr>
+<tr><td><code>pipeline_ast_cached()</code></td><td style="text-align: center">❌</td><td style="text-align: center">Hash + LRU</td><td style="text-align: center">★★★★★</td></tr>
+<tr><td><code>pipeline_bytes_fast()</code></td><td style="text-align: center">❌</td><td style="text-align: center">Pre-encoded</td><td style="text-align: center">★★★★★</td></tr>
+<tr><td><code>pipeline_prepared_fast()</code></td><td style="text-align: center">❌</td><td style="text-align: center">Named</td><td style="text-align: center">★★★★★</td></tr>
+<tr><td><code>pipeline_prepared_zerocopy()</code></td><td style="text-align: center">❌</td><td style="text-align: center">Named + zero-copy</td><td style="text-align: center">★★★★★</td></tr>
+<tr><td><code>pipeline_prepared_ultra()</code></td><td style="text-align: center">❌</td><td style="text-align: center">Named + ultra</td><td style="text-align: center">★★★★★+</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="example-pipelined-inserts"><a class="header" href="#example-pipelined-inserts">Example: Pipelined Inserts</a></h3>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>use qail_pg::PgConnection;
+</span>let commands: Vec&lt;QailCmd&gt; = users.iter().map(|u| {
+    Qail::add("users")
+        .set("name", &amp;u.name)
+        .set("email", &amp;u.email)
+        .build()
+}).collect();
 
-let conn = PgConnection::connect_tls("localhost", 5432, "user", "db").await?;
-<span class="boring">}</span></code></pre>
-<h3 id="mutual-tls-client-certificates"><a class="header" href="#mutual-tls-client-certificates">Mutual TLS (Client Certificates)</a></h3>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use qail_pg::{PgConnection, TlsConfig};
+// Fire-and-forget — fastest for bulk mutations
+let affected = driver.pipeline_ast_fast(&amp;commands).await?;
 
-let config = TlsConfig {
-    client_cert_pem: cert_bytes,
-    client_key_pem: key_bytes,
-    ca_cert_pem: Some(ca_bytes),
-};
-
-let conn = PgConnection::connect_mtls("localhost", 5432, "user", "db", config).await?;
-<span class="boring">}</span></code></pre>
-<hr>
-<h2 id="ast-native-queries"><a class="header" href="#ast-native-queries">AST-Native Queries</a></h2>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>let cmd = Qail::get("users").select_all().limit(10);
-
-// Fetch all rows
-let rows = driver.fetch_all(&amp;cmd).await?;
-
-// Fetch one row
-let row = driver.fetch_one(&amp;cmd).await?;
-
-// Execute mutation (returns affected rows)
-let affected = driver.execute(&amp;cmd).await?;
+// With results — slower but returns inserted rows
+let rows = driver.pipeline_ast(&amp;commands).await?;
 <span class="boring">}</span></code></pre>
 <hr>
 <h2 id="connection-pooling"><a class="header" href="#connection-pooling">Connection Pooling</a></h2>
@@ -2597,7 +2703,25 @@ conn.simple_query("SELECT 1").await?;
 // Check idle count
 let idle = pool.idle_count().await;
 <span class="boring">}</span></code></pre>
-<h3 id="pool-timeout-configuration"><a class="header" href="#pool-timeout-configuration">Pool Timeout Configuration</a></h3>
+<h3 id="pool-with-rls-multi-tenant"><a class="header" href="#pool-with-rls-multi-tenant">Pool with RLS (Multi-Tenant)</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use qail_core::RlsContext;
+
+let ctx = RlsContext {
+    operator_id: "tenant-123".into(),
+    agent_id: Some("agent-456".into()),
+    is_super_admin: false,
+};
+
+// Acquire + set RLS context in one call
+// On Drop: auto-clears RLS context, then returns to pool
+let mut conn = pool.acquire_with_rls(&amp;ctx).await?;
+<span class="boring">}</span></code></pre>
+<blockquote>
+<p><strong>Important:</strong> When using <code>acquire_with_rls()</code>, the RLS context is automatically cleared when the connection is returned to the pool. This prevents cross-tenant data leakage — a connection used by Tenant A will never carry Tenant A’s context when checked out by Tenant B.</p>
+</blockquote>
+<h3 id="pool-configuration"><a class="header" href="#pool-configuration">Pool Configuration</a></h3>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use std::time::Duration;
@@ -2613,15 +2737,19 @@ let config = PoolConfig::new("localhost", 5432, "user", "db")
 <tr><th>Option</th><th>Default</th><th>Description</th></tr>
 </thead>
 <tbody>
+<tr><td><code>max_connections</code></td><td>10</td><td>Maximum pool size</td></tr>
+<tr><td><code>min_connections</code></td><td>1</td><td>Minimum idle connections</td></tr>
 <tr><td><code>idle_timeout</code></td><td>10 min</td><td>Stale connections auto-discarded</td></tr>
 <tr><td><code>acquire_timeout</code></td><td>30 sec</td><td>Max wait for connection</td></tr>
 <tr><td><code>connect_timeout</code></td><td>10 sec</td><td>Max time to establish new connection</td></tr>
+<tr><td><code>max_lifetime</code></td><td>30 min</td><td>Max age of any connection</td></tr>
+<tr><td><code>test_on_acquire</code></td><td>true</td><td>Ping connection before returning</td></tr>
 </tbody>
 </table>
 </div>
 <hr>
 <h2 id="bulk-insert-copy-protocol"><a class="header" href="#bulk-insert-copy-protocol">Bulk Insert (COPY Protocol)</a></h2>
-<p>High-performance bulk insert using PostgreSQL’s COPY protocol:</p>
+<p>High-performance bulk insert using PostgreSQL’s COPY protocol. Benchmarked at <strong>1.63M rows/sec</strong> for 100M rows.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use qail_core::ast::Value;
@@ -2636,6 +2764,19 @@ let rows = vec![
 let count = driver.copy_bulk(&amp;cmd, &amp;rows).await?;
 // count = 2
 <span class="boring">}</span></code></pre>
+<h3 id="performance-comparison"><a class="header" href="#performance-comparison">Performance Comparison</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Operation</th><th>Rows/sec</th><th>Notes</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>COPY bulk insert</strong></td><td><strong>1.63M</strong></td><td>Native COPY protocol</td></tr>
+<tr><td>Pipelined INSERT</td><td>180K</td><td>Extended Query</td></tr>
+<tr><td>Single INSERT</td><td>22K</td><td>Per-statement</td></tr>
+</tbody>
+</table>
+</div>
 <hr>
 <h2 id="cursor-streaming"><a class="header" href="#cursor-streaming">Cursor Streaming</a></h2>
 <p>Stream large result sets in batches:</p>
@@ -2654,9 +2795,7 @@ for batch in batches {
 <h2 id="transactions"><a class="header" href="#transactions">Transactions</a></h2>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>use qail_pg::PgConnection;
-
-let mut conn = PgConnection::connect("localhost", 5432, "user", "db").await?;
+</span>let mut conn = pool.acquire().await?;
 
 conn.begin_transaction().await?;
 // ... queries ...
@@ -2664,25 +2803,6 @@ conn.commit().await?;
 
 // Or rollback on error
 conn.rollback().await?;
-<span class="boring">}</span></code></pre>
-<hr>
-<h2 id="-raw-sql-discouraged"><a class="header" href="#-raw-sql-discouraged">⚠️ Raw SQL (Discouraged)</a></h2>
-<p><code>execute_raw</code> exists for legacy compatibility but <strong>violates AST-native philosophy</strong>.</p>
-<p>Use AST-native alternatives:</p>
-<ul>
-<li>Transactions: <code>conn.begin_transaction()</code>, <code>conn.commit()</code>, <code>conn.rollback()</code></li>
-<li>DDL: Use QAIL schema syntax and migrate command</li>
-</ul>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>// ❌ Avoid
-driver.execute_raw("BEGIN").await?;
-
-// ✅ Prefer AST-native
-let mut conn = pool.acquire().await?;
-conn.begin_transaction().await?;
-// ... queries ...
-conn.commit().await?;
 <span class="boring">}</span></code></pre>
 <hr>
 <h2 id="row-decoding"><a class="header" href="#row-decoding">Row Decoding</a></h2>
@@ -2695,7 +2815,7 @@ let age = row.get_i32(1);
 <h3 id="by-column-name-recommended"><a class="header" href="#by-column-name-recommended">By Column Name (Recommended)</a></h3>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>// Safer - column order changes don't break code
+</span>// Safer — column order changes don't break code
 let name = row.get_string_by_name("name");
 let age = row.get_i32_by_name("age");
 let email = row.get_string_by_name("email");
@@ -2703,7 +2823,7 @@ let email = row.get_string_by_name("email");
 // Check if NULL
 if row.is_null_by_name("deleted_at") { ... }
 <span class="boring">}</span></code></pre>
-<p>Available get_by_name methods:</p>
+<p>Available <code>get_by_name</code> methods:</p>
 <ul>
 <li><code>get_string_by_name</code>, <code>get_i32_by_name</code>, <code>get_i64_by_name</code></li>
 <li><code>get_f64_by_name</code>, <code>get_bool_by_name</code></li>
@@ -2732,142 +2852,122 @@ if row.is_null_by_name("deleted_at") { ... }
 </tbody>
 </table>
 </div>
-<div style="break-before: page; page-break-before: always;"></div>
-<h1 id="redis-driver"><a class="header" href="#redis-driver">Redis Driver</a></h1>
-<p><strong>“Redis stores time — QAIL decides.”</strong></p>
-<p>The <code>qail-redis</code> crate provides a unified Qail AST interface for Redis operations.</p>
-<h2 id="installation-1"><a class="header" href="#installation-1">Installation</a></h2>
-<pre><code class="language-toml">[dependencies]
-qail-redis = "0.14"
-</code></pre>
-<h2 id="quick-start-2"><a class="header" href="#quick-start-2">Quick Start</a></h2>
-<pre class="playground"><code class="language-rust">use qail_redis::{RedisDriver, RedisExt};
-use qail_core::prelude::*;
+<hr>
+<h2 id="-raw-sql-discouraged"><a class="header" href="#-raw-sql-discouraged">⚠️ Raw SQL (Discouraged)</a></h2>
+<p><code>execute_raw</code> exists for legacy compatibility but <strong>violates AST-native philosophy</strong>.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ❌ Avoid
+driver.execute_raw("BEGIN").await?;
 
-#[tokio::main]
-async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
-    let mut driver = RedisDriver::connect("127.0.0.1", 6379).await?;
-    
-    // Unified Qail AST - same pattern as PostgreSQL/Qdrant
-    driver.execute(&amp;Qail::redis_set("session:123", b"data".to_vec()).redis_ex(3600)).await?;
-    
-    let value = driver.get_str("session:123").await?;
-    println!("Value: {:?}", value);
-    
-    Ok(())
-}</code></pre>
-<h2 id="unified-api"><a class="header" href="#unified-api">Unified API</a></h2>
-<p>Redis uses the same <code>Qail</code> type as PostgreSQL and Qdrant:</p>
+// ✅ Prefer AST-native
+conn.begin_transaction().await?;
+<span class="boring">}</span></code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="api-decision-guide"><a class="header" href="#api-decision-guide">API Decision Guide</a></h1>
+<p>Quick reference: “I want to do X → use Y.”</p>
+<hr>
+<h2 id="connecting"><a class="header" href="#connecting">Connecting</a></h2>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Database</th><th>Constructor</th><th>Purpose</th></tr>
+<tr><th>I want to…</th><th>Use</th></tr>
 </thead>
 <tbody>
-<tr><td>PostgreSQL</td><td><code>Qail::get("users")</code></td><td>Query facts</td></tr>
-<tr><td>Qdrant</td><td><code>Qail::search("products")</code></td><td>Search meaning</td></tr>
-<tr><td>Redis</td><td><code>Qail::redis_get("session")</code></td><td>Retrieve time-bound data</td></tr>
+<tr><td>Connect with just host/port/user/db</td><td><code>PgDriver::connect()</code></td></tr>
+<tr><td>Connect with a password</td><td><code>PgDriver::connect_with_password()</code></td></tr>
+<tr><td>Use <code>DATABASE_URL</code> from env</td><td><code>PgDriver::connect_env()</code></td></tr>
+<tr><td>Connect over TLS (cloud DB)</td><td><code>PgConnection::connect_tls()</code></td></tr>
+<tr><td>Use client certificates (mTLS)</td><td><code>PgConnection::connect_mtls()</code></td></tr>
+<tr><td>Connect via Unix socket</td><td><code>PgConnection::connect_unix()</code></td></tr>
+<tr><td>Customize everything</td><td><code>PgDriver::builder()</code></td></tr>
+<tr><td><strong>Run a production server</strong></td><td><strong><code>PgPool::connect(config)</code></strong></td></tr>
 </tbody>
 </table>
 </div>
-<h2 id="available-commands"><a class="header" href="#available-commands">Available Commands</a></h2>
-<h3 id="string-commands"><a class="header" href="#string-commands">String Commands</a></h3>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>// GET key
-Qail::redis_get("mykey")
-
-// SET key value
-Qail::redis_set("mykey", b"value".to_vec())
-
-// SET with TTL (seconds)
-Qail::redis_set("mykey", b"value".to_vec()).redis_ex(3600)
-
-// SET only if not exists
-Qail::redis_set("mykey", b"value".to_vec()).redis_nx()
-
-// SET only if exists
-Qail::redis_set("mykey", b"value".to_vec()).redis_xx()
-<span class="boring">}</span></code></pre>
-<h3 id="counter-commands"><a class="header" href="#counter-commands">Counter Commands</a></h3>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>// INCR key
-Qail::redis_incr("counter")
-
-// DECR key  
-Qail::redis_decr("counter")
-<span class="boring">}</span></code></pre>
-<h3 id="key-commands"><a class="header" href="#key-commands">Key Commands</a></h3>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>// DEL key
-Qail::redis_del("mykey")
-
-// EXISTS key
-Qail::redis_exists("mykey")
-
-// TTL key
-Qail::redis_ttl("mykey")
-
-// EXPIRE key seconds
-Qail::redis_expire("mykey", 60)
-<span class="boring">}</span></code></pre>
-<h3 id="other-commands"><a class="header" href="#other-commands">Other Commands</a></h3>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>// PING
-Qail::redis_ping()
-<span class="boring">}</span></code></pre>
-<h2 id="redisext-trait"><a class="header" href="#redisext-trait">RedisExt Trait</a></h2>
-<p>The <code>RedisExt</code> trait provides fluent methods for Redis-specific options:</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use qail_redis::RedisExt;
-
-// Chain TTL onto SET
-Qail::redis_set("key", b"value".to_vec())
-    .redis_ex(3600)  // EX seconds
-    .redis_nx()       // Only if not exists
-<span class="boring">}</span></code></pre>
-<h2 id="connection-pooling-1"><a class="header" href="#connection-pooling-1">Connection Pooling</a></h2>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use qail_redis::{RedisPool, PoolConfig};
-
-let config = PoolConfig::new("127.0.0.1", 6379)
-    .max_connections(10);
-
-let pool = RedisPool::new(config);
-
-// Get a connection from the pool
-let mut conn = pool.get().await?;
-conn.set("key", b"value").await?;
-<span class="boring">}</span></code></pre>
-<h2 id="native-resp3-protocol"><a class="header" href="#native-resp3-protocol">Native RESP3 Protocol</a></h2>
-<p><code>qail-redis</code> implements native RESP3 protocol encoding/decoding:</p>
-<ul>
-<li><strong>Zero string parsing</strong>: Commands are encoded directly from AST</li>
-<li><strong>Full RESP3 support</strong>: Booleans, doubles, maps, nulls</li>
-<li><strong>Efficient</strong>: Direct wire protocol writes</li>
-</ul>
-<h2 id="the-qail-vision"><a class="header" href="#the-qail-vision">The QAIL Vision</a></h2>
-<blockquote>
-<p>“Postgres stores facts, Qdrant stores meaning, Redis stores time — QAIL decides.”</p>
-</blockquote>
-<p>With <code>qail-redis</code>, you now have a unified API across all three database paradigms:</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>// Facts (PostgreSQL)
-Qail::get("users").filter("active", Eq, true)
-
-// Meaning (Qdrant)
-Qail::search("products").vector(&amp;embedding).limit(10)
-
-// Time (Redis)
-Qail::redis_set("session:123", session_data).redis_ex(3600)
-<span class="boring">}</span></code></pre>
-<p>Same <code>Qail</code> type. Same philosophy. Different backends.</p>
+<hr>
+<h2 id="querying"><a class="header" href="#querying">Querying</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>I want to…</th><th>Use</th></tr>
+</thead>
+<tbody>
+<tr><td>Get rows back</td><td><code>driver.fetch_all(&amp;cmd)</code></td></tr>
+<tr><td>Get exactly one row</td><td><code>driver.fetch_one(&amp;cmd)</code></td></tr>
+<tr><td>Run a mutation (INSERT/UPDATE/DELETE)</td><td><code>driver.execute(&amp;cmd)</code></td></tr>
+<tr><td>Run a raw SQL string (discouraged)</td><td><code>driver.execute_raw("...")</code></td></tr>
+</tbody>
+</table>
+</div>
+<hr>
+<h2 id="bulk-operations"><a class="header" href="#bulk-operations">Bulk Operations</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>I want to…</th><th>Use</th></tr>
+</thead>
+<tbody>
+<tr><td>Insert thousands of rows fast</td><td><code>driver.copy_bulk(&amp;cmd, &amp;rows)</code> (COPY protocol)</td></tr>
+<tr><td>Pipeline many inserts (no results needed)</td><td><code>driver.pipeline_ast_fast(&amp;commands)</code></td></tr>
+<tr><td>Pipeline inserts (need the inserted rows)</td><td><code>driver.pipeline_ast(&amp;commands)</code></td></tr>
+<tr><td>Pipeline the same query shape with many param sets</td><td><code>driver.pipeline_ast_cached(&amp;commands)</code></td></tr>
+</tbody>
+</table>
+</div>
+<hr>
+<h2 id="connection-pool"><a class="header" href="#connection-pool">Connection Pool</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>I want to…</th><th>Use</th></tr>
+</thead>
+<tbody>
+<tr><td>Get a pooled connection</td><td><code>pool.acquire()</code></td></tr>
+<tr><td>Get a connection with RLS tenant context</td><td><code>pool.acquire_with_rls(&amp;ctx)</code></td></tr>
+<tr><td>Check pool status</td><td><code>pool.idle_count()</code>, <code>pool.stats()</code></td></tr>
+</tbody>
+</table>
+</div>
+<hr>
+<h2 id="transactions-1"><a class="header" href="#transactions-1">Transactions</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>I want to…</th><th>Use</th></tr>
+</thead>
+<tbody>
+<tr><td>Start a transaction</td><td><code>conn.begin_transaction()</code></td></tr>
+<tr><td>Commit</td><td><code>conn.commit()</code></td></tr>
+<tr><td>Roll back</td><td><code>conn.rollback()</code></td></tr>
+</tbody>
+</table>
+</div>
+<hr>
+<h2 id="multi-tenant-rls"><a class="header" href="#multi-tenant-rls">Multi-Tenant (RLS)</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>I want to…</th><th>Use</th></tr>
+</thead>
+<tbody>
+<tr><td>Set tenant context on connection</td><td><code>pool.acquire_with_rls(&amp;ctx)</code></td></tr>
+<tr><td>Manually set RLS</td><td><code>driver.set_rls_context(&amp;ctx)</code></td></tr>
+<tr><td>Clear RLS context</td><td><code>driver.clear_rls_context()</code></td></tr>
+<tr><td>Define RLS policies in schema</td><td><code>policy name on table for select using $$ ... $$</code> in <code>.qail</code></td></tr>
+<tr><td>Generate RLS setup SQL</td><td><code>rls_setup_sql(&amp;table, &amp;policy)</code></td></tr>
+</tbody>
+</table>
+</div>
+<hr>
+<h2 id="performance-tips"><a class="header" href="#performance-tips">Performance Tips</a></h2>
+<ol>
+<li><strong>Use the pool</strong> — <code>PgPool</code> reuses connections and caches prepared statements.</li>
+<li><strong>Use <code>pipeline_ast_fast()</code></strong> for bulk mutations — one round-trip instead of N.</li>
+<li><strong>Use <code>copy_bulk()</code></strong> for truly massive inserts (&gt;10K rows) — 10x faster than pipelining.</li>
+<li><strong>Use <code>fetch_all()</code> (cached)</strong> not <code>fetch_all_uncached()</code> — statement caching gives ~2x speedup.</li>
+<li><strong>Use <code>acquire_with_rls()</code></strong> in multi-tenant apps — auto-clears on Drop, prevents cross-tenant leaks.</li>
+</ol>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="migrations"><a class="header" href="#migrations">Migrations</a></h1>
 <p>QAIL supports two migration workflows:</p>
@@ -3678,7 +3778,7 @@ Qail::get(users::table)
     .column_protected(users::password_hash)
 <span class="boring">}</span></code></pre>
 <div style="break-before: page; page-break-before: always;"></div>
-<h1 id="connection-pooling-2"><a class="header" href="#connection-pooling-2">Connection Pooling</a></h1>
+<h1 id="connection-pooling-1"><a class="header" href="#connection-pooling-1">Connection Pooling</a></h1>
 <p>Efficient connection reuse with built-in multi-tenant safety.</p>
 <h2 id="configuration-1"><a class="header" href="#configuration-1">Configuration</a></h2>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -3927,7 +4027,7 @@ impl ToPg for MyType {
 <p><strong>New in v0.14.20</strong> — Full Diesel-like type checking for QAIL queries</p>
 </blockquote>
 <p>QAIL now supports compile-time type validation through generated schema files, similar to Diesel but with AST-native architecture.</p>
-<h2 id="quick-start-3"><a class="header" href="#quick-start-3">Quick Start</a></h2>
+<h2 id="quick-start-2"><a class="header" href="#quick-start-2">Quick Start</a></h2>
 <h3 id="1-generate-schema"><a class="header" href="#1-generate-schema">1. Generate Schema</a></h3>
 <pre><code class="language-bash">qail types schema.qail -o src/schema.rs
 </code></pre>
@@ -4183,7 +4283,7 @@ let query = Qail::typed(bookings::table)
 <h1 id="centralized-configuration"><a class="header" href="#centralized-configuration">Centralized Configuration</a></h1>
 <p>Qail uses a single <code>qail.toml</code> file as the source of truth for all components. Configuration follows a layered priority:</p>
 <p><strong>Environment Variables &gt; <code>qail.toml</code> &gt; Hardcoded Defaults</strong></p>
-<h2 id="quick-start-4"><a class="header" href="#quick-start-4">Quick Start</a></h2>
+<h2 id="quick-start-3"><a class="header" href="#quick-start-3">Quick Start</a></h2>
 <p>Generate a config with <code>qail init</code>, or create <code>qail.toml</code> manually:</p>
 <pre><code class="language-toml">[project]
 name = "my-app"
@@ -4352,7 +4452,7 @@ let gw = GatewayConfig::from_qail_config(&amp;qail);
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="cli-commands"><a class="header" href="#cli-commands">CLI Commands</a></h1>
 <p>The <code>qail</code> command-line tool — v0.15.8.</p>
-<h2 id="installation-2"><a class="header" href="#installation-2">Installation</a></h2>
+<h2 id="installation-1"><a class="header" href="#installation-1">Installation</a></h2>
 <pre><code class="language-bash">cargo install qail
 </code></pre>
 <h2 id="commands"><a class="header" href="#commands">Commands</a></h2>
@@ -4553,7 +4653,7 @@ qail migrate plan old.qail:new.qail --output migration.sql
 <pre><code class="language-bash">qail migrate shadow v1.qail:v2.qail postgres://shadow-db/...
 </code></pre>
 <hr>
-<h2 id="other-commands-1"><a class="header" href="#other-commands-1">Other Commands</a></h2>
+<h2 id="other-commands"><a class="header" href="#other-commands">Other Commands</a></h2>
 <h3 id="qail-explain"><a class="header" href="#qail-explain"><code>qail explain</code></a></h3>
 <p>Parse and explain a QAIL query:</p>
 <pre><code class="language-bash">qail "get users'id'email[active = true]"
