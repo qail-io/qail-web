@@ -15,12 +15,314 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
     <main class="page-content">
         <div class="container" style="max-width: 900px;">
+            <!-- v0.20.6 -->
+            <section class="release-section">
+                <div class="release-header">
+                    <h2>v0.20.6</h2>
+                    <span class="release-date">February 18, 2026</span>
+                    <span class="status-badge full">Latest</span>
+                </div>
+
+                <div class="release-highlight">
+                    <span style="font-size: 1.5rem;">📚</span>
+                    <strong>A+ Documentation Coverage</strong> — All 6 crates pass with zero missing items
+                </div>
+
+                <h4>Documentation Sweep</h4>
+                <ul class="changelog-list">
+                    <li>
+                        <strong>109 items fixed</strong> across
+                        <code>qail-core</code>, <code>qail-pg</code>, <code>qail-gateway</code>,
+                        <code>qail-qdrant</code>, <code>qail-workflow</code>, <code>qail-cli</code>
+                    </li>
+                    <li>
+                        <strong># Arguments sections:</strong>
+                        Added to 41 complex functions (typed builders, driver connect, pool config, encoder, DML encoders, validators, schema registry)
+                    </li>
+                    <li>
+                        <strong>Expanded docs:</strong>
+                        12 short/placeholder comments replaced with full descriptions
+                    </li>
+                    <li>
+                        <strong>Enum variants:</strong>
+                        All <code>PointId</code>, <code>PayloadValue</code>, <code>FieldType</code>,
+                        <code>Distance</code>, <code>Currency</code>, <code>ChargeStatus</code>,
+                        <code>ChannelKind</code> variants now documented
+                    </li>
+                    <li>
+                        <strong>Struct fields:</strong>
+                        All <code>Point</code>, <code>ScoredPoint</code>, <code>StateChange</code>,
+                        <code>DimensionMismatch</code> fields now documented
+                    </li>
+                </ul>
+
+                <h4>Verified</h4>
+                <ul class="changelog-list">
+                    <li><code>cargo build --workspace</code> — clean (0 warnings)</li>
+                    <li>Doc coverage script — 0 missing, all crates A+</li>
+                </ul>
+            </section>
+
+            <!-- v0.20.5 -->
+            <section class="release-section">
+                <div class="release-header">
+                    <h2>v0.20.5</h2>
+                    <span class="release-date">February 16, 2026</span>
+                </div>
+
+                <div class="release-highlight">
+                    <span style="font-size: 1.5rem;">📦</span>
+                    <strong>Dependency Refresh</strong> — rand 0.10, postcard replaces bincode
+                </div>
+
+                <h4>Changed</h4>
+                <ul class="changelog-list">
+                    <li>
+                        <strong>Deps:</strong>
+                        <code>rand</code> 0.9→0.10, <code>thiserror</code> 2.0.18, <code>proptest</code> 1.10, <code>metrics-exporter-prometheus</code> 0.18.1
+                    </li>
+                    <li>
+                        <strong>Gateway:</strong>
+                        Migrated binary endpoint from <code>bincode</code> to <code>postcard</code> — actively maintained, smaller payloads
+                    </li>
+                    <li>
+                        <strong>Docs:</strong>
+                        Fixed overclaims in README, updated ROADMAP to v0.20.4
+                    </li>
+                    <li>
+                        <strong>Project:</strong>
+                        Added Dependabot for weekly Cargo dependency updates
+                    </li>
+                </ul>
+            </section>
+
+            <!-- v0.20.4 -->
+            <section class="release-section">
+                <div class="release-header">
+                    <h2>v0.20.4</h2>
+                    <span class="release-date">February 16, 2026</span>
+                </div>
+
+                <div class="release-highlight">
+                    <span style="font-size: 1.5rem;">🔧</span>
+                    <strong>Qdrant Feature Flag</strong> — optional dependency, scrubbed 150 MB from git history
+                </div>
+
+                <h4>Added</h4>
+                <ul class="changelog-list">
+                    <li>
+                        <strong>Gateway:</strong>
+                        <code>qdrant</code> feature flag — <code>qail-qdrant</code> now optional (default = on)
+                    </li>
+                    <li>
+                        <strong>Project:</strong>
+                        <code>SECURITY.md</code> — vulnerability disclosure policy with GitHub Security Advisories
+                    </li>
+                </ul>
+
+                <h4>Fixed</h4>
+                <ul class="changelog-list">
+                    <li>14 integration tests marked <code>#[ignore]</code> — no longer block CI without live infra</li>
+                    <li>Scrubbed ~150 MB of build artifacts and production schema from git history</li>
+                </ul>
+            </section>
+
+            <!-- v0.20.3 -->
+            <section class="release-section">
+                <div class="release-header">
+                    <h2>v0.20.3</h2>
+                    <span class="release-date">February 16, 2026</span>
+                </div>
+
+                <div class="release-highlight">
+                    <span style="font-size: 1.5rem;">📐</span>
+                    <strong>Modular Handlers</strong> — split 1,049-line handler.rs into focused modules
+                </div>
+
+                <h4>Added</h4>
+                <ul class="changelog-list">
+                    <li>
+                        <strong>Gateway:</strong>
+                        Split <code>handler.rs</code> into <code>handler/</code> directory — query, admin, convert, qdrant modules
+                    </li>
+                    <li>
+                        <strong>Gateway:</strong>
+                        22 new unit tests for <code>handler/convert.rs</code> (81 → 103 total)
+                    </li>
+                    <li>
+                        <strong>Project:</strong>
+                        Added <code>CONTRIBUTING.md</code> — build instructions, project structure, PR process
+                    </li>
+                </ul>
+
+                <h4>Fixed</h4>
+                <ul class="changelog-list">
+                    <li>Replaced <code>eprintln!()</code> with <code>tracing</code> macros</li>
+                    <li>Fixed 6 rustdoc errors (private intra-doc links, unclosed HTML tags)</li>
+                    <li>Corrected license badge from MIT to Apache-2.0</li>
+                </ul>
+            </section>
+
+            <!-- v0.20.2 -->
+            <section class="release-section">
+                <div class="release-header">
+                    <h2>v0.20.2</h2>
+                    <span class="release-date">February 12, 2026</span>
+                </div>
+
+                <h4>Added</h4>
+                <ul class="changelog-list">
+                    <li><strong>CLI:</strong> Fix primary key introspection for composite keys</li>
+                    <li><strong>SDK:</strong> Generated build artifacts for Swift, TypeScript, and Kotlin SDKs</li>
+                    <li><strong>Gateway:</strong> Fast query execution endpoint (<code>/qail/fast</code>) with shape-based caching</li>
+                </ul>
+            </section>
+
+            <!-- v0.20.1 -->
+            <section class="release-section">
+                <div class="release-header">
+                    <h2>v0.20.1</h2>
+                    <span class="release-date">February 11, 2026</span>
+                </div>
+
+                <h4>Added</h4>
+                <ul class="changelog-list">
+                    <li><strong>PG:</strong> Transaction-local RLS — tenant context scoped to transaction lifetime</li>
+                    <li><strong>PG:</strong> Prepared statement caching for repeated query patterns</li>
+                </ul>
+            </section>
+
+            <!-- v0.20.0 -->
+            <section class="release-section">
+                <div class="release-header">
+                    <h2>v0.20.0</h2>
+                    <span class="release-date">February 10, 2026</span>
+                </div>
+
+                <div class="release-highlight">
+                    <span style="font-size: 1.5rem;">🛡️</span>
+                    <strong>Security Hardening</strong> — EXPLAIN pre-check, SuperAdminToken, wire protocol tests
+                </div>
+
+                <h4>Added</h4>
+                <ul class="changelog-list">
+                    <li><strong>PG:</strong> <code>EXPLAIN</code> pre-check — rejects expensive queries before execution</li>
+                    <li><strong>Core:</strong> <code>SuperAdminToken</code> — cryptographic proof for RLS bypass authorization</li>
+                    <li><strong>PG:</strong> Wire protocol security tests — SQL injection and binary smuggling hardening</li>
+                    <li><strong>Gateway:</strong> Comprehensive cache correctness and TTL expiry tests</li>
+                </ul>
+
+                <h4>Changed</h4>
+                <ul class="changelog-list">
+                    <li><strong>Gateway:</strong> License updated to BSL-1.1</li>
+                    <li><strong>Core:</strong> Redis module removed (replaced by PostgreSQL-native caching)</li>
+                </ul>
+            </section>
+
+            <!-- v0.19.1 -->
+            <section class="release-section">
+                <div class="release-header">
+                    <h2>v0.19.1</h2>
+                    <span class="release-date">February 10, 2026</span>
+                </div>
+
+                <h4>Changed</h4>
+                <ul class="changelog-list">
+                    <li><strong>Core:</strong> Replaced stringly-typed column schema with <code>ColumnType</code> AST — type-safe schema representation</li>
+                </ul>
+            </section>
+
+            <!-- v0.19.0 -->
+            <section class="release-section">
+                <div class="release-header">
+                    <h2>v0.19.0</h2>
+                    <span class="release-date">February 9, 2026</span>
+                </div>
+
+                <div class="release-highlight">
+                    <span style="font-size: 1.5rem;">🌿</span>
+                    <strong>Data Virtualization</strong> — branching, column-level ACL, rate limiter fixes
+                </div>
+
+                <h4>Added</h4>
+                <ul class="changelog-list">
+                    <li><strong>Gateway:</strong> Data virtualization branching with CLI commands</li>
+                    <li><strong>Gateway:</strong> Column-level access control policies</li>
+                </ul>
+
+                <h4>Fixed</h4>
+                <ul class="changelog-list">
+                    <li>Rate limiter correctness, REST response caching, compression middleware</li>
+                    <li>Clippy cleanup across workspace</li>
+                </ul>
+            </section>
+
+            <!-- v0.18.6 -->
+            <section class="release-section">
+                <div class="release-header">
+                    <h2>v0.18.6</h2>
+                    <span class="release-date">February 10, 2026</span>
+                </div>
+
+                <h4>Added</h4>
+                <ul class="changelog-list">
+                    <li><strong>Core:</strong> Codegen emits <code>RequiresRls</code> / <code>DirectBuild</code> markers for compile-time tenant safety</li>
+                    <li><strong>Core:</strong> RLS Proof Witness — compile-time tenant enforcement patterns</li>
+                </ul>
+            </section>
+
+            <!-- v0.18.5 -->
+            <section class="release-section">
+                <div class="release-header">
+                    <h2>v0.18.5</h2>
+                    <span class="release-date">February 10, 2026</span>
+                </div>
+
+                <h4>Added</h4>
+                <ul class="changelog-list">
+                    <li>
+                        <strong>Core:</strong>
+                        <code>policy_parser</code> module — reusable SQL→AST parser for RLS policy expressions
+                    </li>
+                    <li>
+                        <strong>CLI:</strong>
+                        Fully AST-native introspection — zero <code>fetch_raw</code> calls
+                    </li>
+                </ul>
+
+                <h4>Fixed</h4>
+                <ul class="changelog-list">
+                    <li>Removed ~166 lines of duplicate policy parsing code from <code>introspection.rs</code></li>
+                </ul>
+            </section>
+
+            <!-- v0.15.9 -->
+            <section class="release-section">
+                <div class="release-header">
+                    <h2>v0.15.9</h2>
+                    <span class="release-date">February 8, 2026</span>
+                </div>
+
+                <div class="release-highlight">
+                    <span style="font-size: 1.5rem;">🧱</span>
+                    <strong>Full DDL Coverage</strong> — extensions, sequences, enums, views, functions, triggers, grants
+                </div>
+
+                <h4>Added</h4>
+                <ul class="changelog-list">
+                    <li><strong>Core:</strong> CREATE/DROP EXTENSION, COMMENT ON, CREATE/ALTER/DROP SEQUENCE</li>
+                    <li><strong>Core:</strong> CREATE TYPE AS ENUM, expression indexes, multi-column foreign keys</li>
+                    <li><strong>Core:</strong> CREATE/DROP VIEW + MATERIALIZED VIEW, CREATE/DROP FUNCTION (PL/pgSQL)</li>
+                    <li><strong>Core:</strong> CREATE/DROP TRIGGER, GRANT/REVOKE</li>
+                    <li><strong>CLI:</strong> Subdirectory migration discovery, <code>.sql</code> file rejection, configurable <code>deltas/</code> directory</li>
+                </ul>
+            </section>
+
             <!-- v0.16.0 -->
             <section class="release-section">
                 <div class="release-header">
                     <h2>v0.16.0</h2>
                     <span class="release-date">February 8, 2026</span>
-                    <span class="status-badge full">Latest</span>
                 </div>
 
                 <div class="release-highlight">
