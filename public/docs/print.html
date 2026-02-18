@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "coal";
-            window.path_to_searchindex_js = "searchindex-4a5273a6.js";
+            window.path_to_searchindex_js = "searchindex-2ddfd2a5.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-77e67636.js"></script>
@@ -927,7 +927,10 @@ GET /api/orders/_aggregate?fn=count&amp;status=paid           # Filtered aggrega
 <p>Supported functions: <code>count</code>, <code>sum</code>, <code>avg</code>, <code>min</code>, <code>max</code>.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="authentication--security-1"><a class="header" href="#authentication--security-1">Authentication &amp; Security</a></h1>
-<p>The gateway provides multiple layers of security: JWT/webhook authentication, PostgreSQL Row-Level Security integration, a YAML policy engine, and query allow-listing.</p>
+<p>The gateway provides multiple layers of security: JWT authentication, PostgreSQL Row-Level Security integration, a YAML policy engine, and query allow-listing.</p>
+<blockquote>
+<p><strong>Note:</strong> Webhook-based authentication has been removed. JWT (<code>JWT_SECRET</code>) is the only supported authentication mechanism. If your reverse proxy needs to authenticate, forward user identity within the JWT — not via custom headers.</p>
+</blockquote>
 <hr>
 <h2 id="jwt-authentication-1"><a class="header" href="#jwt-authentication-1">JWT Authentication</a></h2>
 <p>The gateway validates JWT tokens and extracts tenant context for RLS.</p>
@@ -950,17 +953,9 @@ set_config('app.role', '&lt;from JWT&gt;', false);
 <pre><code class="language-bash">curl -H "x-operator-id: uuid" -H "x-user-id: uuid" /api/orders
 </code></pre>
 <blockquote>
-<p><strong>Warning:</strong> Header-based auth is only active when <code>JWT_SECRET</code> is <strong>not set</strong>. In production with <code>JWT_SECRET</code> configured, these headers are ignored — role and identity are cryptographically bound to the JWT token.</p>
+<p><strong>Warning:</strong> Header-based auth is only active when <code>QAIL_DEV_MODE=true</code> is set <strong>and</strong> <code>JWT_SECRET</code> is <strong>not set</strong>. The gateway will <strong>refuse to start</strong> in dev mode when the bind address is not <code>localhost</code> — preventing accidental exposure of header-based auth on public interfaces.</p>
 </blockquote>
 <hr>
-<h2 id="webhook-auth-1"><a class="header" href="#webhook-auth-1">Webhook Auth</a></h2>
-<p>Delegate authentication to an external service:</p>
-<pre><code class="language-toml"># qail.toml
-[gateway.auth.webhook]
-url = "https://auth.example.com/verify"
-headers_forward = ["Authorization", "Cookie"]
-</code></pre>
-<p>The gateway forwards the specified headers to your auth endpoint. The webhook response becomes the auth context.</p>
 <hr>
 <h2 id="row-level-security-rls-1"><a class="header" href="#row-level-security-rls-1">Row-Level Security (RLS)</a></h2>
 <p>Every query is automatically scoped to the authenticated tenant via PostgreSQL’s native RLS. The gateway sets session variables before each query:</p>
@@ -1051,6 +1046,15 @@ rate_limit = 100
 </tbody>
 </table>
 </div>
+<hr>
+<h2 id="internal-endpoint-protection-m4"><a class="header" href="#internal-endpoint-protection-m4">Internal Endpoint Protection (M4)</a></h2>
+<p>The <code>/metrics</code> and <code>/health/internal</code> endpoints expose operational details. Protect them in production:</p>
+<pre><code class="language-toml"># qail.toml
+[gateway]
+admin_token = "your-secret-admin-token"
+</code></pre>
+<p>When set, both endpoints require <code>Authorization: Bearer &lt;admin_token&gt;</code>. Without the token, they return <code>401 Unauthorized</code>.</p>
+<p>Alternatively, restrict access via network policy (firewall rules, reverse proxy).</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="real-time--events"><a class="header" href="#real-time--events">Real-Time &amp; Events</a></h1>
 <p>The gateway supports real-time data through WebSocket subscriptions, live queries, and event triggers with webhook delivery.</p>
