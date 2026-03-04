@@ -4,7 +4,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
 <BaseLayout
     title="Roadmap | QAIL — The Provably Correct Backend"
-    description="QAIL Roadmap 2026: From AST-native database access to compile-time correctness proofs. 7 systems complete, 3 visionary phases ahead."
+    description="QAIL roadmap and delivery log. Current focus: protocol hardening, validator depth, and migration safety defaults."
 >
     <style>
         .roadmap-hero {
@@ -254,7 +254,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
     <header class="page-header">
         <div class="container roadmap-hero">
-            <span class="version-tag">v0.18.5 · Feb 2026</span>
+            <span class="version-tag">Updated · March 2026</span>
             <h1>Roadmap</h1>
             <p class="subtitle">
                 The Provably Correct Backend
@@ -658,9 +658,9 @@ import BaseLayout from "../layouts/BaseLayout.astro";
                     class="manifesto-quote"
                     style="border-left-color: var(--accent-purple); background: rgba(168, 85, 247, 0.05);"
                 >
-                    "QAIL eliminates SQL strings entirely. The builder API
-                    (Qail::get(), Qail::add()) is the ONLY way to construct
-                    queries. No parsing at runtime, no strings anywhere."
+                    "QAIL's default builder path avoids SQL strings in application code. The builder API
+                    (Qail::get(), Qail::add()) is the primary safe path for constructing
+                    queries. No runtime SQL-string parsing on the AST path."
                 </blockquote>
             </section>
         </div>

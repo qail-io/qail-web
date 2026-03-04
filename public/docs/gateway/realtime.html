@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "coal";
             const default_dark_theme = "coal";
-            window.path_to_searchindex_js = "../searchindex-2706ae00.js";
+            window.path_to_searchindex_js = "../searchindex-412820a1.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-d260c190.js"></script>
@@ -189,14 +189,13 @@
 <pre><code class="language-javascript">const ws = new WebSocket('ws://localhost:8080/ws');
 ws.send(JSON.stringify({
   type: 'subscribe',
-  table: 'orders',
-  filter: { status: 'paid' }
+  channel: 'qail_table_orders'
 }));
 
 ws.onmessage = (event) =&gt; {
-  const { type, data } = JSON.parse(event.data);
-  // type: "INSERT" | "UPDATE" | "DELETE"
-  console.log('Change:', type, data);
+  const msg = JSON.parse(event.data);
+  // type: "subscribed" | "notification" | "error"
+  console.log(msg);
 };
 </code></pre>
 <p>Subscriptions are scoped by your RLS policies — each client only receives events for rows they are authorized to see.</p>
@@ -205,28 +204,26 @@ ws.onmessage = (event) =&gt; {
 <p>Auto-refresh query results when underlying data changes:</p>
 <pre><code class="language-javascript">ws.send(JSON.stringify({
   type: 'live_query',
-  query: '/api/orders?status=paid&amp;sort=-created_at&amp;limit=10',
-  interval: 2000  // Poll interval in ms
+  qail: "get orders where status = 'paid' order by created_at desc limit 10",
+  table: 'orders',
+  interval_ms: 2000
 }));
 </code></pre>
 <p>The gateway re-executes the query at the specified interval and pushes updated results only when data has changed.</p>
 <hr>
 <h2 id="event-triggers"><a class="header" href="#event-triggers">Event Triggers</a></h2>
 <p>Fire webhooks on database mutations. Define triggers in YAML:</p>
-<pre><code class="language-yaml">events:
-  - name: order_created
-    table: orders
-    operations: [INSERT]
-    webhook: "https://api.example.com/hooks/order-created"
-    headers:
-      X-Secret: "webhook-secret-key"
-    retry:
-      count: 3
-      interval: 5000
-  - name: order_updated
-    table: orders
-    operations: [UPDATE]
-    webhook: "https://api.example.com/hooks/order-updated"
+<pre><code class="language-yaml">- name: order_created
+  table: orders
+  operations: [create]
+  webhook_url: "https://api.example.com/hooks/order-created"
+  headers:
+    X-Secret: webhook-secret-key
+  retry_count: 3
+- name: order_updated
+  table: orders
+  operations: [update]
+  webhook_url: "https://api.example.com/hooks/order-updated"
 </code></pre>
 <h3 id="webhook-payload"><a class="header" href="#webhook-payload">Webhook Payload</a></h3>
 <pre><code class="language-json">{
@@ -254,9 +251,9 @@ ws.onmessage = (event) =&gt; {
 <tr><th>Operation</th><th>Fires on</th><th>Payload</th></tr>
 </thead>
 <tbody>
-<tr><td><code>INSERT</code></td><td><code>POST /api/{table}</code></td><td><code>new</code> data</td></tr>
-<tr><td><code>UPDATE</code></td><td><code>PATCH /api/{table}/:id</code></td><td><code>new</code> + <code>old</code> data</td></tr>
-<tr><td><code>DELETE</code></td><td><code>DELETE /api/{table}/:id</code></td><td><code>old</code> data</td></tr>
+<tr><td><code>create</code></td><td><code>POST /api/{table}</code></td><td><code>new</code> data</td></tr>
+<tr><td><code>update</code></td><td><code>PATCH /api/{table}/:id</code></td><td><code>new</code> + <code>old</code> data</td></tr>
+<tr><td><code>delete</code></td><td><code>DELETE /api/{table}/:id</code></td><td><code>old</code> data</td></tr>
 </tbody>
 </table>
 </div>

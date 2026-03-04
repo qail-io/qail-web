@@ -11,7 +11,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
             <p class="blog-meta">February 8, 2026 · 8 min read</p>
             <h1>Why Every Rust PostgreSQL Driver Ignores Row-Level Security</h1>
             <p class="subtitle">
-                And how we built the first driver that makes multi-tenant data isolation impossible to forget.
+                And how we built the first driver that makes multi-tenant data isolation hard to forget and easier to enforce.
             </p>
         </div>
     </header>
@@ -177,7 +177,7 @@ let rows = driver.query(&query).await?;</code>
                 <p style="margin-top: 1.5rem;">
                     The key insight: <strong>the RLS context is attached to the AST node, not to the connection</strong>.
                     The driver sees <code>.with_rls(ctx)</code> on the query and handles the entire lifecycle atomically.
-                    You can't forget. You can't split it across connections. It's structural.
+                    This makes tenant scoping harder to forget and prevents common cross-connection mistakes.
                 </p>
             </section>
 

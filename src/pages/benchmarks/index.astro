@@ -4,7 +4,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 
 <BaseLayout
     title="Benchmarks | QAIL"
-    description="QAIL Performance Benchmarks - The fastest PostgreSQL driver."
+    description="QAIL benchmark reports and reproducible performance experiments."
 >
     <style is:global>
         .benchmark-list {
@@ -79,8 +79,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         <div class="container">
             <h1>Performance Benchmarks</h1>
             <p class="subtitle">
-                Reproducible benchmarks comparing QAIL against other PostgreSQL
-                drivers
+                Snapshot benchmark reports; rerun on your own hardware and network for exact numbers
             </p>
         </div>
     </header>
@@ -94,7 +93,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
                     class="benchmark-card"
                 >
                     <div class="date">
-                        January 1, 2026 <span class="latest-badge">NEW</span>
+                        January 1, 2026 <span class="latest-badge">Latest report</span>
                     </div>
                     <div class="title">
                         🚀 Qdrant Vector Search <span class="badge-metric"

@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "coal";
-            window.path_to_searchindex_js = "searchindex-2706ae00.js";
+            window.path_to_searchindex_js = "searchindex-412820a1.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-d260c190.js"></script>
@@ -195,8 +195,10 @@ POST   /api/{table}              # Create
 PATCH  /api/{table}/:id          # Update
 DELETE /api/{table}/:id          # Delete
 GET    /api/{table}/_explain     # EXPLAIN ANALYZE
-GET    /api/{table}/_aggregate   # Aggregations
+GET    /api/{table}/aggregate    # Aggregations
+GET    /api/{table}/_aggregate   # Aggregations (compat alias)
 GET    /api/{table}/:id/{child}  # Nested resources (FK-based)
+POST   /api/rpc/{function}       # Function RPC with JSON args
 </code></pre>
 <h2 id="query-api"><a class="header" href="#query-api">Query API</a></h2>
 <h3 id="filtering"><a class="header" href="#filtering">Filtering</a></h3>
@@ -236,6 +238,7 @@ GET /api/orders?expand=users,operators                    # Multiple relations
 GET /api/orders?expand=nested:users                       # Nested FK expansion
 </code></pre>
 <p>Response includes the full related object inline — <strong>no N+1 queries</strong>. The gateway performs a server-side JOIN.</p>
+<p><code>expand=</code> is for forward (many-to-one / one-to-one) relations. For reverse one-to-many expansion, use <code>nested:</code> to avoid parent-row duplication.</p>
 <h3 id="nested-resource-routes"><a class="header" href="#nested-resource-routes">Nested Resource Routes</a></h3>
 <p>Access child resources through parent:</p>
 <pre><code>GET /api/operators/:id/orders                             # All orders for operator
@@ -263,67 +266,57 @@ curl -X POST /api/orders -d '[{"total": 100}, {"total": 200}]'
 <h3 id="returning-clause"><a class="header" href="#returning-clause">Returning Clause</a></h3>
 <p>All mutations support <code>?returning=id,status</code> to get back specific columns after the operation.</p>
 <h2 id="aggregations"><a class="header" href="#aggregations">Aggregations</a></h2>
-<pre><code>GET /api/orders/_aggregate?fn=count                       # COUNT(*)
-GET /api/orders/_aggregate?fn=sum&amp;column=total            # SUM(total)
-GET /api/orders/_aggregate?fn=avg&amp;column=total            # AVG
-GET /api/orders/_aggregate?fn=min&amp;column=created_at       # MIN
-GET /api/orders/_aggregate?fn=max&amp;column=total            # MAX
-GET /api/orders/_aggregate?fn=count&amp;status=paid           # Filtered aggregation
+<pre><code>GET /api/orders/aggregate?fn=count                        # COUNT(*)
+GET /api/orders/aggregate?fn=sum&amp;column=total             # SUM(total)
+GET /api/orders/aggregate?fn=avg&amp;column=total             # AVG
+GET /api/orders/aggregate?fn=min&amp;column=created_at        # MIN
+GET /api/orders/aggregate?fn=max&amp;column=total             # MAX
+GET /api/orders/aggregate?fn=count&amp;status=paid            # Filtered aggregation
+GET /api/orders/_aggregate?fn=count                        # Alias (compat)
+</code></pre>
+<h2 id="function-rpc"><a class="header" href="#function-rpc">Function RPC</a></h2>
+<pre><code>POST /api/rpc/search_orders
+Body: { "tenant_id": "acme", "limit": 25 }               # Named args
+
+POST /api/rpc/rebuild_index
+Body: ["orders", true]                                     # Positional args
 </code></pre>
 <h2 id="authentication--security"><a class="header" href="#authentication--security">Authentication &amp; Security</a></h2>
 <h3 id="jwt-authentication"><a class="header" href="#jwt-authentication">JWT Authentication</a></h3>
-<p>The gateway validates JWT tokens and extracts tenant context for RLS:</p>
-<pre><code class="language-yaml"># gateway.yaml
-auth:
-  jwt:
-    secret: "your-hs256-secret"        # HS256
-    # OR
-    jwks_url: "https://..."            # RS256 via JWKS
-  claims:
-    operator_id: "operator_id"
-    user_id: "sub"
-    role: "role"
+<p>The gateway validates <code>Authorization: Bearer &lt;jwt&gt;</code> tokens and extracts tenant context for RLS.
+Set <code>JWT_SECRET</code> in the environment:</p>
+<pre><code class="language-bash">export JWT_SECRET="your-hs256-secret"
 </code></pre>
 <h3 id="header-based-dev-auth"><a class="header" href="#header-based-dev-auth">Header-Based Dev Auth</a></h3>
 <p>For development, pass claims directly as headers:</p>
-<pre><code class="language-bash">curl -H "x-operator-id: uuid" -H "x-user-id: uuid" /api/orders
-</code></pre>
-<h3 id="webhook-auth"><a class="header" href="#webhook-auth">Webhook Auth</a></h3>
-<p>Delegate authentication to an external service:</p>
-<pre><code class="language-yaml">auth:
-  webhook:
-    url: "https://auth.example.com/verify"
-    headers_forward: ["Authorization", "Cookie"]
+<pre><code class="language-bash">curl \
+  -H "x-user-id: user-123" \
+  -H "x-user-role: operator" \
+  -H "x-tenant-id: tenant-abc" \
+  /api/orders
 </code></pre>
 <h3 id="row-level-security-rls"><a class="header" href="#row-level-security-rls">Row-Level Security (RLS)</a></h3>
-<p>Every query is automatically scoped to the authenticated tenant via PostgreSQL’s native RLS. The gateway sets session variables (<code>app.operator_id</code>, <code>app.user_id</code>) before each query — <strong>no manual WHERE clauses needed</strong>.</p>
+<p>Every query is automatically scoped to the authenticated tenant via PostgreSQL’s native RLS. The gateway sets session variables (<code>app.current_operator_id</code>, <code>app.current_user_id</code>) before each query — <strong>no manual WHERE clauses needed</strong>.</p>
 <h3 id="yaml-policy-engine"><a class="header" href="#yaml-policy-engine">YAML Policy Engine</a></h3>
 <p>Fine-grained access control per table, per role:</p>
 <pre><code class="language-yaml">policies:
-  orders:
-    roles:
-      agent:
-        select: true
-        insert: true
-        update: true
-        delete: false
-        columns: ["id", "status", "total", "created_at"]  # Column-level
-        filter:                                             # Row-level
-          operator_id: "x-operator-id"
-      viewer:
-        select: true
-        columns: ["id", "status"]
+  - name: orders_agent_read
+    table: orders
+    role: agent
+    operations: [read]
+    filter: "operator_id = $tenant_id"
+    allowed_columns: ["id", "status", "total", "created_at"]
+  - name: orders_viewer_read
+    table: orders
+    role: viewer
+    operations: [read]
+    allowed_columns: ["id", "status"]
 </code></pre>
 <h3 id="query-allow-listing"><a class="header" href="#query-allow-listing">Query Allow-Listing</a></h3>
 <p>Lock down which queries can run in production:</p>
-<pre><code class="language-yaml">security:
-  allow_list:
-    enabled: true
-    queries:
-      - "GET /api/orders"
-      - "GET /api/orders/:id"
-  complexity_limit: 10        # Max query depth
-  rate_limit: 100             # Requests per minute
+<pre><code class="language-toml"># qail.toml
+[gateway]
+allow_list_path = "allow_list.txt"
 </code></pre>
 <h2 id="real-time"><a class="header" href="#real-time">Real-Time</a></h2>
 <h3 id="websocket-subscriptions"><a class="header" href="#websocket-subscriptions">WebSocket Subscriptions</a></h3>
@@ -331,38 +324,37 @@ auth:
 <pre><code class="language-javascript">const ws = new WebSocket('ws://localhost:8080/ws');
 ws.send(JSON.stringify({
   type: 'subscribe',
-  table: 'orders',
-  filter: { status: 'paid' }
+  channel: 'qail_table_orders'
 }));
 
 ws.onmessage = (event) =&gt; {
-  const { type, data } = JSON.parse(event.data);
-  // type: "INSERT" | "UPDATE" | "DELETE"
-  console.log('Change:', type, data);
+  const msg = JSON.parse(event.data);
+  // type: "subscribed" | "notification" | "error"
+  console.log(msg);
 };
 </code></pre>
 <h3 id="live-queries"><a class="header" href="#live-queries">Live Queries</a></h3>
 <p>Auto-refresh query results when underlying data changes:</p>
 <pre><code class="language-javascript">ws.send(JSON.stringify({
   type: 'live_query',
-  query: '/api/orders?status=paid&amp;sort=-created_at&amp;limit=10',
-  interval: 2000  // Poll interval in ms
+  qail: "get orders where status = 'paid' order by created_at desc limit 10",
+  table: 'orders',
+  interval_ms: 2000
 }));
 </code></pre>
 <h3 id="event-triggers"><a class="header" href="#event-triggers">Event Triggers</a></h3>
 <p>Fire webhooks on database mutations:</p>
-<pre><code class="language-yaml">events:
-  - name: order_created
-    table: orders
-    operations: [INSERT]
-    webhook: "https://api.example.com/hooks/order-created"
-    retry:
-      count: 3
-      interval: 5000
-  - name: order_updated
-    table: orders
-    operations: [UPDATE]
-    webhook: "https://api.example.com/hooks/order-updated"
+<pre><code class="language-yaml">- name: order_created
+  table: orders
+  operations: [create]
+  webhook_url: "https://api.example.com/hooks/order-created"
+  retry_count: 3
+  headers:
+    X-Secret: webhook-secret-key
+- name: order_updated
+  table: orders
+  operations: [update]
+  webhook_url: "https://api.example.com/hooks/order-updated"
 </code></pre>
 <h2 id="performance"><a class="header" href="#performance">Performance</a></h2>
 <h3 id="response-streaming"><a class="header" href="#response-streaming">Response Streaming</a></h3>

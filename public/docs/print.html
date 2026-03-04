@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "coal";
-            window.path_to_searchindex_js = "searchindex-2706ae00.js";
+            window.path_to_searchindex_js = "searchindex-412820a1.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-d260c190.js"></script>
@@ -198,10 +198,12 @@
 <tbody>
 <tr><td><strong>1</strong></td><td><strong>SQL-AST</strong></td><td><strong>PostgreSQL</strong></td><td><code>qail-pg</code> — Native wire protocol, AST-to-bytes</td></tr>
 <tr><td><strong>2</strong></td><td><strong>Vector-AST</strong></td><td><strong>Qdrant</strong></td><td><code>qail-qdrant</code> — gRPC + REST, vector search</td></tr>
-<tr><td><strong>3</strong></td><td><strong>KV-Command</strong></td><td><strong>Redis</strong></td><td><code>qail-redis</code> — Native RESP3 protocol</td></tr>
 </tbody>
 </table>
 </div>
+<blockquote>
+<p>Redis support (<code>qail-redis</code>) was removed in <code>v0.20.0</code>.</p>
+</blockquote>
 <h3 id="-not-supported"><a class="header" href="#-not-supported">❌ Not Supported</a></h3>
 <ul>
 <li><strong>Oracle, SQL Server, MySQL:</strong> Proprietary/Closed protocols.</li>
@@ -222,7 +224,7 @@ let cmd = Qail::get("users")
 let mut driver = PgDriver::connect("localhost", 5432, "user", "db").await?;
 let rows = driver.query(&amp;cmd).await?;
 <span class="boring">}</span></code></pre>
-<h2 id="current-status-80-production-ready"><a class="header" href="#current-status-80-production-ready">Current Status (~80% Production Ready)</a></h2>
+<h2 id="current-status-production-ready-actively-hardened"><a class="header" href="#current-status-production-ready-actively-hardened">Current Status (Production Ready, Actively Hardened)</a></h2>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -407,8 +409,10 @@ POST   /api/{table}              # Create
 PATCH  /api/{table}/:id          # Update
 DELETE /api/{table}/:id          # Delete
 GET    /api/{table}/_explain     # EXPLAIN ANALYZE
-GET    /api/{table}/_aggregate   # Aggregations
+GET    /api/{table}/aggregate    # Aggregations
+GET    /api/{table}/_aggregate   # Aggregations (compat alias)
 GET    /api/{table}/:id/{child}  # Nested resources (FK-based)
+POST   /api/rpc/{function}       # Function RPC with JSON args
 </code></pre>
 <h2 id="query-api"><a class="header" href="#query-api">Query API</a></h2>
 <h3 id="filtering"><a class="header" href="#filtering">Filtering</a></h3>
@@ -448,6 +452,7 @@ GET /api/orders?expand=users,operators                    # Multiple relations
 GET /api/orders?expand=nested:users                       # Nested FK expansion
 </code></pre>
 <p>Response includes the full related object inline — <strong>no N+1 queries</strong>. The gateway performs a server-side JOIN.</p>
+<p><code>expand=</code> is for forward (many-to-one / one-to-one) relations. For reverse one-to-many expansion, use <code>nested:</code> to avoid parent-row duplication.</p>
 <h3 id="nested-resource-routes"><a class="header" href="#nested-resource-routes">Nested Resource Routes</a></h3>
 <p>Access child resources through parent:</p>
 <pre><code>GET /api/operators/:id/orders                             # All orders for operator
@@ -475,67 +480,57 @@ curl -X POST /api/orders -d '[{"total": 100}, {"total": 200}]'
 <h3 id="returning-clause"><a class="header" href="#returning-clause">Returning Clause</a></h3>
 <p>All mutations support <code>?returning=id,status</code> to get back specific columns after the operation.</p>
 <h2 id="aggregations"><a class="header" href="#aggregations">Aggregations</a></h2>
-<pre><code>GET /api/orders/_aggregate?fn=count                       # COUNT(*)
-GET /api/orders/_aggregate?fn=sum&amp;column=total            # SUM(total)
-GET /api/orders/_aggregate?fn=avg&amp;column=total            # AVG
-GET /api/orders/_aggregate?fn=min&amp;column=created_at       # MIN
-GET /api/orders/_aggregate?fn=max&amp;column=total            # MAX
-GET /api/orders/_aggregate?fn=count&amp;status=paid           # Filtered aggregation
+<pre><code>GET /api/orders/aggregate?fn=count                        # COUNT(*)
+GET /api/orders/aggregate?fn=sum&amp;column=total             # SUM(total)
+GET /api/orders/aggregate?fn=avg&amp;column=total             # AVG
+GET /api/orders/aggregate?fn=min&amp;column=created_at        # MIN
+GET /api/orders/aggregate?fn=max&amp;column=total             # MAX
+GET /api/orders/aggregate?fn=count&amp;status=paid            # Filtered aggregation
+GET /api/orders/_aggregate?fn=count                        # Alias (compat)
+</code></pre>
+<h2 id="function-rpc"><a class="header" href="#function-rpc">Function RPC</a></h2>
+<pre><code>POST /api/rpc/search_orders
+Body: { "tenant_id": "acme", "limit": 25 }               # Named args
+
+POST /api/rpc/rebuild_index
+Body: ["orders", true]                                     # Positional args
 </code></pre>
 <h2 id="authentication--security"><a class="header" href="#authentication--security">Authentication &amp; Security</a></h2>
 <h3 id="jwt-authentication"><a class="header" href="#jwt-authentication">JWT Authentication</a></h3>
-<p>The gateway validates JWT tokens and extracts tenant context for RLS:</p>
-<pre><code class="language-yaml"># gateway.yaml
-auth:
-  jwt:
-    secret: "your-hs256-secret"        # HS256
-    # OR
-    jwks_url: "https://..."            # RS256 via JWKS
-  claims:
-    operator_id: "operator_id"
-    user_id: "sub"
-    role: "role"
+<p>The gateway validates <code>Authorization: Bearer &lt;jwt&gt;</code> tokens and extracts tenant context for RLS.
+Set <code>JWT_SECRET</code> in the environment:</p>
+<pre><code class="language-bash">export JWT_SECRET="your-hs256-secret"
 </code></pre>
 <h3 id="header-based-dev-auth"><a class="header" href="#header-based-dev-auth">Header-Based Dev Auth</a></h3>
 <p>For development, pass claims directly as headers:</p>
-<pre><code class="language-bash">curl -H "x-operator-id: uuid" -H "x-user-id: uuid" /api/orders
-</code></pre>
-<h3 id="webhook-auth"><a class="header" href="#webhook-auth">Webhook Auth</a></h3>
-<p>Delegate authentication to an external service:</p>
-<pre><code class="language-yaml">auth:
-  webhook:
-    url: "https://auth.example.com/verify"
-    headers_forward: ["Authorization", "Cookie"]
+<pre><code class="language-bash">curl \
+  -H "x-user-id: user-123" \
+  -H "x-user-role: operator" \
+  -H "x-tenant-id: tenant-abc" \
+  /api/orders
 </code></pre>
 <h3 id="row-level-security-rls"><a class="header" href="#row-level-security-rls">Row-Level Security (RLS)</a></h3>
-<p>Every query is automatically scoped to the authenticated tenant via PostgreSQL’s native RLS. The gateway sets session variables (<code>app.operator_id</code>, <code>app.user_id</code>) before each query — <strong>no manual WHERE clauses needed</strong>.</p>
+<p>Every query is automatically scoped to the authenticated tenant via PostgreSQL’s native RLS. The gateway sets session variables (<code>app.current_operator_id</code>, <code>app.current_user_id</code>) before each query — <strong>no manual WHERE clauses needed</strong>.</p>
 <h3 id="yaml-policy-engine"><a class="header" href="#yaml-policy-engine">YAML Policy Engine</a></h3>
 <p>Fine-grained access control per table, per role:</p>
 <pre><code class="language-yaml">policies:
-  orders:
-    roles:
-      agent:
-        select: true
-        insert: true
-        update: true
-        delete: false
-        columns: ["id", "status", "total", "created_at"]  # Column-level
-        filter:                                             # Row-level
-          operator_id: "x-operator-id"
-      viewer:
-        select: true
-        columns: ["id", "status"]
+  - name: orders_agent_read
+    table: orders
+    role: agent
+    operations: [read]
+    filter: "operator_id = $tenant_id"
+    allowed_columns: ["id", "status", "total", "created_at"]
+  - name: orders_viewer_read
+    table: orders
+    role: viewer
+    operations: [read]
+    allowed_columns: ["id", "status"]
 </code></pre>
 <h3 id="query-allow-listing"><a class="header" href="#query-allow-listing">Query Allow-Listing</a></h3>
 <p>Lock down which queries can run in production:</p>
-<pre><code class="language-yaml">security:
-  allow_list:
-    enabled: true
-    queries:
-      - "GET /api/orders"
-      - "GET /api/orders/:id"
-  complexity_limit: 10        # Max query depth
-  rate_limit: 100             # Requests per minute
+<pre><code class="language-toml"># qail.toml
+[gateway]
+allow_list_path = "allow_list.txt"
 </code></pre>
 <h2 id="real-time"><a class="header" href="#real-time">Real-Time</a></h2>
 <h3 id="websocket-subscriptions"><a class="header" href="#websocket-subscriptions">WebSocket Subscriptions</a></h3>
@@ -543,38 +538,37 @@ auth:
 <pre><code class="language-javascript">const ws = new WebSocket('ws://localhost:8080/ws');
 ws.send(JSON.stringify({
   type: 'subscribe',
-  table: 'orders',
-  filter: { status: 'paid' }
+  channel: 'qail_table_orders'
 }));
 
 ws.onmessage = (event) =&gt; {
-  const { type, data } = JSON.parse(event.data);
-  // type: "INSERT" | "UPDATE" | "DELETE"
-  console.log('Change:', type, data);
+  const msg = JSON.parse(event.data);
+  // type: "subscribed" | "notification" | "error"
+  console.log(msg);
 };
 </code></pre>
 <h3 id="live-queries"><a class="header" href="#live-queries">Live Queries</a></h3>
 <p>Auto-refresh query results when underlying data changes:</p>
 <pre><code class="language-javascript">ws.send(JSON.stringify({
   type: 'live_query',
-  query: '/api/orders?status=paid&amp;sort=-created_at&amp;limit=10',
-  interval: 2000  // Poll interval in ms
+  qail: "get orders where status = 'paid' order by created_at desc limit 10",
+  table: 'orders',
+  interval_ms: 2000
 }));
 </code></pre>
 <h3 id="event-triggers"><a class="header" href="#event-triggers">Event Triggers</a></h3>
 <p>Fire webhooks on database mutations:</p>
-<pre><code class="language-yaml">events:
-  - name: order_created
-    table: orders
-    operations: [INSERT]
-    webhook: "https://api.example.com/hooks/order-created"
-    retry:
-      count: 3
-      interval: 5000
-  - name: order_updated
-    table: orders
-    operations: [UPDATE]
-    webhook: "https://api.example.com/hooks/order-updated"
+<pre><code class="language-yaml">- name: order_created
+  table: orders
+  operations: [create]
+  webhook_url: "https://api.example.com/hooks/order-created"
+  retry_count: 3
+  headers:
+    X-Secret: webhook-secret-key
+- name: order_updated
+  table: orders
+  operations: [update]
+  webhook_url: "https://api.example.com/hooks/order-updated"
 </code></pre>
 <h2 id="performance"><a class="header" href="#performance">Performance</a></h2>
 <h3 id="response-streaming"><a class="header" href="#response-streaming">Response Streaming</a></h3>
@@ -681,8 +675,8 @@ GET /api/_openapi        # Auto-generated OpenAPI 3.0 spec
  │     Result row cap: max_result_rows (configurable)        │
  ├───────────────────────────────────────────────────────────┤
  │  9. Connection Release                                    │
- │     DISCARD ALL → clears server-side state                │
- │     Client caches cleared (prepared stmts, column info)   │
+ │     COMMIT → resets txn-local RLS + statement_timeout      │
+ │     Prepared statement caches remain hot for reuse         │
  │     Connection returned to pool in clean state            │
  └───────────────────────────────────────────────────────────┘
        │
@@ -692,7 +686,7 @@ GET /api/_openapi        # Auto-generated OpenAPI 3.0 spec
 <h2 id="connection-safety-model"><a class="header" href="#connection-safety-model">Connection Safety Model</a></h2>
 <p>The connection pool enforces a strict lifecycle:</p>
 <h3 id="acquisition"><a class="header" href="#acquisition">Acquisition</a></h3>
-<p>Three public methods — <code>acquire_raw()</code> is <strong>crate-internal only</strong>:</p>
+<p>Four public methods:</p>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -702,25 +696,20 @@ GET /api/_openapi        # Auto-generated OpenAPI 3.0 spec
 <tr><td><code>acquire_with_rls(ctx)</code></td><td>✅ Set</td><td>Default</td><td>Normal tenant queries</td></tr>
 <tr><td><code>acquire_with_rls_timeout(ctx, ms)</code></td><td>✅ Set</td><td>Custom</td><td>Gateway with <code>statement_timeout_ms</code></td></tr>
 <tr><td><code>acquire_system()</code></td><td>✅ Empty</td><td>Default</td><td>Schema introspection, migrations</td></tr>
-<tr><td><code>acquire_raw()</code> ⚠️</td><td>❌ None</td><td>Default</td><td><strong>Internal only</strong> — requires <code>// SAFETY:</code> comment</td></tr>
+<tr><td><code>acquire_raw()</code> ⚠️</td><td>❌ None</td><td>Default</td><td>Advanced/internal paths that set RLS immediately</td></tr>
 </tbody>
 </table>
 </div>
 <h3 id="release"><a class="header" href="#release">Release</a></h3>
 <p>Every connection release executes:</p>
-<pre><code class="language-sql">DISCARD ALL;   -- Clears prepared statements, temp tables, GUCs, session state
+<pre><code class="language-sql">COMMIT;   -- Ends txn opened by RLS setup; resets transaction-local GUCs
 </code></pre>
-<p>Followed by client-side cleanup:</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>conn.prepared_statements.clear();
-conn.stmt_cache.clear();
-conn.column_info_cache.clear();
-
-debug_assert!(conn.prepared_statements.is_empty(),
-    "INVARIANT VIOLATED: prepared statements survived DISCARD ALL");
-<span class="boring">}</span></code></pre>
-<p>This guarantees <strong>zero state leakage</strong> between tenants sharing the same physical connection.</p>
+<p>With transaction-local settings (<code>set_config(..., true)</code> + <code>SET LOCAL</code>), this resets:</p>
+<ul>
+<li>RLS context GUCs</li>
+<li><code>statement_timeout</code></li>
+</ul>
+<p>Prepared statement caches are intentionally preserved for performance while tenant context is reset on each release.</p>
 <h3 id="why-acquire_raw-is-restricted"><a class="header" href="#why-acquire_raw-is-restricted">Why <code>acquire_raw()</code> Is Restricted</a></h3>
 <p><code>acquire_raw()</code> returns a connection with <strong>no RLS context</strong>. If used for tenant queries, it would bypass row-level security entirely.</p>
 <p>Every internal call site must include a <code>// SAFETY:</code> comment explaining why raw acquisition is justified (typically: “RLS context is set immediately on the next line”). This convention is enforced via CI:</p>
@@ -739,9 +728,9 @@ grep -rn "acquire_raw" pg/src/ | grep -v "// SAFETY:"
 <h3 id="3-tenant-isolation-on-connection-reuse"><a class="header" href="#3-tenant-isolation-on-connection-reuse">3. Tenant Isolation on Connection Reuse</a></h3>
 <p>When a connection is released and re-acquired by a different tenant:</p>
 <ol>
-<li><code>DISCARD ALL</code> destroys all server-side state</li>
-<li>Client-side caches are cleared</li>
+<li><code>COMMIT</code> resets transaction-local RLS state and timeout</li>
 <li>New RLS context is set for the new tenant</li>
+<li>Query executes under the new tenant context</li>
 </ol>
 <p>The integration test <code>test_pool_connection_recycling_isolation</code> verifies this with a pool of size 1, forcing the same physical connection to serve two different tenants sequentially.</p>
 <h3 id="4-bounded-resource-consumption"><a class="header" href="#4-bounded-resource-consumption">4. Bounded Resource Consumption</a></h3>
@@ -817,8 +806,10 @@ grep -rn "acquire_raw" pg/src/ | grep -v "// SAFETY:"
 <tr><td><code>GET</code></td><td><code>/api/{table}</code></td><td>List with filters, sort, pagination</td></tr>
 <tr><td><code>GET</code></td><td><code>/api/{table}/:id</code></td><td>Get by primary key</td></tr>
 <tr><td><code>GET</code></td><td><code>/api/{table}/_explain</code></td><td>EXPLAIN ANALYZE</td></tr>
-<tr><td><code>GET</code></td><td><code>/api/{table}/_aggregate</code></td><td>Aggregations</td></tr>
+<tr><td><code>GET</code></td><td><code>/api/{table}/aggregate</code></td><td>Aggregations</td></tr>
+<tr><td><code>GET</code></td><td><code>/api/{table}/_aggregate</code></td><td>Aggregations (compat alias)</td></tr>
 <tr><td><code>GET</code></td><td><code>/api/{table}/:id/{child}</code></td><td>Nested resources (FK-based)</td></tr>
+<tr><td><code>POST</code></td><td><code>/api/rpc/{function}</code></td><td>Function RPC with JSON args</td></tr>
 <tr><td><code>POST</code></td><td><code>/api/{table}</code></td><td>Create (single or batch)</td></tr>
 <tr><td><code>PATCH</code></td><td><code>/api/{table}/:id</code></td><td>Partial update</td></tr>
 <tr><td><code>DELETE</code></td><td><code>/api/{table}/:id</code></td><td>Delete by primary key</td></tr>
@@ -827,15 +818,21 @@ grep -rn "acquire_raw" pg/src/ | grep -v "// SAFETY:"
 </div>
 <hr>
 <h2 id="filtering-1"><a class="header" href="#filtering-1">Filtering</a></h2>
-<p>All filter operators are supported as query parameters:</p>
+<p>All filter operators are supported as query parameters.
+Both key-style (<code>column.op=value</code>) and value-style (<code>column=op.value</code>) are accepted:</p>
 <pre><code>GET /api/orders?status=paid                              # Exact match
+GET /api/orders?status.eq=paid                           # Exact match (key-style)
 GET /api/orders?total=gt.100                             # Greater than
+GET /api/orders?total.gte=50&amp;total.lte=200               # Range (key-style)
 GET /api/orders?total=gte.50&amp;total=lte.200               # Range
 GET /api/orders?status=in.(paid,shipped)                 # IN list
+GET /api/orders?status.in=paid,shipped                   # IN list (key-style)
 GET /api/orders?name=like.*ferry*                        # Pattern match
 GET /api/orders?name=ilike.*FERRY*                       # Case-insensitive
 GET /api/orders?notes=is_null                            # NULL check
+GET /api/orders?notes.is_null=true                       # NULL check (key-style)
 GET /api/orders?status=ne.cancelled                      # Not equal
+GET /api/orders?status.ne=cancelled                      # Not equal (key-style)
 GET /api/orders?tags=contains.premium                    # Array contains
 </code></pre>
 <h3 id="operator-reference"><a class="header" href="#operator-reference">Operator Reference</a></h3>
@@ -846,13 +843,13 @@ GET /api/orders?tags=contains.premium                    # Array contains
 </thead>
 <tbody>
 <tr><td><code>eq</code> (default)</td><td><code>=</code></td><td><code>?status=paid</code></td></tr>
-<tr><td><code>ne</code></td><td><code>!=</code></td><td><code>?status=ne.cancelled</code></td></tr>
+<tr><td><code>ne</code></td><td><code>!=</code></td><td><code>?status=ne.cancelled</code> or <code>?status.ne=cancelled</code></td></tr>
 <tr><td><code>gt</code> / <code>gte</code></td><td><code>&gt;</code> / <code>&gt;=</code></td><td><code>?total=gte.100</code></td></tr>
 <tr><td><code>lt</code> / <code>lte</code></td><td><code>&lt;</code> / <code>&lt;=</code></td><td><code>?age=lt.30</code></td></tr>
-<tr><td><code>in</code></td><td><code>IN (...)</code></td><td><code>?status=in.(active,pending)</code></td></tr>
+<tr><td><code>in</code></td><td><code>IN (...)</code></td><td><code>?status=in.(active,pending)</code> or <code>?status.in=active,pending</code></td></tr>
 <tr><td><code>like</code></td><td><code>LIKE</code></td><td><code>?email=like.*@gmail*</code></td></tr>
 <tr><td><code>ilike</code></td><td><code>ILIKE</code></td><td><code>?name=ilike.*john*</code></td></tr>
-<tr><td><code>is_null</code></td><td><code>IS NULL</code></td><td><code>?deleted_at=is_null</code></td></tr>
+<tr><td><code>is_null</code></td><td><code>IS NULL</code></td><td><code>?deleted_at=is_null</code> or <code>?deleted_at.is_null=true</code></td></tr>
 <tr><td><code>contains</code></td><td><code>@&gt;</code></td><td><code>?tags=contains.premium</code></td></tr>
 </tbody>
 </table>
@@ -868,6 +865,7 @@ GET /api/products?search=ferry&amp;search_columns=name,desc  # Search specific c
 <pre><code>GET /api/orders?sort=created_at                          # Ascending (default)
 GET /api/orders?sort=-total                              # Descending (prefix -)
 GET /api/orders?sort=-status,created_at                  # Multi-column
+GET /api/orders?sort=total:desc,created_at:asc           # Multi-column (explicit)
 </code></pre>
 <hr>
 <h2 id="pagination-1"><a class="header" href="#pagination-1">Pagination</a></h2>
@@ -888,6 +886,7 @@ GET /api/orders?expand=users,operators                    # Multiple relations
 GET /api/orders?expand=nested:users                       # Nested FK expansion
 </code></pre>
 <p>Response includes the full related object inline — <strong>no N+1 queries</strong>. The gateway performs a server-side JOIN.</p>
+<p><code>expand=</code> is for forward (many-to-one / one-to-one) relations. For reverse one-to-many expansion, use <code>nested:</code> to avoid parent-row duplication.</p>
 <h3 id="nested-resource-routes-1"><a class="header" href="#nested-resource-routes-1">Nested Resource Routes</a></h3>
 <p>Access child resources through parent:</p>
 <pre><code>GET /api/operators/:id/orders                             # All orders for operator
@@ -917,14 +916,33 @@ curl -X POST /api/orders -d '[{"total": 100}, {"total": 200}]'
 <p>All mutations support <code>?returning=id,status</code> to get back specific columns after the operation.</p>
 <hr>
 <h2 id="aggregations-1"><a class="header" href="#aggregations-1">Aggregations</a></h2>
-<pre><code>GET /api/orders/_aggregate?fn=count                       # COUNT(*)
-GET /api/orders/_aggregate?fn=sum&amp;column=total            # SUM(total)
-GET /api/orders/_aggregate?fn=avg&amp;column=total            # AVG
-GET /api/orders/_aggregate?fn=min&amp;column=created_at       # MIN
-GET /api/orders/_aggregate?fn=max&amp;column=total            # MAX
-GET /api/orders/_aggregate?fn=count&amp;status=paid           # Filtered aggregation
+<pre><code>GET /api/orders/aggregate?fn=count                        # COUNT(*)
+GET /api/orders/aggregate?fn=sum&amp;column=total             # SUM(total)
+GET /api/orders/aggregate?fn=avg&amp;column=total             # AVG
+GET /api/orders/aggregate?fn=min&amp;column=created_at        # MIN
+GET /api/orders/aggregate?fn=max&amp;column=total             # MAX
+GET /api/orders/aggregate?fn=count&amp;status=paid            # Filtered aggregation
+GET /api/orders/_aggregate?fn=count                        # Alias (compat)
 </code></pre>
 <p>Supported functions: <code>count</code>, <code>sum</code>, <code>avg</code>, <code>min</code>, <code>max</code>.</p>
+<hr>
+<h2 id="rpc-functions"><a class="header" href="#rpc-functions">RPC Functions</a></h2>
+<p>Call PostgreSQL functions directly:</p>
+<pre><code class="language-bash"># Named arguments (object body)
+curl -X POST /api/rpc/search_orders \
+  -d '{"tenant_id":"acme","limit":25}'
+
+# Positional arguments (array body)
+curl -X POST /api/rpc/rebuild_index \
+  -d '["orders", true]'
+</code></pre>
+<p>Accepted body formats:</p>
+<ul>
+<li>JSON object: named args (<code>arg =&gt; value</code>)</li>
+<li>JSON array: positional args</li>
+<li>scalar/null: single positional arg</li>
+<li>empty body: no args</li>
+</ul>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="authentication--security-1"><a class="header" href="#authentication--security-1">Authentication &amp; Security</a></h1>
 <p>The gateway provides multiple layers of security: JWT authentication, PostgreSQL Row-Level Security integration, a YAML policy engine, and query allow-listing.</p>
@@ -934,12 +952,7 @@ GET /api/orders/_aggregate?fn=count&amp;status=paid           # Filtered aggrega
 <hr>
 <h2 id="jwt-authentication-1"><a class="header" href="#jwt-authentication-1">JWT Authentication</a></h2>
 <p>The gateway validates JWT tokens and extracts tenant context for RLS.</p>
-<p>Set <code>JWT_SECRET</code> as an environment variable or in <code>qail.toml</code>:</p>
-<pre><code class="language-toml"># qail.toml
-[gateway]
-jwt_secret = "your-hs256-secret"
-</code></pre>
-<p>Or set via environment variable (takes precedence over TOML):</p>
+<p>Set <code>JWT_SECRET</code> as an environment variable:</p>
 <pre><code class="language-bash">export JWT_SECRET="your-hs256-secret"
 </code></pre>
 <p>The extracted claims (<code>operator_id</code>, <code>user_id</code>, <code>role</code>) are set as PostgreSQL session variables before every query, enabling native RLS enforcement:</p>
@@ -950,12 +963,18 @@ set_config('app.role', '&lt;from JWT&gt;', false);
 <hr>
 <h2 id="header-based-dev-auth-1"><a class="header" href="#header-based-dev-auth-1">Header-Based Dev Auth</a></h2>
 <p>For development, pass claims directly as headers:</p>
-<pre><code class="language-bash">curl -H "x-operator-id: uuid" -H "x-user-id: uuid" /api/orders
+<pre><code class="language-bash">curl \
+  -H "x-user-id: user-123" \
+  -H "x-user-role: operator" \
+  -H "x-tenant-id: tenant-abc" \
+  /api/orders
 </code></pre>
 <blockquote>
-<p><strong>Warning:</strong> Header-based auth is only active when <code>QAIL_DEV_MODE=true</code> is set <strong>and</strong> <code>JWT_SECRET</code> is <strong>not set</strong>. The gateway will <strong>refuse to start</strong> in dev mode when the bind address is not <code>localhost</code> — preventing accidental exposure of header-based auth on public interfaces.</p>
+<p><strong>Warning:</strong> Header-based auth is only active when <code>QAIL_DEV_MODE=true</code> is set.
+This works independently of <code>JWT_SECRET</code> — you can have both JWT and dev-mode headers active simultaneously.
+If a <code>Bearer</code> token is provided but fails validation, the request is <strong>denied</strong> (not degraded to dev-mode or anonymous).
+The gateway logs a startup warning when dev mode is enabled and does not enforce bind-address restrictions.</p>
 </blockquote>
-<hr>
 <hr>
 <h2 id="row-level-security-rls-1"><a class="header" href="#row-level-security-rls-1">Row-Level Security (RLS)</a></h2>
 <p>Every query is automatically scoped to the authenticated tenant via PostgreSQL’s native RLS. The gateway sets session variables before each query:</p>
@@ -967,7 +986,7 @@ set_config('app.role', '&lt;from JWT&gt;', false);
 <p>Your PostgreSQL RLS policies reference these variables:</p>
 <pre><code class="language-sql">CREATE POLICY tenant_isolation ON orders
   FOR ALL
-  USING (operator_id = current_setting('app.operator_id')::uuid);
+  USING (operator_id = current_setting('app.current_operator_id')::uuid);
 
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orders FORCE ROW LEVEL SECURITY;
@@ -980,19 +999,17 @@ ALTER TABLE orders FORCE ROW LEVEL SECURITY;
 <h2 id="yaml-policy-engine-1"><a class="header" href="#yaml-policy-engine-1">YAML Policy Engine</a></h2>
 <p>Fine-grained access control per table, per role:</p>
 <pre><code class="language-yaml">policies:
-  orders:
-    roles:
-      agent:
-        select: true
-        insert: true
-        update: true
-        delete: false
-        columns: ["id", "status", "total", "created_at"]  # Column-level
-        filter:                                             # Row-level
-          operator_id: "x-operator-id"
-      viewer:
-        select: true
-        columns: ["id", "status"]
+  - name: orders_agent_read
+    table: orders
+    role: agent
+    operations: [read]
+    filter: "operator_id = $tenant_id"
+    allowed_columns: ["id", "status", "total", "created_at"]
+  - name: orders_viewer_read
+    table: orders
+    role: viewer
+    operations: [read]
+    allowed_columns: ["id", "status"]
 </code></pre>
 <h3 id="column-permissions"><a class="header" href="#column-permissions">Column Permissions</a></h3>
 <p>Control which columns each role can read or write:</p>
@@ -1009,8 +1026,8 @@ ALTER TABLE orders FORCE ROW LEVEL SECURITY;
 <tr><th>Permission</th><th>Operations</th></tr>
 </thead>
 <tbody>
-<tr><td><code>select</code></td><td><code>GET</code> list and single</td></tr>
-<tr><td><code>insert</code></td><td><code>POST</code> create</td></tr>
+<tr><td><code>read</code></td><td><code>GET</code> list and single</td></tr>
+<tr><td><code>create</code></td><td><code>POST</code> create</td></tr>
 <tr><td><code>update</code></td><td><code>PATCH</code> update</td></tr>
 <tr><td><code>delete</code></td><td><code>DELETE</code> delete</td></tr>
 </tbody>
@@ -1020,16 +1037,98 @@ ALTER TABLE orders FORCE ROW LEVEL SECURITY;
 <h2 id="query-allow-listing-1"><a class="header" href="#query-allow-listing-1">Query Allow-Listing</a></h2>
 <p>Lock down which queries can run in production:</p>
 <pre><code class="language-toml"># qail.toml
-[gateway.security]
-allow_list_enabled = true
-allow_list = [
-  "GET /api/orders",
-  "GET /api/orders/:id",
-]
-complexity_limit = 10
-rate_limit = 100
+[gateway]
+allow_list_path = "allow_list.txt"
 </code></pre>
 <p>When enabled, any query pattern not in the allow-list is rejected with <code>403 Forbidden</code>. This provides defense-in-depth: even if auth is bypassed, only pre-approved query shapes can execute.</p>
+<hr>
+<h2 id="rpc-contract-hardening"><a class="header" href="#rpc-contract-hardening">RPC Contract Hardening</a></h2>
+<p>Harden <code>/api/rpc/{function}</code> with strict function naming and signature checks:</p>
+<pre><code class="language-toml">[gateway]
+rpc_require_schema_qualified = true
+rpc_allowlist_path = "rpc_allowlist.txt"
+rpc_signature_check = true
+</code></pre>
+<p><code>rpc_allowlist_path</code> format:</p>
+<pre><code class="language-text"># One function per line (case-insensitive)
+api.search_orders
+public.health_check
+</code></pre>
+<p>What each control does:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Setting</th><th>Effect</th></tr>
+</thead>
+<tbody>
+<tr><td><code>rpc_require_schema_qualified</code></td><td>Rejects unqualified calls like <code>search_orders</code>; requires <code>schema.function</code></td></tr>
+<tr><td><code>rpc_allowlist_path</code></td><td>Blocks RPC calls not explicitly listed</td></tr>
+<tr><td><code>rpc_signature_check</code></td><td>For named-arg JSON bodies, rejects unknown argument keys not present in PostgreSQL function signatures</td></tr>
+</tbody>
+</table>
+</div>
+<p>When <code>rpc_signature_check=true</code>, the gateway also uses a parser-only PostgreSQL probe (<code>PREPARE ...; DEALLOCATE</code>) to align overload resolution with PostgreSQL itself before execution.</p>
+<p>RPC DevEx endpoint:</p>
+<ul>
+<li><code>GET /api/_rpc/contracts</code> returns callable function signatures (<code>identity_args</code>, defaults, variadic, return type) for typed client generation.</li>
+</ul>
+<p>RPC result format control:</p>
+<ul>
+<li>Optional header <code>x-qail-result-format: binary</code> enables binary column format on RPC responses.</li>
+<li>Default is <code>x-qail-result-format: text</code>.</li>
+</ul>
+<hr>
+<h2 id="database-authtls-hardening"><a class="header" href="#database-authtls-hardening">Database Auth/TLS Hardening</a></h2>
+<p>Gateway database transport/auth policy can be configured through <code>database_url</code> query parameters:</p>
+<pre><code class="language-toml">[gateway]
+database_url = "postgresql://app:secret@db.internal:5432/app\
+?sslmode=require\
+&amp;sslrootcert=/etc/qail/ca.pem\
+&amp;channel_binding=require\
+&amp;auth_mode=scram_only"
+</code></pre>
+<p>Supported parameters:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Parameter</th><th>Values</th><th>Effect</th></tr>
+</thead>
+<tbody>
+<tr><td><code>sslmode</code></td><td><code>disable</code>, <code>prefer</code>, <code>require</code> (<code>verify-ca</code>/<code>verify-full</code> map to <code>require</code>)</td><td>TLS policy</td></tr>
+<tr><td><code>sslrootcert</code></td><td>file path</td><td>Custom CA bundle for server cert validation</td></tr>
+<tr><td><code>sslcert</code> + <code>sslkey</code></td><td>file paths</td><td>Enable mTLS client cert auth</td></tr>
+<tr><td><code>channel_binding</code></td><td><code>disable</code>, <code>prefer</code>, <code>require</code></td><td>SCRAM channel-binding policy</td></tr>
+<tr><td><code>auth_mode</code></td><td><code>scram_only</code>, <code>gssapi_only</code>, <code>compat</code></td><td>Auth policy preset</td></tr>
+<tr><td><code>auth_scram</code> / <code>auth_md5</code> / <code>auth_cleartext</code></td><td>boolean</td><td>Fine-grained mechanism toggles</td></tr>
+<tr><td><code>auth_kerberos</code> / <code>auth_gssapi</code> / <code>auth_sspi</code></td><td>boolean</td><td>Enterprise auth mechanism toggles</td></tr>
+<tr><td><code>gss_provider</code></td><td><code>linux_krb5</code>, <code>callback</code>, <code>custom</code></td><td>Selects built-in Linux krb5 provider vs external callback wiring</td></tr>
+<tr><td><code>gss_service</code></td><td>string (default <code>postgres</code>)</td><td>Kerberos service used for host-based target (<code>service@host</code>)</td></tr>
+<tr><td><code>gss_target</code></td><td>string</td><td>Optional full host-based target override</td></tr>
+<tr><td><code>gss_connect_retries</code></td><td>integer (default <code>2</code>)</td><td>Retries transient GSS/Kerberos connect/auth failures</td></tr>
+<tr><td><code>gss_retry_base_ms</code></td><td>integer ms (default <code>150</code>)</td><td>Base delay for exponential GSS retry backoff</td></tr>
+<tr><td><code>gss_circuit_threshold</code></td><td>integer (default <code>8</code>)</td><td>Failures in window before local GSS circuit opens</td></tr>
+<tr><td><code>gss_circuit_window_ms</code></td><td>integer ms (default <code>30000</code>)</td><td>Rolling window for circuit failure counting</td></tr>
+<tr><td><code>gss_circuit_cooldown_ms</code></td><td>integer ms (default <code>15000</code>)</td><td>Cooldown while open circuit blocks new connect attempts</td></tr>
+</tbody>
+</table>
+</div>
+<p>If <code>sslcert</code> or <code>sslkey</code> is provided, both must be set.</p>
+<p>If <code>gss_provider=linux_krb5</code> is set, build the gateway with feature <code>enterprise-gssapi</code> on Linux.</p>
+<p>Startup runs Kerberos preflight checks and emits clear diagnostics for common misconfiguration
+(missing explicit credential cache/keytab paths, invalid <code>KRB5_CONFIG</code>, etc).</p>
+<p>Example:</p>
+<pre><code class="language-toml">[gateway]
+database_url = "postgresql://app@db.internal:5432/app\
+?sslmode=require\
+&amp;auth_mode=gssapi_only\
+&amp;gss_provider=linux_krb5\
+&amp;gss_service=postgres\
+&amp;gss_connect_retries=3\
+&amp;gss_retry_base_ms=200\
+&amp;gss_circuit_threshold=8\
+&amp;gss_circuit_window_ms=30000\
+&amp;gss_circuit_cooldown_ms=15000"
+</code></pre>
 <hr>
 <h2 id="security-summary"><a class="header" href="#security-summary">Security Summary</a></h2>
 <div class="table-wrapper">
@@ -1064,14 +1163,13 @@ admin_token = "your-secret-admin-token"
 <pre><code class="language-javascript">const ws = new WebSocket('ws://localhost:8080/ws');
 ws.send(JSON.stringify({
   type: 'subscribe',
-  table: 'orders',
-  filter: { status: 'paid' }
+  channel: 'qail_table_orders'
 }));
 
 ws.onmessage = (event) =&gt; {
-  const { type, data } = JSON.parse(event.data);
-  // type: "INSERT" | "UPDATE" | "DELETE"
-  console.log('Change:', type, data);
+  const msg = JSON.parse(event.data);
+  // type: "subscribed" | "notification" | "error"
+  console.log(msg);
 };
 </code></pre>
 <p>Subscriptions are scoped by your RLS policies — each client only receives events for rows they are authorized to see.</p>
@@ -1080,28 +1178,26 @@ ws.onmessage = (event) =&gt; {
 <p>Auto-refresh query results when underlying data changes:</p>
 <pre><code class="language-javascript">ws.send(JSON.stringify({
   type: 'live_query',
-  query: '/api/orders?status=paid&amp;sort=-created_at&amp;limit=10',
-  interval: 2000  // Poll interval in ms
+  qail: "get orders where status = 'paid' order by created_at desc limit 10",
+  table: 'orders',
+  interval_ms: 2000
 }));
 </code></pre>
 <p>The gateway re-executes the query at the specified interval and pushes updated results only when data has changed.</p>
 <hr>
 <h2 id="event-triggers-1"><a class="header" href="#event-triggers-1">Event Triggers</a></h2>
 <p>Fire webhooks on database mutations. Define triggers in YAML:</p>
-<pre><code class="language-yaml">events:
-  - name: order_created
-    table: orders
-    operations: [INSERT]
-    webhook: "https://api.example.com/hooks/order-created"
-    headers:
-      X-Secret: "webhook-secret-key"
-    retry:
-      count: 3
-      interval: 5000
-  - name: order_updated
-    table: orders
-    operations: [UPDATE]
-    webhook: "https://api.example.com/hooks/order-updated"
+<pre><code class="language-yaml">- name: order_created
+  table: orders
+  operations: [create]
+  webhook_url: "https://api.example.com/hooks/order-created"
+  headers:
+    X-Secret: webhook-secret-key
+  retry_count: 3
+- name: order_updated
+  table: orders
+  operations: [update]
+  webhook_url: "https://api.example.com/hooks/order-updated"
 </code></pre>
 <h3 id="webhook-payload"><a class="header" href="#webhook-payload">Webhook Payload</a></h3>
 <pre><code class="language-json">{
@@ -1129,9 +1225,9 @@ ws.onmessage = (event) =&gt; {
 <tr><th>Operation</th><th>Fires on</th><th>Payload</th></tr>
 </thead>
 <tbody>
-<tr><td><code>INSERT</code></td><td><code>POST /api/{table}</code></td><td><code>new</code> data</td></tr>
-<tr><td><code>UPDATE</code></td><td><code>PATCH /api/{table}/:id</code></td><td><code>new</code> + <code>old</code> data</td></tr>
-<tr><td><code>DELETE</code></td><td><code>DELETE /api/{table}/:id</code></td><td><code>old</code> data</td></tr>
+<tr><td><code>create</code></td><td><code>POST /api/{table}</code></td><td><code>new</code> data</td></tr>
+<tr><td><code>update</code></td><td><code>PATCH /api/{table}/:id</code></td><td><code>new</code> + <code>old</code> data</td></tr>
+<tr><td><code>delete</code></td><td><code>DELETE /api/{table}/:id</code></td><td><code>old</code> data</td></tr>
 </tbody>
 </table>
 </div>
@@ -2495,7 +2591,10 @@ ColumnType::Jsonb.supports_indexing()     // false - warned before migration
 <li><strong>Zero-Alloc</strong> — Reusable buffers, no heap allocation per query</li>
 <li><strong>LRU Statement Cache</strong> — Bounded cache (100 max), auto-evicts</li>
 <li><strong>SSL/TLS</strong> — Full TLS with mutual TLS (mTLS) support</li>
-<li><strong>SCRAM-SHA-256</strong> — Secure password authentication</li>
+<li><strong>Password Auth Modes</strong> — Supports SCRAM-SHA-256, MD5, and cleartext server flows</li>
+<li><strong>Enterprise Auth Policy</strong> — Configure allowed auth mechanisms and SCRAM channel binding mode</li>
+<li><strong>Kerberos/GSS/SSPI Hooks</strong> — Protocol-level support with pluggable token providers (legacy + stateful)</li>
+<li><strong>Built-in Linux Kerberos Provider</strong> — Optional <code>enterprise-gssapi</code> feature for native krb5/GSS flow</li>
 <li><strong>Connection Pooling</strong> — Efficient resource management with RLS-safe checkout</li>
 <li><strong>COPY Protocol</strong> — Bulk insert for high throughput (1.63M rows/sec)</li>
 <li><strong>Pipeline Execution</strong> — Multiple queries per round-trip</li>
@@ -2506,7 +2605,7 @@ ColumnType::Jsonb.supports_indexing()     // false - warned before migration
 <h2 id="architecture"><a class="header" href="#architecture">Architecture</a></h2>
 <p>Understanding <strong>which type to use</strong> is the most important concept:</p>
 <pre><code>PgPool (manages N connections, handles checkout/return)
-  └── PooledConnection (auto-returns to pool on Drop, resets RLS)
+  └── PooledConnection (call `release().await` for deterministic pool return)
         └── PgConnection (raw TCP/TLS stream, wire protocol I/O)
               └── PgDriver (convenience wrapper over PgConnection)
 </code></pre>
@@ -2519,7 +2618,7 @@ ColumnType::Jsonb.supports_indexing()     // false - warned before migration
 <tr><td><code>PgDriver</code></td><td>Quick scripts, benchmarks, single-connection use cases</td></tr>
 <tr><td><code>PgConnection</code></td><td>You need raw control (TLS, mTLS, Unix sockets, manual lifecycle)</td></tr>
 <tr><td><code>PgPool</code></td><td><strong>Production code</strong> — multi-connection, concurrent workloads</td></tr>
-<tr><td><code>PooledConnection</code></td><td>You called <code>pool.acquire()</code> — auto-returns when dropped</td></tr>
+<tr><td><code>PooledConnection</code></td><td>You called <code>pool.acquire*()</code> — call <code>release().await</code></td></tr>
 </tbody>
 </table>
 </div>
@@ -2534,9 +2633,10 @@ ColumnType::Jsonb.supports_indexing()     // false - warned before migration
 </thead>
 <tbody>
 <tr><td>Local dev (<code>pg_hba.conf = trust</code>)</td><td><code>PgDriver::connect()</code></td><td>No password required</td></tr>
-<tr><td>Password auth (most common)</td><td><code>PgDriver::connect_with_password()</code></td><td>Auto SCRAM-SHA-256</td></tr>
+<tr><td>Password auth (most common)</td><td><code>PgDriver::connect_with_password()</code></td><td>Auto cleartext / MD5 / SCRAM-SHA-256</td></tr>
 <tr><td>Cloud DB (RDS, Cloud SQL, Supabase)</td><td><code>PgConnection::connect_tls()</code></td><td>Server-side TLS</td></tr>
 <tr><td>Zero-trust / mTLS</td><td><code>PgConnection::connect_mtls()</code></td><td>Client certificate</td></tr>
+<tr><td>Enterprise policy (TLS/auth/channel binding)</td><td><code>PgDriver::connect_with_options()</code></td><td>Explicit TLS mode + auth controls</td></tr>
 <tr><td>Unix socket (same host)</td><td><code>PgConnection::connect_unix()</code></td><td>Lowest latency</td></tr>
 <tr><td><code>.env</code> / <code>DATABASE_URL</code></td><td><code>PgDriver::connect_env()</code></td><td>Parses URL format</td></tr>
 <tr><td>Custom config</td><td><code>PgDriver::builder()</code></td><td>Builder pattern for full control</td></tr>
@@ -2580,6 +2680,117 @@ let config = TlsConfig {
 
 let conn = PgConnection::connect_mtls("localhost", 5432, "user", "db", config).await?;
 <span class="boring">}</span></code></pre>
+<h3 id="enterprise-authtls-policy"><a class="header" href="#enterprise-authtls-policy">Enterprise Auth/TLS Policy</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use qail_pg::{AuthSettings, ConnectOptions, PgDriver, ScramChannelBindingMode, TlsMode};
+
+let options = ConnectOptions {
+    tls_mode: TlsMode::Require,
+    auth: AuthSettings {
+        allow_cleartext_password: false,
+        allow_md5_password: false,
+        allow_scram_sha_256: true,
+        channel_binding: ScramChannelBindingMode::Require,
+        ..AuthSettings::default()
+    },
+    ..Default::default()
+};
+
+let driver = PgDriver::connect_with_options(
+    "db.internal",
+    5432,
+    "app_user",
+    "app_db",
+    Some("secret"),
+    options,
+)
+.await?;
+<span class="boring">}</span></code></pre>
+<h3 id="kerberos--gssapi-token-hook"><a class="header" href="#kerberos--gssapi-token-hook">Kerberos / GSSAPI Token Hook</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use qail_pg::{
+    AuthSettings, ConnectOptions, EnterpriseAuthMechanism, PgDriver,
+};
+
+fn gss_provider(
+    mech: EnterpriseAuthMechanism,
+    challenge: Option&lt;&amp;[u8]&gt;,
+) -&gt; Result&lt;Vec&lt;u8&gt;, String&gt; {
+    // Plug your krb5/gssapi token generation here.
+    // Return initial token when challenge=None, then continue tokens per challenge.
+    let _ = (mech, challenge);
+    Err("not wired yet".to_string())
+}
+
+let options = ConnectOptions {
+    auth: AuthSettings::gssapi_only(),
+    gss_token_provider: Some(gss_provider),
+    ..Default::default()
+};
+
+let _driver = PgDriver::connect_with_options(
+    "db.internal", 5432, "app_user", "app_db", None, options
+).await?;
+<span class="boring">}</span></code></pre>
+<h3 id="stateful-gss-provider-per-session-context"><a class="header" href="#stateful-gss-provider-per-session-context">Stateful GSS Provider (Per-Session Context)</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::Arc;
+use qail_pg::{AuthSettings, ConnectOptions, GssTokenRequest, PgDriver};
+
+let provider = Arc::new(move |req: GssTokenRequest&lt;'_&gt;| -&gt; Result&lt;Vec&lt;u8&gt;, String&gt; {
+    // req.session_id is stable for one auth handshake.
+    // Keep per-session context in your own map if your GSS stack requires it.
+    let _ = req;
+    Err("wire your stateful provider".to_string())
+});
+
+let options = ConnectOptions {
+    auth: AuthSettings::gssapi_only(),
+    gss_token_provider_ex: Some(provider),
+    ..Default::default()
+};
+
+let _driver = PgDriver::connect_with_options(
+    "db.internal", 5432, "app_user", "app_db", None, options
+).await?;
+<span class="boring">}</span></code></pre>
+<h3 id="built-in-linux-kerberos-provider-feature-gated"><a class="header" href="#built-in-linux-kerberos-provider-feature-gated">Built-in Linux Kerberos Provider (Feature-Gated)</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[cfg(all(feature = "enterprise-gssapi", target_os = "linux"))]
+{
+    use qail_pg::{
+        AuthSettings, ConnectOptions, LinuxKrb5ProviderConfig, PgDriver,
+        linux_krb5_preflight, linux_krb5_token_provider,
+    };
+
+    let gss_cfg = LinuxKrb5ProviderConfig {
+        service: "postgres".to_string(),
+        host: "db.internal".to_string(),
+        target_name: None, // optional override, e.g. Some("postgres@db.internal".into())
+    };
+
+    let report = linux_krb5_preflight(&amp;gss_cfg)?;
+    for warning in &amp;report.warnings {
+        eprintln!("Kerberos preflight warning: {}", warning);
+    }
+
+    let provider = linux_krb5_token_provider(gss_cfg)?;
+
+    let options = ConnectOptions {
+        auth: AuthSettings::gssapi_only(),
+        gss_token_provider_ex: Some(provider),
+        ..Default::default()
+    };
+
+    let _driver = PgDriver::connect_with_options(
+        "db.internal", 5432, "app_user", "app_db", None, options
+    ).await?;
+}
+<span class="boring">}</span></code></pre>
 <h3 id="unix-socket"><a class="header" href="#unix-socket">Unix Socket</a></h3>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -2610,6 +2821,9 @@ let affected = driver.execute(&amp;cmd).await?;
 <hr>
 <h2 id="statement-cache-lru"><a class="header" href="#statement-cache-lru">Statement Cache (LRU)</a></h2>
 <p>Prepared statements are cached automatically. The AST is hashed by structure, so identical query shapes reuse the same prepared statement.</p>
+<p>Cached execution includes one-shot self-heal for common server-side invalidation cases
+(<code>prepared statement does not exist</code>, <code>cached plan must be replanned</code>): local cache state is
+cleared and the statement is retried once automatically.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>// Cache is bounded (default: 100 statements)
@@ -2627,7 +2841,9 @@ driver.clear_cache();
 </thead>
 <tbody>
 <tr><td><code>fetch_all()</code></td><td>Uses cache (~25,000 q/s)</td></tr>
+<tr><td><code>fetch_all_with_format(cmd, ResultFormat::Binary)</code></td><td>Cached fetch with binary column format</td></tr>
 <tr><td><code>fetch_all_uncached()</code></td><td>Skips cache</td></tr>
+<tr><td><code>fetch_all_uncached_with_format(...)</code></td><td>Uncached fetch with text/binary result format</td></tr>
 <tr><td><code>cache_stats()</code></td><td>Returns (current, max)</td></tr>
 <tr><td><code>clear_cache()</code></td><td>Frees all cached statements</td></tr>
 </tbody>
@@ -2691,14 +2907,17 @@ let rows = driver.pipeline_ast(&amp;commands).await?;
 
 let config = PoolConfig::new("localhost", 5432, "user", "db")
     .password("secret")
+    .tls_mode(qail_pg::TlsMode::Require)
+    .auth_settings(qail_pg::AuthSettings::scram_only())
     .max_connections(20)
     .min_connections(5);
 
 let pool = PgPool::connect(config).await?;
 
-// Acquire connection (auto-returned when dropped)
+// Acquire connection (return deterministically with release())
 let mut conn = pool.acquire().await?;
 conn.simple_query("SELECT 1").await?;
+conn.release().await;
 
 // Check idle count
 let idle = pool.idle_count().await;
@@ -2715,8 +2934,9 @@ let ctx = RlsContext {
 };
 
 // Acquire + set RLS context in one call
-// On Drop: auto-clears RLS context, then returns to pool
+// Call release() after query work to reset context and return to pool
 let mut conn = pool.acquire_with_rls(&amp;ctx).await?;
+conn.release().await;
 <span class="boring">}</span></code></pre>
 <blockquote>
 <p><strong>Important:</strong> When using <code>acquire_with_rls()</code>, the RLS context is automatically cleared when the connection is returned to the pool. This prevents cross-tenant data leakage — a connection used by Tenant A will never carry Tenant A’s context when checked out by Tenant B.</p>
@@ -2848,6 +3068,9 @@ if row.is_null_by_name("deleted_at") { ... }
 <tr><td><code>Date</code></td><td><code>DATE</code></td></tr>
 <tr><td><code>Time</code></td><td><code>TIME</code></td></tr>
 <tr><td><code>Json</code></td><td><code>JSONB</code></td></tr>
+<tr><td><code>Inet</code></td><td><code>INET</code></td></tr>
+<tr><td><code>Cidr</code></td><td><code>CIDR</code></td></tr>
+<tr><td><code>MacAddr</code></td><td><code>MACADDR</code></td></tr>
 <tr><td><code>Numeric</code></td><td><code>NUMERIC/DECIMAL</code></td></tr>
 </tbody>
 </table>
@@ -4302,12 +4525,6 @@ test_on_acquire = false
 default_role = "app_user"
 super_admin_role = "super_admin"
 
-[redis]
-host = "127.0.0.1"
-port = 6379
-max_connections = 10
-password = "${REDIS_PASSWORD:-}"
-
 [qdrant]
 url = "http://localhost:6333"
 grpc = "localhost:6334"
@@ -4373,7 +4590,6 @@ url = "postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST:-localhost}:5432/mydb"
 </thead>
 <tbody>
 <tr><td><code>DATABASE_URL</code></td><td><code>[postgres].url</code></td></tr>
-<tr><td><code>REDIS_URL</code></td><td><code>[redis].host</code> + <code>port</code></td></tr>
 <tr><td><code>QDRANT_URL</code></td><td><code>[qdrant].url</code></td></tr>
 <tr><td><code>QAIL_BIND</code></td><td><code>[gateway].bind</code></td></tr>
 </tbody>
@@ -4397,16 +4613,6 @@ use qail_pg::driver::pool::PoolConfig;
 let qail = QailConfig::load()?;                       // reads ./qail.toml
 let pg_config = PoolConfig::from_qail_config(&amp;qail)?;  // parse postgres section
 let pool = PgPool::connect(pg_config).await?;
-<span class="boring">}</span></code></pre>
-<h3 id="redis"><a class="header" href="#redis">Redis</a></h3>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use qail_redis::pool::PoolConfig as RedisPoolConfig;
-
-let qail = QailConfig::load()?;
-if let Some(config) = RedisPoolConfig::from_qail_config(&amp;qail) {
-    let pool = RedisPool::new(config).await?;
-}
 <span class="boring">}</span></code></pre>
 <h3 id="qdrant"><a class="header" href="#qdrant">Qdrant</a></h3>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -4436,7 +4642,6 @@ let gw = GatewayConfig::from_qail_config(&amp;qail);
 <tr><td><code>[project]</code></td><td>Yes</td><td>Project name, mode (<code>postgres</code>/<code>qdrant</code>/<code>hybrid</code>), schema path</td></tr>
 <tr><td><code>[postgres]</code></td><td>Yes</td><td>Database URL and pool tuning</td></tr>
 <tr><td><code>[postgres.rls]</code></td><td>No</td><td>RLS role names</td></tr>
-<tr><td><code>[redis]</code></td><td>No</td><td>Redis connection settings</td></tr>
 <tr><td><code>[qdrant]</code></td><td>No</td><td>Qdrant REST + gRPC endpoints</td></tr>
 <tr><td><code>[gateway]</code></td><td>No</td><td>HTTP server bind, CORS, cache</td></tr>
 <tr><td><code>[[sync]]</code></td><td>No</td><td>Vector sync rules (hybrid mode)</td></tr>

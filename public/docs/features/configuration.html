@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "coal";
             const default_dark_theme = "coal";
-            window.path_to_searchindex_js = "../searchindex-2706ae00.js";
+            window.path_to_searchindex_js = "../searchindex-412820a1.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-d260c190.js"></script>
@@ -203,12 +203,6 @@ test_on_acquire = false
 default_role = "app_user"
 super_admin_role = "super_admin"
 
-[redis]
-host = "127.0.0.1"
-port = 6379
-max_connections = 10
-password = "${REDIS_PASSWORD:-}"
-
 [qdrant]
 url = "http://localhost:6333"
 grpc = "localhost:6334"
@@ -274,7 +268,6 @@ url = "postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST:-localhost}:5432/mydb"
 </thead>
 <tbody>
 <tr><td><code>DATABASE_URL</code></td><td><code>[postgres].url</code></td></tr>
-<tr><td><code>REDIS_URL</code></td><td><code>[redis].host</code> + <code>port</code></td></tr>
 <tr><td><code>QDRANT_URL</code></td><td><code>[qdrant].url</code></td></tr>
 <tr><td><code>QAIL_BIND</code></td><td><code>[gateway].bind</code></td></tr>
 </tbody>
@@ -298,16 +291,6 @@ use qail_pg::driver::pool::PoolConfig;
 let qail = QailConfig::load()?;                       // reads ./qail.toml
 let pg_config = PoolConfig::from_qail_config(&amp;qail)?;  // parse postgres section
 let pool = PgPool::connect(pg_config).await?;
-<span class="boring">}</span></code></pre>
-<h3 id="redis"><a class="header" href="#redis">Redis</a></h3>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use qail_redis::pool::PoolConfig as RedisPoolConfig;
-
-let qail = QailConfig::load()?;
-if let Some(config) = RedisPoolConfig::from_qail_config(&amp;qail) {
-    let pool = RedisPool::new(config).await?;
-}
 <span class="boring">}</span></code></pre>
 <h3 id="qdrant"><a class="header" href="#qdrant">Qdrant</a></h3>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -337,7 +320,6 @@ let gw = GatewayConfig::from_qail_config(&amp;qail);
 <tr><td><code>[project]</code></td><td>Yes</td><td>Project name, mode (<code>postgres</code>/<code>qdrant</code>/<code>hybrid</code>), schema path</td></tr>
 <tr><td><code>[postgres]</code></td><td>Yes</td><td>Database URL and pool tuning</td></tr>
 <tr><td><code>[postgres.rls]</code></td><td>No</td><td>RLS role names</td></tr>
-<tr><td><code>[redis]</code></td><td>No</td><td>Redis connection settings</td></tr>
 <tr><td><code>[qdrant]</code></td><td>No</td><td>Qdrant REST + gRPC endpoints</td></tr>
 <tr><td><code>[gateway]</code></td><td>No</td><td>HTTP server bind, CORS, cache</td></tr>
 <tr><td><code>[[sync]]</code></td><td>No</td><td>Vector sync rules (hybrid mode)</td></tr>

@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "coal";
             const default_dark_theme = "coal";
-            window.path_to_searchindex_js = "../searchindex-2706ae00.js";
+            window.path_to_searchindex_js = "../searchindex-412820a1.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-d260c190.js"></script>
@@ -193,8 +193,10 @@
 <tr><td><code>GET</code></td><td><code>/api/{table}</code></td><td>List with filters, sort, pagination</td></tr>
 <tr><td><code>GET</code></td><td><code>/api/{table}/:id</code></td><td>Get by primary key</td></tr>
 <tr><td><code>GET</code></td><td><code>/api/{table}/_explain</code></td><td>EXPLAIN ANALYZE</td></tr>
-<tr><td><code>GET</code></td><td><code>/api/{table}/_aggregate</code></td><td>Aggregations</td></tr>
+<tr><td><code>GET</code></td><td><code>/api/{table}/aggregate</code></td><td>Aggregations</td></tr>
+<tr><td><code>GET</code></td><td><code>/api/{table}/_aggregate</code></td><td>Aggregations (compat alias)</td></tr>
 <tr><td><code>GET</code></td><td><code>/api/{table}/:id/{child}</code></td><td>Nested resources (FK-based)</td></tr>
+<tr><td><code>POST</code></td><td><code>/api/rpc/{function}</code></td><td>Function RPC with JSON args</td></tr>
 <tr><td><code>POST</code></td><td><code>/api/{table}</code></td><td>Create (single or batch)</td></tr>
 <tr><td><code>PATCH</code></td><td><code>/api/{table}/:id</code></td><td>Partial update</td></tr>
 <tr><td><code>DELETE</code></td><td><code>/api/{table}/:id</code></td><td>Delete by primary key</td></tr>
@@ -203,15 +205,21 @@
 </div>
 <hr>
 <h2 id="filtering"><a class="header" href="#filtering">Filtering</a></h2>
-<p>All filter operators are supported as query parameters:</p>
+<p>All filter operators are supported as query parameters.
+Both key-style (<code>column.op=value</code>) and value-style (<code>column=op.value</code>) are accepted:</p>
 <pre><code>GET /api/orders?status=paid                              # Exact match
+GET /api/orders?status.eq=paid                           # Exact match (key-style)
 GET /api/orders?total=gt.100                             # Greater than
+GET /api/orders?total.gte=50&amp;total.lte=200               # Range (key-style)
 GET /api/orders?total=gte.50&amp;total=lte.200               # Range
 GET /api/orders?status=in.(paid,shipped)                 # IN list
+GET /api/orders?status.in=paid,shipped                   # IN list (key-style)
 GET /api/orders?name=like.*ferry*                        # Pattern match
 GET /api/orders?name=ilike.*FERRY*                       # Case-insensitive
 GET /api/orders?notes=is_null                            # NULL check
+GET /api/orders?notes.is_null=true                       # NULL check (key-style)
 GET /api/orders?status=ne.cancelled                      # Not equal
+GET /api/orders?status.ne=cancelled                      # Not equal (key-style)
 GET /api/orders?tags=contains.premium                    # Array contains
 </code></pre>
 <h3 id="operator-reference"><a class="header" href="#operator-reference">Operator Reference</a></h3>
@@ -222,13 +230,13 @@ GET /api/orders?tags=contains.premium                    # Array contains
 </thead>
 <tbody>
 <tr><td><code>eq</code> (default)</td><td><code>=</code></td><td><code>?status=paid</code></td></tr>
-<tr><td><code>ne</code></td><td><code>!=</code></td><td><code>?status=ne.cancelled</code></td></tr>
+<tr><td><code>ne</code></td><td><code>!=</code></td><td><code>?status=ne.cancelled</code> or <code>?status.ne=cancelled</code></td></tr>
 <tr><td><code>gt</code> / <code>gte</code></td><td><code>&gt;</code> / <code>&gt;=</code></td><td><code>?total=gte.100</code></td></tr>
 <tr><td><code>lt</code> / <code>lte</code></td><td><code>&lt;</code> / <code>&lt;=</code></td><td><code>?age=lt.30</code></td></tr>
-<tr><td><code>in</code></td><td><code>IN (...)</code></td><td><code>?status=in.(active,pending)</code></td></tr>
+<tr><td><code>in</code></td><td><code>IN (...)</code></td><td><code>?status=in.(active,pending)</code> or <code>?status.in=active,pending</code></td></tr>
 <tr><td><code>like</code></td><td><code>LIKE</code></td><td><code>?email=like.*@gmail*</code></td></tr>
 <tr><td><code>ilike</code></td><td><code>ILIKE</code></td><td><code>?name=ilike.*john*</code></td></tr>
-<tr><td><code>is_null</code></td><td><code>IS NULL</code></td><td><code>?deleted_at=is_null</code></td></tr>
+<tr><td><code>is_null</code></td><td><code>IS NULL</code></td><td><code>?deleted_at=is_null</code> or <code>?deleted_at.is_null=true</code></td></tr>
 <tr><td><code>contains</code></td><td><code>@&gt;</code></td><td><code>?tags=contains.premium</code></td></tr>
 </tbody>
 </table>
@@ -244,6 +252,7 @@ GET /api/products?search=ferry&amp;search_columns=name,desc  # Search specific c
 <pre><code>GET /api/orders?sort=created_at                          # Ascending (default)
 GET /api/orders?sort=-total                              # Descending (prefix -)
 GET /api/orders?sort=-status,created_at                  # Multi-column
+GET /api/orders?sort=total:desc,created_at:asc           # Multi-column (explicit)
 </code></pre>
 <hr>
 <h2 id="pagination"><a class="header" href="#pagination">Pagination</a></h2>
@@ -264,6 +273,7 @@ GET /api/orders?expand=users,operators                    # Multiple relations
 GET /api/orders?expand=nested:users                       # Nested FK expansion
 </code></pre>
 <p>Response includes the full related object inline — <strong>no N+1 queries</strong>. The gateway performs a server-side JOIN.</p>
+<p><code>expand=</code> is for forward (many-to-one / one-to-one) relations. For reverse one-to-many expansion, use <code>nested:</code> to avoid parent-row duplication.</p>
 <h3 id="nested-resource-routes"><a class="header" href="#nested-resource-routes">Nested Resource Routes</a></h3>
 <p>Access child resources through parent:</p>
 <pre><code>GET /api/operators/:id/orders                             # All orders for operator
@@ -293,14 +303,33 @@ curl -X POST /api/orders -d '[{"total": 100}, {"total": 200}]'
 <p>All mutations support <code>?returning=id,status</code> to get back specific columns after the operation.</p>
 <hr>
 <h2 id="aggregations"><a class="header" href="#aggregations">Aggregations</a></h2>
-<pre><code>GET /api/orders/_aggregate?fn=count                       # COUNT(*)
-GET /api/orders/_aggregate?fn=sum&amp;column=total            # SUM(total)
-GET /api/orders/_aggregate?fn=avg&amp;column=total            # AVG
-GET /api/orders/_aggregate?fn=min&amp;column=created_at       # MIN
-GET /api/orders/_aggregate?fn=max&amp;column=total            # MAX
-GET /api/orders/_aggregate?fn=count&amp;status=paid           # Filtered aggregation
+<pre><code>GET /api/orders/aggregate?fn=count                        # COUNT(*)
+GET /api/orders/aggregate?fn=sum&amp;column=total             # SUM(total)
+GET /api/orders/aggregate?fn=avg&amp;column=total             # AVG
+GET /api/orders/aggregate?fn=min&amp;column=created_at        # MIN
+GET /api/orders/aggregate?fn=max&amp;column=total             # MAX
+GET /api/orders/aggregate?fn=count&amp;status=paid            # Filtered aggregation
+GET /api/orders/_aggregate?fn=count                        # Alias (compat)
 </code></pre>
 <p>Supported functions: <code>count</code>, <code>sum</code>, <code>avg</code>, <code>min</code>, <code>max</code>.</p>
+<hr>
+<h2 id="rpc-functions"><a class="header" href="#rpc-functions">RPC Functions</a></h2>
+<p>Call PostgreSQL functions directly:</p>
+<pre><code class="language-bash"># Named arguments (object body)
+curl -X POST /api/rpc/search_orders \
+  -d '{"tenant_id":"acme","limit":25}'
+
+# Positional arguments (array body)
+curl -X POST /api/rpc/rebuild_index \
+  -d '["orders", true]'
+</code></pre>
+<p>Accepted body formats:</p>
+<ul>
+<li>JSON object: named args (<code>arg =&gt; value</code>)</li>
+<li>JSON array: positional args</li>
+<li>scalar/null: single positional arg</li>
+<li>empty body: no args</li>
+</ul>
 
                     </main>
 

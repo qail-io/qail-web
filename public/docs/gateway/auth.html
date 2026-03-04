@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "coal";
             const default_dark_theme = "coal";
-            window.path_to_searchindex_js = "../searchindex-2706ae00.js";
+            window.path_to_searchindex_js = "../searchindex-412820a1.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-d260c190.js"></script>
@@ -189,12 +189,7 @@
 <hr>
 <h2 id="jwt-authentication"><a class="header" href="#jwt-authentication">JWT Authentication</a></h2>
 <p>The gateway validates JWT tokens and extracts tenant context for RLS.</p>
-<p>Set <code>JWT_SECRET</code> as an environment variable or in <code>qail.toml</code>:</p>
-<pre><code class="language-toml"># qail.toml
-[gateway]
-jwt_secret = "your-hs256-secret"
-</code></pre>
-<p>Or set via environment variable (takes precedence over TOML):</p>
+<p>Set <code>JWT_SECRET</code> as an environment variable:</p>
 <pre><code class="language-bash">export JWT_SECRET="your-hs256-secret"
 </code></pre>
 <p>The extracted claims (<code>operator_id</code>, <code>user_id</code>, <code>role</code>) are set as PostgreSQL session variables before every query, enabling native RLS enforcement:</p>
@@ -205,12 +200,18 @@ set_config('app.role', '&lt;from JWT&gt;', false);
 <hr>
 <h2 id="header-based-dev-auth"><a class="header" href="#header-based-dev-auth">Header-Based Dev Auth</a></h2>
 <p>For development, pass claims directly as headers:</p>
-<pre><code class="language-bash">curl -H "x-operator-id: uuid" -H "x-user-id: uuid" /api/orders
+<pre><code class="language-bash">curl \
+  -H "x-user-id: user-123" \
+  -H "x-user-role: operator" \
+  -H "x-tenant-id: tenant-abc" \
+  /api/orders
 </code></pre>
 <blockquote>
-<p><strong>Warning:</strong> Header-based auth is only active when <code>QAIL_DEV_MODE=true</code> is set <strong>and</strong> <code>JWT_SECRET</code> is <strong>not set</strong>. The gateway will <strong>refuse to start</strong> in dev mode when the bind address is not <code>localhost</code> — preventing accidental exposure of header-based auth on public interfaces.</p>
+<p><strong>Warning:</strong> Header-based auth is only active when <code>QAIL_DEV_MODE=true</code> is set.
+This works independently of <code>JWT_SECRET</code> — you can have both JWT and dev-mode headers active simultaneously.
+If a <code>Bearer</code> token is provided but fails validation, the request is <strong>denied</strong> (not degraded to dev-mode or anonymous).
+The gateway logs a startup warning when dev mode is enabled and does not enforce bind-address restrictions.</p>
 </blockquote>
-<hr>
 <hr>
 <h2 id="row-level-security-rls"><a class="header" href="#row-level-security-rls">Row-Level Security (RLS)</a></h2>
 <p>Every query is automatically scoped to the authenticated tenant via PostgreSQL’s native RLS. The gateway sets session variables before each query:</p>
@@ -222,7 +223,7 @@ set_config('app.role', '&lt;from JWT&gt;', false);
 <p>Your PostgreSQL RLS policies reference these variables:</p>
 <pre><code class="language-sql">CREATE POLICY tenant_isolation ON orders
   FOR ALL
-  USING (operator_id = current_setting('app.operator_id')::uuid);
+  USING (operator_id = current_setting('app.current_operator_id')::uuid);
 
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orders FORCE ROW LEVEL SECURITY;
@@ -235,19 +236,17 @@ ALTER TABLE orders FORCE ROW LEVEL SECURITY;
 <h2 id="yaml-policy-engine"><a class="header" href="#yaml-policy-engine">YAML Policy Engine</a></h2>
 <p>Fine-grained access control per table, per role:</p>
 <pre><code class="language-yaml">policies:
-  orders:
-    roles:
-      agent:
-        select: true
-        insert: true
-        update: true
-        delete: false
-        columns: ["id", "status", "total", "created_at"]  # Column-level
-        filter:                                             # Row-level
-          operator_id: "x-operator-id"
-      viewer:
-        select: true
-        columns: ["id", "status"]
+  - name: orders_agent_read
+    table: orders
+    role: agent
+    operations: [read]
+    filter: "operator_id = $tenant_id"
+    allowed_columns: ["id", "status", "total", "created_at"]
+  - name: orders_viewer_read
+    table: orders
+    role: viewer
+    operations: [read]
+    allowed_columns: ["id", "status"]
 </code></pre>
 <h3 id="column-permissions"><a class="header" href="#column-permissions">Column Permissions</a></h3>
 <p>Control which columns each role can read or write:</p>
@@ -264,8 +263,8 @@ ALTER TABLE orders FORCE ROW LEVEL SECURITY;
 <tr><th>Permission</th><th>Operations</th></tr>
 </thead>
 <tbody>
-<tr><td><code>select</code></td><td><code>GET</code> list and single</td></tr>
-<tr><td><code>insert</code></td><td><code>POST</code> create</td></tr>
+<tr><td><code>read</code></td><td><code>GET</code> list and single</td></tr>
+<tr><td><code>create</code></td><td><code>POST</code> create</td></tr>
 <tr><td><code>update</code></td><td><code>PATCH</code> update</td></tr>
 <tr><td><code>delete</code></td><td><code>DELETE</code> delete</td></tr>
 </tbody>
@@ -275,16 +274,98 @@ ALTER TABLE orders FORCE ROW LEVEL SECURITY;
 <h2 id="query-allow-listing"><a class="header" href="#query-allow-listing">Query Allow-Listing</a></h2>
 <p>Lock down which queries can run in production:</p>
 <pre><code class="language-toml"># qail.toml
-[gateway.security]
-allow_list_enabled = true
-allow_list = [
-  "GET /api/orders",
-  "GET /api/orders/:id",
-]
-complexity_limit = 10
-rate_limit = 100
+[gateway]
+allow_list_path = "allow_list.txt"
 </code></pre>
 <p>When enabled, any query pattern not in the allow-list is rejected with <code>403 Forbidden</code>. This provides defense-in-depth: even if auth is bypassed, only pre-approved query shapes can execute.</p>
+<hr>
+<h2 id="rpc-contract-hardening"><a class="header" href="#rpc-contract-hardening">RPC Contract Hardening</a></h2>
+<p>Harden <code>/api/rpc/{function}</code> with strict function naming and signature checks:</p>
+<pre><code class="language-toml">[gateway]
+rpc_require_schema_qualified = true
+rpc_allowlist_path = "rpc_allowlist.txt"
+rpc_signature_check = true
+</code></pre>
+<p><code>rpc_allowlist_path</code> format:</p>
+<pre><code class="language-text"># One function per line (case-insensitive)
+api.search_orders
+public.health_check
+</code></pre>
+<p>What each control does:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Setting</th><th>Effect</th></tr>
+</thead>
+<tbody>
+<tr><td><code>rpc_require_schema_qualified</code></td><td>Rejects unqualified calls like <code>search_orders</code>; requires <code>schema.function</code></td></tr>
+<tr><td><code>rpc_allowlist_path</code></td><td>Blocks RPC calls not explicitly listed</td></tr>
+<tr><td><code>rpc_signature_check</code></td><td>For named-arg JSON bodies, rejects unknown argument keys not present in PostgreSQL function signatures</td></tr>
+</tbody>
+</table>
+</div>
+<p>When <code>rpc_signature_check=true</code>, the gateway also uses a parser-only PostgreSQL probe (<code>PREPARE ...; DEALLOCATE</code>) to align overload resolution with PostgreSQL itself before execution.</p>
+<p>RPC DevEx endpoint:</p>
+<ul>
+<li><code>GET /api/_rpc/contracts</code> returns callable function signatures (<code>identity_args</code>, defaults, variadic, return type) for typed client generation.</li>
+</ul>
+<p>RPC result format control:</p>
+<ul>
+<li>Optional header <code>x-qail-result-format: binary</code> enables binary column format on RPC responses.</li>
+<li>Default is <code>x-qail-result-format: text</code>.</li>
+</ul>
+<hr>
+<h2 id="database-authtls-hardening"><a class="header" href="#database-authtls-hardening">Database Auth/TLS Hardening</a></h2>
+<p>Gateway database transport/auth policy can be configured through <code>database_url</code> query parameters:</p>
+<pre><code class="language-toml">[gateway]
+database_url = "postgresql://app:secret@db.internal:5432/app\
+?sslmode=require\
+&amp;sslrootcert=/etc/qail/ca.pem\
+&amp;channel_binding=require\
+&amp;auth_mode=scram_only"
+</code></pre>
+<p>Supported parameters:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Parameter</th><th>Values</th><th>Effect</th></tr>
+</thead>
+<tbody>
+<tr><td><code>sslmode</code></td><td><code>disable</code>, <code>prefer</code>, <code>require</code> (<code>verify-ca</code>/<code>verify-full</code> map to <code>require</code>)</td><td>TLS policy</td></tr>
+<tr><td><code>sslrootcert</code></td><td>file path</td><td>Custom CA bundle for server cert validation</td></tr>
+<tr><td><code>sslcert</code> + <code>sslkey</code></td><td>file paths</td><td>Enable mTLS client cert auth</td></tr>
+<tr><td><code>channel_binding</code></td><td><code>disable</code>, <code>prefer</code>, <code>require</code></td><td>SCRAM channel-binding policy</td></tr>
+<tr><td><code>auth_mode</code></td><td><code>scram_only</code>, <code>gssapi_only</code>, <code>compat</code></td><td>Auth policy preset</td></tr>
+<tr><td><code>auth_scram</code> / <code>auth_md5</code> / <code>auth_cleartext</code></td><td>boolean</td><td>Fine-grained mechanism toggles</td></tr>
+<tr><td><code>auth_kerberos</code> / <code>auth_gssapi</code> / <code>auth_sspi</code></td><td>boolean</td><td>Enterprise auth mechanism toggles</td></tr>
+<tr><td><code>gss_provider</code></td><td><code>linux_krb5</code>, <code>callback</code>, <code>custom</code></td><td>Selects built-in Linux krb5 provider vs external callback wiring</td></tr>
+<tr><td><code>gss_service</code></td><td>string (default <code>postgres</code>)</td><td>Kerberos service used for host-based target (<code>service@host</code>)</td></tr>
+<tr><td><code>gss_target</code></td><td>string</td><td>Optional full host-based target override</td></tr>
+<tr><td><code>gss_connect_retries</code></td><td>integer (default <code>2</code>)</td><td>Retries transient GSS/Kerberos connect/auth failures</td></tr>
+<tr><td><code>gss_retry_base_ms</code></td><td>integer ms (default <code>150</code>)</td><td>Base delay for exponential GSS retry backoff</td></tr>
+<tr><td><code>gss_circuit_threshold</code></td><td>integer (default <code>8</code>)</td><td>Failures in window before local GSS circuit opens</td></tr>
+<tr><td><code>gss_circuit_window_ms</code></td><td>integer ms (default <code>30000</code>)</td><td>Rolling window for circuit failure counting</td></tr>
+<tr><td><code>gss_circuit_cooldown_ms</code></td><td>integer ms (default <code>15000</code>)</td><td>Cooldown while open circuit blocks new connect attempts</td></tr>
+</tbody>
+</table>
+</div>
+<p>If <code>sslcert</code> or <code>sslkey</code> is provided, both must be set.</p>
+<p>If <code>gss_provider=linux_krb5</code> is set, build the gateway with feature <code>enterprise-gssapi</code> on Linux.</p>
+<p>Startup runs Kerberos preflight checks and emits clear diagnostics for common misconfiguration
+(missing explicit credential cache/keytab paths, invalid <code>KRB5_CONFIG</code>, etc).</p>
+<p>Example:</p>
+<pre><code class="language-toml">[gateway]
+database_url = "postgresql://app@db.internal:5432/app\
+?sslmode=require\
+&amp;auth_mode=gssapi_only\
+&amp;gss_provider=linux_krb5\
+&amp;gss_service=postgres\
+&amp;gss_connect_retries=3\
+&amp;gss_retry_base_ms=200\
+&amp;gss_circuit_threshold=8\
+&amp;gss_circuit_window_ms=30000\
+&amp;gss_circuit_cooldown_ms=15000"
+</code></pre>
 <hr>
 <h2 id="security-summary"><a class="header" href="#security-summary">Security Summary</a></h2>
 <div class="table-wrapper">

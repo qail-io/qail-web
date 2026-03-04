@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "coal";
-            window.path_to_searchindex_js = "searchindex-2706ae00.js";
+            window.path_to_searchindex_js = "searchindex-412820a1.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-d260c190.js"></script>
@@ -200,10 +200,12 @@
 <tbody>
 <tr><td><strong>1</strong></td><td><strong>SQL-AST</strong></td><td><strong>PostgreSQL</strong></td><td><code>qail-pg</code> — Native wire protocol, AST-to-bytes</td></tr>
 <tr><td><strong>2</strong></td><td><strong>Vector-AST</strong></td><td><strong>Qdrant</strong></td><td><code>qail-qdrant</code> — gRPC + REST, vector search</td></tr>
-<tr><td><strong>3</strong></td><td><strong>KV-Command</strong></td><td><strong>Redis</strong></td><td><code>qail-redis</code> — Native RESP3 protocol</td></tr>
 </tbody>
 </table>
 </div>
+<blockquote>
+<p>Redis support (<code>qail-redis</code>) was removed in <code>v0.20.0</code>.</p>
+</blockquote>
 <h3 id="-not-supported"><a class="header" href="#-not-supported">❌ Not Supported</a></h3>
 <ul>
 <li><strong>Oracle, SQL Server, MySQL:</strong> Proprietary/Closed protocols.</li>
@@ -224,7 +226,7 @@ let cmd = Qail::get("users")
 let mut driver = PgDriver::connect("localhost", 5432, "user", "db").await?;
 let rows = driver.query(&amp;cmd).await?;
 <span class="boring">}</span></code></pre>
-<h2 id="current-status-80-production-ready"><a class="header" href="#current-status-80-production-ready">Current Status (~80% Production Ready)</a></h2>
+<h2 id="current-status-production-ready-actively-hardened"><a class="header" href="#current-status-production-ready-actively-hardened">Current Status (Production Ready, Actively Hardened)</a></h2>
 <div class="table-wrapper">
 <table>
 <thead>

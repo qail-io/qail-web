@@ -2,7 +2,7 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 ---
 
-<BaseLayout title="QAIL — The AST Protocol for Data" description="One AST replaces REST, GraphQL, and ORMs. Binary wire protocol, built-in RLS, compile-time safety. 41× faster than GraphQL N+1. Native Rust with drivers for every language.">
+<BaseLayout title="QAIL — The AST Protocol for Data" description="One AST pipeline across core, gateway, and PostgreSQL wire protocol. Built-in RLS, compile-time validation, and N+1 detection for production SaaS backends.">
     <!-- Hero -->
     <header class="hero">
         <div class="hero-bg"></div>
@@ -219,7 +219,8 @@ import BaseLayout from "../layouts/BaseLayout.astro";
                 style="text-align: center; margin-bottom: 2.5rem; color: var(--text-muted); max-width: 600px; margin-left: auto; margin-right: auto;"
             >
                 Same query. Same database. Same 50-row result set with 3 JOINs.<br/>
-                100 iterations, release build, buffer cache warmed.
+                100 iterations, release build, buffer cache warmed.<br/>
+                Snapshot run: February 2026.
             </p>
 
             <!-- Benchmark bars -->
@@ -230,7 +231,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
                     <div style="flex: 1; position: relative;">
                         <div style="height: 40px; width: 3%; min-width: 28px; background: linear-gradient(90deg, #22c55e, #4ade80); border-radius: 8px; display: flex; align-items: center; justify-content: flex-end; padding-right: 0.5rem;">
                         </div>
-                        <span style="position: absolute; left: 40px; top: 50%; transform: translateY(-50%); font-size: 0.8rem; font-weight: 700; color: #22c55e;">436µs</span>
+                        <span style="position: absolute; left: 40px; top: 50%; transform: translateY(-50%); font-size: 0.8rem; font-weight: 700; color: #22c55e;">449µs</span>
                     </div>
                     <div style="width: 80px; font-size: 0.75rem; color: var(--text-muted);">1 query</div>
                 </div>
@@ -241,7 +242,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
                     <div style="flex: 1; position: relative;">
                         <div style="height: 40px; width: 5.5%; min-width: 50px; background: linear-gradient(90deg, #e535ab, #ff69b4); border-radius: 8px;">
                         </div>
-                        <span style="position: absolute; left: 62px; top: 50%; transform: translateY(-50%); font-size: 0.8rem; font-weight: 700; color: #e535ab;">923µs</span>
+                        <span style="position: absolute; left: 62px; top: 50%; transform: translateY(-50%); font-size: 0.8rem; font-weight: 700; color: #e535ab;">1.52ms</span>
                     </div>
                     <div style="width: 80px; font-size: 0.75rem; color: var(--text-muted);">~3 queries</div>
                 </div>
@@ -251,7 +252,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
                     <div style="width: 140px; text-align: right; font-size: 0.85rem; font-weight: 600; color: #f59e0b;">GQL Naive</div>
                     <div style="flex: 1;">
                         <div style="height: 40px; width: 100%; background: linear-gradient(90deg, #f59e0b, #fbbf24); border-radius: 8px; display: flex; align-items: center; justify-content: flex-end; padding-right: 0.75rem;">
-                            <span style="font-size: 0.8rem; font-weight: 700; color: #000;">18ms · 41× slower</span>
+                            <span style="font-size: 0.8rem; font-weight: 700; color: #000;">18.2ms · 40× slower</span>
                         </div>
                     </div>
                     <div style="width: 80px; font-size: 0.75rem; color: var(--text-muted);">~151 queries</div>
@@ -262,7 +263,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
                     <div style="width: 140px; text-align: right; font-size: 0.85rem; font-weight: 600; color: #ef4444;">REST Naive</div>
                     <div style="flex: 1;">
                         <div style="height: 40px; width: 93%; background: linear-gradient(90deg, #ef4444, #f87171); border-radius: 8px; display: flex; align-items: center; justify-content: flex-end; padding-right: 0.75rem;">
-                            <span style="font-size: 0.8rem; font-weight: 700; color: #fff;">16.8ms · 39× slower</span>
+                            <span style="font-size: 0.8rem; font-weight: 700; color: #fff;">22.5ms · 50× slower</span>
                         </div>
                     </div>
                     <div style="width: 80px; font-size: 0.75rem; color: var(--text-muted);">~151 queries</div>
@@ -270,7 +271,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
             </div>
 
             <p style="text-align: center; margin-top: 2rem; font-size: 0.85rem; color: var(--text-muted);">
-                QAIL sends <strong style="color: #22c55e;">1 SQL JOIN</strong>. GraphQL/REST resolve N+1 with <strong style="color: #ef4444;">151 round-trips</strong> to Postgres.
+                QAIL executes one planned query on this path. Naive resolver/endpoint patterns can explode to <strong style="color: #ef4444;">151 round-trips</strong> without join batching.
             </p>
             <p style="text-align: center; margin-top: 0.5rem;">
                 <a

@@ -15,12 +15,34 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
     <main class="page-content">
         <div class="container" style="max-width: 900px;">
+            <!-- v0.23.0 -->
+            <section class="release-section">
+                <div class="release-header">
+                    <h2>v0.23.0</h2>
+                    <span class="release-date">March 2026</span>
+                    <span class="status-badge full">Latest</span>
+                </div>
+
+                <div class="release-highlight">
+                    <span style="font-size: 1.5rem;">🛡️</span>
+                    <strong>Platform Hardening</strong> — protocol, gateway, validator, and migration safety upgrades
+                </div>
+
+                <h4>Highlights</h4>
+                <ul class="changelog-list">
+                    <li><strong>PG driver:</strong> GSS/GSSENC implementation phases completed with protocol-level security fixes and test coverage expansion</li>
+                    <li><strong>Gateway:</strong> stricter fail-closed security defaults, allow-list and complexity guard parity across HTTP/WS, stronger idempotency and tenant protections</li>
+                    <li><strong>Validator:</strong> deeper schema/build validation and stronger N+1 detection coverage, including cross-file propagation improvements</li>
+                    <li><strong>Migrations:</strong> safer apply flow with destructive-change guardrails, phase checks, and stronger reset/backfill correctness</li>
+                    <li><strong>Quality:</strong> clippy/test cleanup across core, pg, and gateway with panic-path reductions in hot code paths</li>
+                </ul>
+            </section>
+
             <!-- v0.20.6 -->
             <section class="release-section">
                 <div class="release-header">
                     <h2>v0.20.6</h2>
                     <span class="release-date">February 18, 2026</span>
-                    <span class="status-badge full">Latest</span>
                 </div>
 
                 <div class="release-highlight">

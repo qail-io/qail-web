@@ -156,8 +156,7 @@ const qailCode = `Qail::get("posts")
                 <blockquote class="manifesto-quote">
                     "Safety shouldn't require a prison of boilerplate. We moved
                     validation from the 'String' layer to the 'AST' layer. Code
-                    is data. Data is typed. Injection is structurally
-                    impossible."
+                    is data. Data is typed. Injection risk is reduced on the AST path."
                 </blockquote>
 
                 <p>
@@ -316,10 +315,10 @@ const qailCode = `Qail::get("posts")
                 </blockquote>
 
                 <h3>Soundness by Construction</h3>
-                <p>By forcing all queries through the AST, QAIL guarantees:</p>
+                <p>By forcing queries through the AST path, QAIL enforces strong invariants:</p>
                 <ul>
                     <li>
-                        <strong>SQL Injection is Structurally Impossible</strong
+                        <strong>SQL Injection Risk Removed on AST Path</strong
                         > — Code and data are never mixed. Parameters are always separate
                         from query structure.
                     </li>
@@ -356,7 +355,7 @@ const qailCode = `Qail::get("posts")
                         <tr>
                             <td><strong>Rust</strong> (no escape)</td>
                             <td>"If it's not safe, you can't write it"</td>
-                            <td>People adapt → Memory safety guaranteed</td>
+                            <td>People adapt → Memory safety strongly enforced</td>
                         </tr>
                         <tr>
                             <td>ORM with Raw</td>
@@ -367,7 +366,7 @@ const qailCode = `Qail::get("posts")
                             <td><strong>QAIL</strong> (pure AST)</td>
                             <td>"If it's not in the AST, you can't query it"</td
                             >
-                            <td>People adapt → Injection impossible</td>
+                            <td>People adapt → Injection risk reduced by design</td>
                         </tr>
                     </tbody>
                 </table>
@@ -376,7 +375,7 @@ const qailCode = `Qail::get("posts")
                 <p>
                     If you need raw SQL strings, use <code>sqlx</code> or another
                     driver. QAIL is for those who want
-                    <strong>guarantees</strong>, not flexibility.
+                    <strong>strong invariants</strong>, not string-level flexibility.
                 </p>
 
                 <p
@@ -571,7 +570,7 @@ const qailCode = `Qail::get("posts")
                 >
                     "QAIL is the query transport layer, not an ORM. If you need
                     magic lazy loading, use Prisma. If you want the
-                    fastest, safest way to talk to your database — with proof — use QAIL."
+                    high-performance, safety-focused way to talk to your database — with proof — use QAIL."
                 </blockquote>
             </section>
 
@@ -653,7 +652,7 @@ const qailCode = `Qail::get("posts")
                         <tr>
                             <td>SQL injection</td>
                             <td>Possible (one mistake)</td>
-                            <td><strong>Impossible</strong> (binary AST)</td>
+                            <td><strong>Prevented on AST path</strong> (binary AST)</td>
                         </tr>
                         <tr>
                             <td>Tenant data leak</td>
@@ -663,7 +662,7 @@ const qailCode = `Qail::get("posts")
                         <tr>
                             <td>N+1 catastrophe</td>
                             <td>Default behavior</td>
-                            <td><strong>Structurally impossible</strong></td>
+                            <td><strong>Detected and discouraged</strong> (AST + lint)</td>
                         </tr>
                     </tbody>
                 </table>
