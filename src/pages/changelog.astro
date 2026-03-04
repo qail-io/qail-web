@@ -237,7 +237,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
                 <h4>Changed</h4>
                 <ul class="changelog-list">
                     <li><strong>Gateway:</strong> License updated to BSL-1.1</li>
-                    <li><strong>Core:</strong> Redis module removed (replaced by PostgreSQL-native caching)</li>
+                    <li><strong>Core:</strong> Redis module removed (replaced by in-process moka cache + PG statement caching)</li>
                 </ul>
             </section>
 
@@ -566,7 +566,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
                 <ul class="changelog-list">
                     <li>
                         <strong>QueryCache:</strong>
-                        DashMap-based LRU with configurable TTL (default: 60s, 1000 entries)
+                        Introduced in-process query cache (now moka-backed) with configurable TTL (default: 60s, 1000 entries)
                     </li>
                     <li>
                         <strong>Auto-Invalidation:</strong>

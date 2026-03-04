@@ -484,7 +484,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
                     <ul class="task-list">
                         <li><span class="check check-done">✓</span> <strong>PostgreSQL</strong> — zero-copy wire protocol, SCRAM-SHA-256, TLS, COPY streaming</li>
                         <li><span class="check check-done">✓</span> <strong>Qdrant</strong> — zero-copy gRPC, HTTP/2 batch pipelining, connection pool</li>
-                        <li><span class="check check-done">✓</span> <strong>Native Cache</strong> — in-process LRU with TTL, auto table-level invalidation (<code>DashMap</code>)</li>
+                        <li><span class="check check-done">✓</span> <strong>Native Cache</strong> — in-process moka cache with TTL, weighted eviction, and table-level invalidation</li>
                     </ul>
                 </div>
 

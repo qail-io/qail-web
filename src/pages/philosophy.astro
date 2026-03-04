@@ -210,7 +210,7 @@ const qailCode = `Qail::get("posts")
                         </tr>
                         <tr>
                             <td><strong>Native Cache</strong></td>
-                            <td>In-process LRU with TTL. Zero-latency result caching.</td>
+                            <td>In-process moka cache with TTL and size bounds. Zero-network result caching.</td>
                             <td>Query results, prepared stmts, EXPLAIN plans</td>
                         </tr>
                     </tbody>
