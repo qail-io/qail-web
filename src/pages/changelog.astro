@@ -15,12 +15,33 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
     <main class="page-content">
         <div class="container" style="max-width: 900px;">
-            <!-- v0.23.0 -->
+            <!-- v0.24.1 -->
             <section class="release-section">
                 <div class="release-header">
-                    <h2>v0.23.0</h2>
-                    <span class="release-date">March 2026</span>
+                    <h2>v0.24.1</h2>
+                    <span class="release-date">March 6, 2026</span>
                     <span class="status-badge full">Latest</span>
+                </div>
+
+                <div class="release-highlight">
+                    <span style="font-size: 1.5rem;">🔒</span>
+                    <strong>Patch Hardening Release</strong> — tighter RLS audit semantics, CI cleanup, and release polish
+                </div>
+
+                <h4>Highlights</h4>
+                <ul class="changelog-list">
+                    <li><strong>Core validator:</strong> stricter super-admin RLS audit with explicit tenant scope rules and deduplicated diagnostics</li>
+                    <li><strong>Syn scanner:</strong> function-scoped super-admin detection and one-shot <code>// qail:allow(super_admin)</code> suppression behavior</li>
+                    <li><strong>CI:</strong> removed deferred wasm publish workflow and added dependency review checks</li>
+                    <li><strong>Release:</strong> coordinated crate bump to <code>0.24.1</code> across core, pg, gateway, workflow, qdrant, encoder, cli, and lsp</li>
+                </ul>
+            </section>
+
+            <!-- v0.24.0 -->
+            <section class="release-section">
+                <div class="release-header">
+                    <h2>v0.24.0</h2>
+                    <span class="release-date">March 2026</span>
                 </div>
 
                 <div class="release-highlight">
