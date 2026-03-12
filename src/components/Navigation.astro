@@ -54,6 +54,9 @@ function isActive(href: string): boolean {
                     </a>
                 ))
             }
+            <a href="https://dev.qail.io" target="_blank" rel="noopener">
+                Developers
+            </a>
         </div>
 
         <div class="nav-actions">
@@ -84,5 +87,6 @@ function isActive(href: string): boolean {
 </nav>
 <div class="mobile-menu" id="mobileMenu">
     {navLinks.map((link) => <a href={link.href}>{link.label}</a>)}
+    <a href="https://dev.qail.io" target="_blank" rel="noopener">Developers</a>
     <a href="https://github.com/qail-io/qail" target="_blank">GitHub</a>
 </div>

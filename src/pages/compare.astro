@@ -19,7 +19,10 @@ import BaseLayout from "../layouts/BaseLayout.astro";
             <section>
                 <h2>AST Builder API (Recommended)</h2>
                 <p style="color: var(--text-muted);">
-                    Build queries as typed Rust structs. No parsing. No strings.
+                    Build queries as typed Rust structs. No app-side SQL string interpolation on this path.
+                </p>
+                <p style="color: var(--text-muted); margin-top: -0.25rem; font-size: 0.9rem;">
+                    PostgreSQL still does normal parse/plan/execute on the server.
                 </p>
 
                 <div class="comparison-grid">

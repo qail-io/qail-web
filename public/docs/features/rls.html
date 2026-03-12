@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "coal";
             const default_dark_theme = "coal";
-            window.path_to_searchindex_js = "../searchindex-412820a1.js";
+            window.path_to_searchindex_js = "../searchindex-107de6ce.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-d260c190.js"></script>
@@ -201,7 +201,7 @@ let sql = "SELECT * FROM invoices"; // BUG: leaks ALL operator data
 <p>QAIL solves this at the driver level:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>use qail_core::rls::RlsContext;
+</span>use qail_core::rls::{RlsContext, SuperAdminToken};
 
 // Create context from authenticated session
 let ctx = RlsContext::operator(operator_id);
@@ -212,7 +212,7 @@ let query = Qail::get("bookings")
     .with_rls(&amp;ctx);  // ← RLS injected at AST level
 
 // Generated SQL: SELECT ... FROM bookings
-// But the connection has: SET app.operator_id = '&lt;uuid&gt;'
+// But the connection sets app.current_operator_id/app.current_agent_id
 // PostgreSQL RLS policy handles the rest
 <span class="boring">}</span></code></pre>
 <h2 id="rlscontext-constructors"><a class="header" href="#rlscontext-constructors">RlsContext Constructors</a></h2>
@@ -225,7 +225,8 @@ let query = Qail::get("bookings")
 <tr><td><code>RlsContext::operator(id)</code></td><td>Single operator</td><td>Operator dashboard</td></tr>
 <tr><td><code>RlsContext::agent(id)</code></td><td>Single agent</td><td>Agent portal</td></tr>
 <tr><td><code>RlsContext::operator_and_agent(op, ag)</code></td><td>Both</td><td>Agent within operator</td></tr>
-<tr><td><code>RlsContext::super_admin()</code></td><td>Bypasses RLS</td><td>Platform admin</td></tr>
+<tr><td><code>RlsContext::global()</code></td><td>Shared/global rows (<code>tenant_id IS NULL</code>)</td><td>Public/reference data</td></tr>
+<tr><td><code>RlsContext::super_admin(token)</code></td><td>Bypasses RLS</td><td>Internal platform-only ops</td></tr>
 </tbody>
 </table>
 </div>
@@ -238,7 +239,12 @@ ctx.has_operator();   // true
 ctx.has_agent();      // true
 ctx.bypasses_rls();   // false
 
-let admin = RlsContext::super_admin();
+let global = RlsContext::global();
+global.is_global();   // true
+global.bypasses_rls();// false
+
+let token = SuperAdminToken::for_system_process("admin_task");
+let admin = RlsContext::super_admin(token);
 admin.bypasses_rls(); // true
 <span class="boring">}</span></code></pre>
 <h2 id="how-it-works"><a class="header" href="#how-it-works">How It Works</a></h2>
@@ -250,14 +256,14 @@ admin.bypasses_rls(); // true
 │  AST Builder adds RLS context to query            │
 │       ↓                                           │
 │  PgDriver::execute()                              │
-│  ├─ set_config('app.current_operator_id', '&lt;uuid&gt;', false) │
-│  ├─ set_config('app.current_agent_id', '&lt;uuid&gt;', false)    │
+│  ├─ set_config('app.current_operator_id', '&lt;uuid&gt;', true)  │
+│  ├─ set_config('app.current_agent_id', '&lt;uuid&gt;', true)     │
 │  └─ Execute query on SAME connection                       │
 │       ↓                                           │
 │  PostgreSQL RLS Policy                            │
 │  CREATE POLICY tenant_isolation ON bookings       │
 │    USING (operator_id = current_setting(          │
-│           'app.operator_id')::uuid)              │
+│           'app.current_operator_id')::uuid)       │
 │       ↓                                           │
 │  Only matching rows returned                      │
 └─────────────────────────────────────────────────┘

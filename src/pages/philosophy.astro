@@ -22,7 +22,7 @@ const qailCode = `Qail::get("posts")
 
 <BaseLayout
     title="The Manifesto | QAIL"
-    description="Why we built QAIL: Skip the string layer. AST to wire protocol bytes. The manifesto behind the vision."
+    description="Why we built QAIL: move query structure from hand-written SQL strings to typed AST, then encode protocol bytes for PostgreSQL."
 >
     <header class="page-header">
         <div class="container">
@@ -92,7 +92,7 @@ const qailCode = `Qail::get("posts")
                     polyglot headaches. But I realized that keeping it private
                     meant letting other engineers suffer through the same
                     'Database Dilemma'. I decided to open-source it so we can
-                    all skip the string layer."
+                    all skip app-side SQL string plumbing."
                 </blockquote>
             </section>
 
@@ -164,8 +164,12 @@ const qailCode = `Qail::get("posts")
                     >, QAIL ensures your queries are safe before they even reach
                     the database. Unlike ORMs that generate strings at runtime,
                     QAIL encodes directly to wire protocol bytes—<strong
-                        >no string layer at all</strong
+                        >without app-side SQL string interpolation on the AST path</strong
                     >.
+                </p>
+                <p>
+                    Important: this does <strong>not</strong> mean PostgreSQL stops parsing.
+                    PostgreSQL still runs its normal parse/plan/execute stages on the server.
                 </p>
             </section>
 
@@ -248,7 +252,7 @@ const qailCode = `Qail::get("posts")
                 <p>
                     We designed the builder API for <strong
                         >Type Safety and Clarity.</strong
-                    > Every method is purposeful. No strings to parse.
+                    > Every method is purposeful. No hand-built SQL-string plumbing.
                 </p>
                 <table style="width: 100%; margin: 1rem 0;">
                     <thead>
@@ -551,8 +555,8 @@ const qailCode = `Qail::get("posts")
                         than SQL
                     </li>
                     <li>
-                        ✅ <strong>Direct wire protocol encoding</strong> — No string
-                        layer
+                        ✅ <strong>Direct wire protocol encoding</strong> — No app-side
+                        SQL interpolation on AST path
                     </li>
                     <li>
                         ✅ <strong
@@ -588,7 +592,7 @@ const qailCode = `Qail::get("posts")
                     style="border-left-color: #22c55e; background: rgba(34, 197, 94, 0.08);"
                 >
                     "Full-featured data API — without GraphQL complexity.
-                    Binary AST protocol instead of string-based queries."
+                    Binary AST protocol with safer defaults than hand-built query strings."
                 </blockquote>
 
                 <h3>What You Get</h3>
@@ -652,7 +656,7 @@ const qailCode = `Qail::get("posts")
                         <tr>
                             <td>SQL injection</td>
                             <td>Possible (one mistake)</td>
-                            <td><strong>Prevented on AST path</strong> (binary AST)</td>
+                            <td><strong>Prevented on AST path</strong> (no app-side SQL interpolation)</td>
                         </tr>
                         <tr>
                             <td>Tenant data leak</td>

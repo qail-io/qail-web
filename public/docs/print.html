@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "coal";
             const default_dark_theme = "coal";
-            window.path_to_searchindex_js = "searchindex-412820a1.js";
+            window.path_to_searchindex_js = "searchindex-107de6ce.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-d260c190.js"></script>
@@ -183,12 +183,19 @@
 <blockquote>
 <p><strong>The AST-Native Query Compiler with Built-in Row-Level Security</strong></p>
 </blockquote>
-<p>QAIL compiles typed query ASTs directly to database wire protocols. No SQL strings. No injection surface. Built-in multi-tenant data isolation via RLS. The only Rust PostgreSQL driver with AST-level tenant injection.</p>
+<p>QAIL compiles typed query ASTs directly to database wire protocols. No application-level SQL string interpolation on the AST path. Built-in multi-tenant data isolation via RLS. The only Rust PostgreSQL driver with AST-level tenant injection.</p>
 <h2 id="philosophy-ast--meaning"><a class="header" href="#philosophy-ast--meaning">Philosophy: AST = Meaning</a></h2>
 <blockquote>
 <p><strong>If a database doesn’t let us encode semantic intent, we don’t fake it.</strong></p>
 </blockquote>
-<p>QAIL compiles typed query ASTs directly to database wire protocols. No SQL strings. No injection surface.</p>
+<p>QAIL compiles typed query ASTs directly to database wire protocols with typed value encoding.</p>
+<h2 id="sql-string-vs-sql-bytes"><a class="header" href="#sql-string-vs-sql-bytes">SQL String vs SQL Bytes</a></h2>
+<ul>
+<li><strong>SQL string</strong>: text query assembled in application code.</li>
+<li><strong>SQL bytes</strong>: PostgreSQL protocol message bytes (<code>Parse</code>/<code>Bind</code>/<code>Execute</code> and results) plus encoded bind values.</li>
+<li><strong>QAIL guarantee</strong>: AST flow removes app-side SQL interpolation as an injection surface.</li>
+<li><strong>PostgreSQL behavior</strong>: server parse/plan/execute still applies normally.</li>
+</ul>
 <h3 id="supported-databases"><a class="header" href="#supported-databases">Supported Databases</a></h3>
 <div class="table-wrapper">
 <table>
@@ -263,27 +270,27 @@ let rows = driver.query(&amp;cmd).await?;
 <tr><td>Materialized Views</td><td>✅</td></tr>
 <tr><td>Row-Level Security (RLS)</td><td>✅</td></tr>
 <tr><td>Multi-Tenant Isolation</td><td>✅</td></tr>
-<tr><td>TypedQail<t> Relations</t></td><td>✅</td></tr>
+<tr><td><code>TypedQail&lt;T&gt;</code> Relations</td><td>✅</td></tr>
 <tr><td>Protected Columns</td><td>✅</td></tr>
 <tr><td>LISTEN/NOTIFY/UNLISTEN</td><td>✅</td></tr>
 </tbody>
 </table>
 </div>
 <blockquote>
-<p><strong>Note:</strong> QAIL’s AST-native design eliminates SQL injection by construction — no strings, no injection surface. Query plan caching (<code>prepare()</code>, <code>pipeline_prepared_fast()</code>) is purely a PostgreSQL performance optimization, not a security measure.</p>
+<p><strong>Note:</strong> QAIL’s AST-native design eliminates app-side SQL interpolation on the AST path. Query plan caching (<code>prepare()</code>, <code>pipeline_prepared_fast()</code>) is a PostgreSQL performance optimization, not the primary security boundary.</p>
 </blockquote>
 <h2 id="why-some-sql-features-dont-exist-in-qail"><a class="header" href="#why-some-sql-features-dont-exist-in-qail">Why Some SQL Features Don’t Exist in QAIL</a></h2>
-<p>QAIL speaks <strong>AST</strong>, not SQL strings. Many traditional SQL “security features” are solutions to string-based problems that don’t exist in an AST-native world:</p>
+<p>QAIL is <strong>AST-first</strong>, not SQL-string-first. Many traditional SQL “security features” exist to mitigate string-construction risks that AST pipelines avoid by design:</p>
 <div class="table-wrapper">
 <table>
 <thead>
 <tr><th>SQL Feature</th><th>Why It Exists</th><th>QAIL Replacement</th></tr>
 </thead>
 <tbody>
-<tr><td><strong>Parameterized Queries</strong></td><td>Prevent string injection</td><td>Not needed — <code>Value::Param</code> is a typed AST node, not a string hole</td></tr>
-<tr><td><strong>Prepared Statements</strong> (for security)</td><td>Separate SQL from data</td><td>Not needed — AST has no SQL text to inject into</td></tr>
-<tr><td><strong>Query Escaping</strong></td><td>Sanitize user input</td><td>Not needed — values are typed (<code>Value::Text</code>, <code>Value::Int</code>), never interpolated</td></tr>
-<tr><td><strong>SQL Validators</strong></td><td>Detect malformed queries</td><td>Not needed — invalid AST won’t compile</td></tr>
+<tr><td><strong>Parameterized Queries</strong></td><td>Prevent string injection</td><td>Built in — <code>Value::Param</code> is a typed AST node, not a string hole</td></tr>
+<tr><td><strong>Prepared Statements</strong> (for security)</td><td>Separate SQL from data</td><td>Not primary defense — AST already separates structure from data</td></tr>
+<tr><td><strong>Query Escaping</strong></td><td>Sanitize user input</td><td>Not primary path — values are typed (<code>Value::Text</code>, <code>Value::Int</code>)</td></tr>
+<tr><td><strong>SQL Validators</strong></td><td>Detect malformed queries</td><td>AST validation + build-time checks handle this path</td></tr>
 </tbody>
 </table>
 </div>
@@ -322,8 +329,8 @@ qail-pg = "0.9"      # PostgreSQL driver
 <pre><code class="language-bash">cargo install qail
 </code></pre>
 <h2 id="javascripttypescript-wasm"><a class="header" href="#javascripttypescript-wasm">JavaScript/TypeScript (WASM)</a></h2>
-<pre><code class="language-bash">npm install qail-wasm
-</code></pre>
+<p>WASM packaging is currently deferred until the platform reaches production-ready status.
+Use Rust crates and CLI for now.</p>
 <h2 id="verify-installation"><a class="header" href="#verify-installation">Verify Installation</a></h2>
 <pre><code class="language-bash">qail --version
 # qail 0.9.5
@@ -2537,7 +2544,7 @@ ColumnType::Jsonb.supports_indexing()     // false - warned before migration
 </ul>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="text-syntax"><a class="header" href="#text-syntax">Text Syntax</a></h1>
-<p>For CLI, LSP, and WASM playground. Parses to AST internally.</p>
+<p>For CLI and LSP usage. Parses to AST internally.</p>
 <h2 id="keywords"><a class="header" href="#keywords">Keywords</a></h2>
 <div class="table-wrapper">
 <table>
@@ -4396,7 +4403,7 @@ let sql = "SELECT * FROM invoices"; // BUG: leaks ALL operator data
 <p>QAIL solves this at the driver level:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>use qail_core::rls::RlsContext;
+</span>use qail_core::rls::{RlsContext, SuperAdminToken};
 
 // Create context from authenticated session
 let ctx = RlsContext::operator(operator_id);
@@ -4407,7 +4414,7 @@ let query = Qail::get("bookings")
     .with_rls(&amp;ctx);  // ← RLS injected at AST level
 
 // Generated SQL: SELECT ... FROM bookings
-// But the connection has: SET app.operator_id = '&lt;uuid&gt;'
+// But the connection sets app.current_operator_id/app.current_agent_id
 // PostgreSQL RLS policy handles the rest
 <span class="boring">}</span></code></pre>
 <h2 id="rlscontext-constructors"><a class="header" href="#rlscontext-constructors">RlsContext Constructors</a></h2>
@@ -4420,7 +4427,8 @@ let query = Qail::get("bookings")
 <tr><td><code>RlsContext::operator(id)</code></td><td>Single operator</td><td>Operator dashboard</td></tr>
 <tr><td><code>RlsContext::agent(id)</code></td><td>Single agent</td><td>Agent portal</td></tr>
 <tr><td><code>RlsContext::operator_and_agent(op, ag)</code></td><td>Both</td><td>Agent within operator</td></tr>
-<tr><td><code>RlsContext::super_admin()</code></td><td>Bypasses RLS</td><td>Platform admin</td></tr>
+<tr><td><code>RlsContext::global()</code></td><td>Shared/global rows (<code>tenant_id IS NULL</code>)</td><td>Public/reference data</td></tr>
+<tr><td><code>RlsContext::super_admin(token)</code></td><td>Bypasses RLS</td><td>Internal platform-only ops</td></tr>
 </tbody>
 </table>
 </div>
@@ -4433,7 +4441,12 @@ ctx.has_operator();   // true
 ctx.has_agent();      // true
 ctx.bypasses_rls();   // false
 
-let admin = RlsContext::super_admin();
+let global = RlsContext::global();
+global.is_global();   // true
+global.bypasses_rls();// false
+
+let token = SuperAdminToken::for_system_process("admin_task");
+let admin = RlsContext::super_admin(token);
 admin.bypasses_rls(); // true
 <span class="boring">}</span></code></pre>
 <h2 id="how-it-works-2"><a class="header" href="#how-it-works-2">How It Works</a></h2>
@@ -4445,14 +4458,14 @@ admin.bypasses_rls(); // true
 │  AST Builder adds RLS context to query            │
 │       ↓                                           │
 │  PgDriver::execute()                              │
-│  ├─ set_config('app.current_operator_id', '&lt;uuid&gt;', false) │
-│  ├─ set_config('app.current_agent_id', '&lt;uuid&gt;', false)    │
+│  ├─ set_config('app.current_operator_id', '&lt;uuid&gt;', true)  │
+│  ├─ set_config('app.current_agent_id', '&lt;uuid&gt;', true)     │
 │  └─ Execute query on SAME connection                       │
 │       ↓                                           │
 │  PostgreSQL RLS Policy                            │
 │  CREATE POLICY tenant_isolation ON bookings       │
 │    USING (operator_id = current_setting(          │
-│           'app.operator_id')::uuid)              │
+│           'app.current_operator_id')::uuid)       │
 │       ↓                                           │
 │  Only matching rows returned                      │
 └─────────────────────────────────────────────────┘
@@ -4937,7 +4950,7 @@ qail migrate plan old.qail:new.qail --output migration.sql
 <tbody>
 <tr><td><code>qail-core</code></td><td>AST, Builder, Parser</td><td><a href="https://docs.rs/qail-core">docs.rs</a></td></tr>
 <tr><td><code>qail-pg</code></td><td>PostgreSQL driver</td><td><a href="https://docs.rs/qail-pg">docs.rs</a></td></tr>
-<tr><td><code>qail-wasm</code></td><td>WASM bindings</td><td><a href="https://npmjs.com/package/qail-wasm">npm</a></td></tr>
+<tr><td><code>qail-wasm</code></td><td>WASM bindings</td><td>Deferred (not currently published)</td></tr>
 </tbody>
 </table>
 </div>

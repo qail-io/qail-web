@@ -2,7 +2,7 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 ---
 
-<BaseLayout title="QAIL — The AST Protocol for Data" description="One AST pipeline across core, gateway, and PostgreSQL wire protocol. Built-in RLS, compile-time validation, and N+1 detection for production SaaS backends.">
+<BaseLayout title="QAIL — The AST Protocol for Data" description="Use one typed AST from API to database. No hand-written SQL string interpolation in app code on the AST path. Built-in RLS and N+1 detection for SaaS backends.">
     <!-- Hero -->
     <header class="hero">
         <div class="hero-bg"></div>
@@ -15,10 +15,12 @@ import BaseLayout from "../layouts/BaseLayout.astro";
             <p class="hero-tagline">
                 One query language. <span class="highlight">Every layer.</span>
             </p>
-            <p style="max-width: 520px; margin: 0 auto 1.5rem; color: var(--text-muted); font-size: 0.95rem; line-height: 1.6;">
-                QAIL eliminates hand-written endpoints, query builders, and ORM abstractions
-                with a single AST that flows from schema to database — binary-encoded,
-                type-safe, with built-in Row-Level Security.
+            <p style="max-width: 560px; margin: 0 auto 1.5rem; color: var(--text-muted); font-size: 0.95rem; line-height: 1.6;">
+                QAIL lets you build queries as typed objects (AST), then sends protocol bytes to PostgreSQL.
+                This removes app-side SQL string interpolation on the AST path and keeps RLS and validation centralized.
+            </p>
+            <p style="max-width: 560px; margin: -0.5rem auto 1.5rem; color: var(--text-muted); font-size: 0.85rem; line-height: 1.6;">
+                Plain English: your app builds a typed query object, not a hand-built SQL string. PostgreSQL still does normal parse/plan/execute on the server.
             </p>
 
             <div class="hero-demo">
@@ -304,8 +306,8 @@ import BaseLayout from "../layouts/BaseLayout.astro";
                         </div>
                     </div>
                     <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
-                        Parser, transpiler, type system. Queries are data structures,
-                        not strings. Schema validation at compile time.
+                        Parser, transpiler, type system. Queries are typed data structures,
+                        not hand-built SQL strings in app code. Schema validation at compile time.
                     </p>
                     <pre style="background: rgba(0,0,0,0.3); padding: 0.75rem; border-radius: 8px; font-size: 0.75rem; margin: 0; overflow-x: auto;"><code><span style="color: #22c55e;">get</span> users <span style="color: #22c55e;">fields</span> id, email
   <span style="color: #22c55e;">where</span> active = true
@@ -323,8 +325,8 @@ import BaseLayout from "../layouts/BaseLayout.astro";
                         </div>
                     </div>
                     <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
-                        Direct wire protocol. Built-in RLS context per connection.
-                        No SQLx middleman. Facts + Meaning.
+                        Protocol-level PostgreSQL driver with typed values and built-in
+                        RLS context per connection.
                     </p>
                     <pre style="background: rgba(0,0,0,0.3); padding: 0.75rem; border-radius: 8px; font-size: 0.75rem; margin: 0; overflow-x: auto;"><code><span style="color: #3b82f6;">let</span> driver = PgDriver::connect_env().<span style="color: #3b82f6;">await</span>?;
 driver.set_rls_context(
@@ -383,8 +385,8 @@ driver.fetch_all(&cmd).<span style="color: #3b82f6;">await</span>?</code></pre>
             <p
                 style="text-align: center; margin-bottom: 2.5rem; color: var(--text-muted); max-width: 550px; margin-left: auto; margin-right: auto;"
             >
-                REST params, text queries, or binary AST — all converge to the same struct.
-                Policy injection and schema validation happen once, on the AST.
+                REST params, text queries, or binary AST all converge to the same AST.
+                Policy injection and schema validation happen once. SQL text output is optional for tooling/debug views.
             </p>
 
             <div style="max-width: 700px; margin: 0 auto;">
@@ -400,7 +402,7 @@ driver.fetch_all(&cmd).<span style="color: #3b82f6;">await</span>?</code></pre>
                     </div>
                     <div style="background: var(--surface-1); border-radius: 12px; padding: 1rem; text-align: center; border: 1px solid rgba(255,255,255,0.06);">
                         <div style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.25rem;">Binary</div>
-                        <code style="font-size: 0.75rem; color: #a855f7;">bincode::serialize(&cmd)</code>
+                        <code style="font-size: 0.75rem; color: #a855f7;">postcard::to_allocvec(&cmd)</code>
                     </div>
                 </div>
 
@@ -423,10 +425,10 @@ driver.fetch_all(&cmd).<span style="color: #3b82f6;">await</span>?</code></pre>
 
                 <div style="text-align: center; font-size: 1.5rem; margin: 0.5rem 0; opacity: 0.4;">↓</div>
 
-                <!-- Transpiler -->
+                <!-- Protocol encoder -->
                 <div style="background: var(--surface-1); border-radius: 12px; padding: 1rem; text-align: center; border: 1px solid rgba(255,255,255,0.06); margin-bottom: 0.75rem;">
-                    <div style="font-size: 0.7rem; color: #3b82f6; font-weight: 600; margin-bottom: 0.25rem;">TRANSPILER</div>
-                    <code style="font-size: 0.75rem; color: var(--text-muted);">cmd.to_sql() → <span style="color: #3b82f6;">SELECT * FROM users WHERE active = true AND operator_id = 'op-456'</span></code>
+                    <div style="font-size: 0.7rem; color: #3b82f6; font-weight: 600; margin-bottom: 0.25rem;">PROTOCOL ENCODER</div>
+                    <code style="font-size: 0.75rem; color: var(--text-muted);">Encode AST → <span style="color: #3b82f6;">Parse / Bind / Execute + typed bind values</span></code>
                 </div>
 
                 <div style="text-align: center; font-size: 1.5rem; margin: 0.5rem 0; opacity: 0.4;">↓</div>
@@ -726,7 +728,7 @@ driver.fetch_all(&cmd).<span style="color: #3b82f6;">await</span>?</code></pre>
         <div class="container">
             <h2>The data layer you don't write.</h2>
             <p style="margin-bottom: 2rem; color: var(--text-muted);">
-                One AST. Binary wire. Compile-time safety. Built-in RLS.
+                One AST. Protocol bytes. Compile-time safety. Built-in RLS.
             </p>
             <div class="cta-buttons">
                 <a href="/docs" class="btn btn-primary btn-large">

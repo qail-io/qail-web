@@ -125,8 +125,8 @@ LIMIT 100</code></pre>
                         <h3>Why is qail-pg faster?</h3>
                         <ul>
                             <li>
-                                <strong>Direct wire protocol</strong> — No intermediate
-                                SQL string layer
+                                <strong>Direct wire protocol</strong> — No app-side
+                                SQL string interpolation on AST path
                             </li>
                             <li>
                                 <strong>Zero allocation query building</strong> —
